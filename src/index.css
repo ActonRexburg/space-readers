@@ -1,0 +1,247 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Lexend:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  /* Space theme colors */
+  --color-space-dark: #0f0a1a;
+  --color-space-deep: #1e1b4b;
+  --color-space-purple: #4c1d95;
+  --color-nebula-pink: #ec4899;
+  --color-nebula-blue: #3b82f6;
+  --color-star-gold: #fbbf24;
+  --color-star-white: #f8fafc;
+  --color-alien-green: #22c55e;
+  --color-fuel-orange: #f97316;
+  
+  /* Touch-friendly sizing */
+  --touch-min: 44px;
+  --touch-large: 64px;
+  
+  /* Kid-friendly fonts */
+  --font-display: 'Fredoka', 'Comic Sans MS', cursive, sans-serif;
+  --font-reading: 'Lexend', 'OpenDyslexic', Arial, sans-serif;
+}
+
+/* Base styles for the app */
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-display);
+  background: linear-gradient(135deg, var(--color-space-dark) 0%, var(--color-space-deep) 50%, var(--color-space-purple) 100%);
+  color: var(--color-star-white);
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
+/* Starfield background animation */
+.starfield {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  background-image: 
+    radial-gradient(2px 2px at 20px 30px, white, transparent),
+    radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.8), transparent),
+    radial-gradient(1px 1px at 90px 40px, white, transparent),
+    radial-gradient(2px 2px at 130px 80px, rgba(255,255,255,0.6), transparent),
+    radial-gradient(1px 1px at 160px 120px, white, transparent),
+    radial-gradient(2px 2px at 200px 50px, rgba(255,255,255,0.7), transparent),
+    radial-gradient(1px 1px at 250px 90px, white, transparent),
+    radial-gradient(2px 2px at 300px 150px, rgba(255,255,255,0.5), transparent);
+  background-size: 350px 200px;
+  animation: twinkle 4s ease-in-out infinite alternate;
+}
+
+@keyframes twinkle {
+  0% { opacity: 0.7; }
+  100% { opacity: 1; }
+}
+
+/* Touch-friendly button base */
+.touch-button {
+  min-height: var(--touch-min);
+  min-width: var(--touch-min);
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 1.125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  touch-action: manipulation;
+}
+
+.touch-button:active {
+  transform: scale(0.95);
+}
+
+/* Reading text styles */
+.reading-text {
+  font-family: var(--font-reading);
+  font-size: 1.5rem;
+  line-height: 2;
+  letter-spacing: 0.02em;
+}
+
+/* Word highlighting for decoder */
+.word-highlight {
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: background-color 0.15s ease;
+}
+
+.word-highlight:hover {
+  background-color: rgba(251, 191, 36, 0.3);
+}
+
+.word-highlight:active {
+  background-color: rgba(251, 191, 36, 0.5);
+}
+
+/* Slider track for decoder */
+.decoder-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 16px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, var(--color-nebula-blue), var(--color-nebula-pink));
+  outline: none;
+  cursor: pointer;
+}
+
+.decoder-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-star-gold);
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(251, 191, 36, 0.8);
+}
+
+.decoder-slider::-moz-range-thumb {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-star-gold);
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 0 10px rgba(251, 191, 36, 0.8);
+}
+
+/* Glow effects */
+.glow-gold {
+  box-shadow: 0 0 20px rgba(251, 191, 36, 0.5);
+}
+
+.glow-green {
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.5);
+}
+
+.glow-blue {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+}
+
+/* Animation utilities */
+.float {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+.pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { filter: drop-shadow(0 0 5px currentColor); }
+  50% { filter: drop-shadow(0 0 20px currentColor); }
+}
+
+/* Card styles */
+.space-card {
+  background: linear-gradient(135deg, rgba(30, 27, 75, 0.9) 0%, rgba(76, 29, 149, 0.7) 100%);
+  border: 2px solid rgba(251, 191, 36, 0.3);
+  border-radius: 16px;
+  backdrop-filter: blur(10px);
+}
+
+/* Avatar styles */
+.avatar-ring {
+  border: 3px solid var(--color-star-gold);
+  border-radius: 50%;
+  padding: 3px;
+}
+
+/* Grapheme highlighting in decoder */
+.grapheme {
+  display: inline-block;
+  padding: 8px 12px;
+  margin: 4px;
+  border-radius: 8px;
+  font-size: 2rem;
+  font-family: var(--font-reading);
+  transition: all 0.2s ease;
+}
+
+.grapheme-inactive {
+  background: rgba(59, 130, 246, 0.3);
+  color: rgba(248, 250, 252, 0.6);
+}
+
+.grapheme-active {
+  background: var(--color-star-gold);
+  color: var(--color-space-dark);
+  transform: scale(1.1);
+  box-shadow: 0 0 15px rgba(251, 191, 36, 0.8);
+}
+
+.grapheme-complete {
+  background: var(--color-alien-green);
+  color: var(--color-space-dark);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(30, 27, 75, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-star-gold);
+  border-radius: 4px;
+}
+
+/* Focus states for accessibility */
+:focus-visible {
+  outline: 3px solid var(--color-star-gold);
+  outline-offset: 2px;
+}
+
+/* Prevent text selection on interactive elements */
+button, .touch-button, .word-highlight {
+  user-select: none;
+}
+
+/* Allow text selection in reading area */
+.reading-text {
+  user-select: text;
+}
