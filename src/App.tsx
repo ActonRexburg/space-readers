@@ -79,8 +79,11 @@ export function App() {
     service.setEnabled(settings.zibClipsEnabled);
   }, [settings.zibClipsEnabled]);
 
+  // Get basename from Vite's BASE_URL, removing trailing slash for react-router
+  const basename = import.meta.env.BASE_URL.replace(/\/$/, '') || '/';
+
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={basename}>
       {/* Global Zib Clip popup - renders on top of everything */}
       <ZibClip position="bottom-right" />
       
