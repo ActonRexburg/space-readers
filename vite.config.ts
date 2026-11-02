@@ -12,7 +12,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'robots.txt'],
+      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'robots.txt', 'rocket.svg'],
       manifest: {
         name: 'Space Readers',
         short_name: 'SpaceReaders',
@@ -41,8 +41,18 @@ export default defineConfig({
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        // Include core app assets in precache (not videos - too large)
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,jpg}'],
+        // Exclude large video files from precache
+        globIgnores: ['**/*.mp4', '**/*.mp3'],
+        // Force new service worker to take control immediately
+        skipWaiting: true,
+        clientsClaim: true,
+        // Navigation fallback for SPA routing
+        navigateFallback: 'index.html',
+        navigateFallbackAllowlist: [/^(?!\/__).*/],
         runtimeCaching: [
+          // Cache Google Fonts
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
             handler: 'CacheFirst',
@@ -51,6 +61,52 @@ export default defineConfig({
               expiration: {
                 maxEntries: 10,
                 maxAgeSeconds: 60 * 60 * 24 * 365
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          // Cache video files with NetworkFirst strategy (show latest, fallback to cache)
+          {
+            urlPattern: /\.mp4$/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'video-cache',
+              expiration: {
+                maxEntries: 20,
+                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              },
+              rangeRequests: true
+            }
+          },
+          // Cache audio files similarly
+          {
+            urlPattern: /\.mp3$/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'audio-cache',
+              expiration: {
+                maxEntries: 20,
+                maxAgeSeconds: 60 * 60 * 24 * 30
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          // Cache poster images
+          {
+            urlPattern: /zib-clips\/poster\/.*\.jpg$/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'poster-cache',
+              expiration: {
+                maxEntries: 20,
+                maxAgeSeconds: 60 * 60 * 24 * 30
               },
               cacheableResponse: {
                 statuses: [0, 200]

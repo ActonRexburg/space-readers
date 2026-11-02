@@ -2,6 +2,8 @@
  * Profile Creation/Edit Form
  * 
  * Modal form for creating or editing a child profile.
+ * For NEW profiles: only name + avatar (interests are picked in onboarding)
+ * For EDITING profiles: name + avatar + interests
  */
 
 import { useState, useEffect } from 'react';
@@ -32,6 +34,9 @@ export function ProfileForm({
   const [step, setStep] = useState<'name' | 'avatar' | 'interests'>('name');
   const [error, setError] = useState('');
 
+  // For new profiles, skip interests step (they'll pick in onboarding's InterestPicker)
+  const isEditing = !!editProfile;
+
   // Reset form when opening/closing or when edit profile changes
   useEffect(() => {
     if (isOpen) {
@@ -43,7 +48,7 @@ export function ProfileForm({
       } else {
         setName('');
         setAvatarId(AVATARS[0].id);
-        setInterests([]);
+        setInterests([]); // Always start with empty interests for new profiles
         setStep('name');
       }
       setError('');
@@ -63,9 +68,15 @@ export function ProfileForm({
       setError('');
       setStep('avatar');
     } else if (step === 'avatar') {
-      setStep('interests');
+      if (isEditing) {
+        // Editing: go to interests step
+        setStep('interests');
+      } else {
+        // New profile: skip interests (handled in Onboarding's InterestPicker)
+        onSave(name.trim(), avatarId, []);
+      }
     } else {
-      // Save
+      // Save with selected interests (only reached when editing)
       onSave(name.trim(), avatarId, interests);
     }
   };
@@ -102,15 +113,18 @@ export function ProfileForm({
 
         {/* Step indicator */}
         <div className="flex justify-center gap-2 mb-6">
-          {['name', 'avatar', 'interests'].map((s, i) => (
-            <div
-              key={s}
-              className={`w-3 h-3 rounded-full ${
-                s === step ? 'bg-star-gold' : 
-                ['name', 'avatar', 'interests'].indexOf(step) > i ? 'bg-alien-green' : 'bg-white/20'
-              }`}
-            />
-          ))}
+          {(isEditing ? ['name', 'avatar', 'interests'] : ['name', 'avatar']).map((s, i) => {
+            const steps = isEditing ? ['name', 'avatar', 'interests'] : ['name', 'avatar'];
+            return (
+              <div
+                key={s}
+                className={`w-3 h-3 rounded-full ${
+                  s === step ? 'bg-star-gold' : 
+                  steps.indexOf(step) > i ? 'bg-alien-green' : 'bg-white/20'
+                }`}
+              />
+            );
+          })}
         </div>
 
         {/* Step: Name */}

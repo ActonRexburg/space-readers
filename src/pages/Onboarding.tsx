@@ -86,7 +86,7 @@ export function Onboarding() {
 
       {step === 'interests' && (
         <InterestPicker
-          initialInterests={activeProfile.interests}
+          initialInterests={activeProfile.hasCompletedInterests ? activeProfile.interests : []}
           onComplete={handleInterestsComplete}
         />
       )}
