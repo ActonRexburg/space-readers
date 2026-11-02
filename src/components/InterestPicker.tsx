@@ -87,6 +87,9 @@ export function InterestPicker({
   const isReady = selectionCount >= MIN_INTERESTS;
   const gaugePercent = Math.min(100, (selectionCount / MIN_INTERESTS) * 100);
 
+  // Get selected interests as array with their data for display
+  const selectedItems = INTEREST_OPTIONS.filter(i => selectedInterests.has(i.id));
+
   return (
     <div className="min-h-screen flex flex-col bg-space-dark relative overflow-hidden">
       {/* Background gradient */}
@@ -140,10 +143,15 @@ export function InterestPicker({
                   key={interest.id}
                   onClick={() => handleTileClick(interest)}
                   className={`
-                    interest-tile
-                    ${isSelected ? 'interest-tile-selected' : ''}
-                    aspect-square
+                    interest-tile aspect-square relative
+                    ${isSelected 
+                      ? 'interest-tile-selected ring-2 ring-alien-green ring-offset-2 ring-offset-space-dark' 
+                      : ''}
                   `}
+                  style={isSelected ? {
+                    boxShadow: '0 0 20px rgba(76, 255, 153, 0.6), 0 0 40px rgba(76, 255, 153, 0.3)',
+                    transform: 'scale(1.05)',
+                  } : undefined}
                   aria-pressed={isSelected}
                   aria-label={`${interest.label}${isSelected ? ', selected' : ''}`}
                 >
@@ -154,14 +162,15 @@ export function InterestPicker({
                   {/* Label */}
                   <span className={`
                     text-xs font-medium text-center leading-tight
-                    ${isSelected ? 'text-star-gold' : 'text-white/70'}
+                    ${isSelected ? 'text-alien-green font-bold' : 'text-white/70'}
                   `}>
                     {interest.label}
                   </span>
-                  {/* Selection indicator */}
+                  {/* Selection indicator - prominent checkmark */}
                   {isSelected && (
-                    <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-star-gold flex items-center justify-center">
-                      <span className="text-xs text-space-dark">✓</span>
+                    <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-alien-green flex items-center justify-center shadow-lg"
+                      style={{ boxShadow: '0 0 10px rgba(76, 255, 153, 0.8)' }}>
+                      <span className="text-sm text-space-dark font-bold">✓</span>
                     </div>
                   )}
                 </button>
@@ -170,6 +179,37 @@ export function InterestPicker({
           </div>
         </div>
       </main>
+
+      {/* Selected items row - shows what you picked so you can see/undo */}
+      {selectedItems.length > 0 && (
+        <div className="relative z-10 px-4 py-3 bg-space-purple/30 border-t border-alien-green/30">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-sm text-alien-green font-medium">Your Picks:</span>
+              <span className="text-xs text-white/50">(tap to remove)</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {selectedItems.map((interest) => (
+                <button
+                  key={interest.id}
+                  onClick={() => handleTileClick(interest)}
+                  className="
+                    flex items-center gap-1.5 px-3 py-1.5 rounded-full
+                    bg-alien-green/20 border border-alien-green/50
+                    hover:bg-red-500/20 hover:border-red-500/50
+                    transition-colors group
+                  "
+                  aria-label={`Remove ${interest.label}`}
+                >
+                  <span className="text-lg">{interest.emoji}</span>
+                  <span className="text-sm text-white/90">{interest.label}</span>
+                  <span className="text-xs text-white/50 group-hover:text-red-400">✕</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Bottom bar with fuel gauge and launch button */}
       <footer className="relative z-10 p-4 bg-space-deep/90 border-t border-cyan-500/20 safe-area-bottom">
