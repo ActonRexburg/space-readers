@@ -28,7 +28,8 @@ const STORAGE_KEYS = {
 const DEFAULT_SETTINGS: DeviceSettings = {
   parentPin: '1234',
   audioEnabled: true,
-  speechRate: 1.0
+  speechRate: 1.0,
+  zibClipsEnabled: true
 };
 
 // Interface for storage operations

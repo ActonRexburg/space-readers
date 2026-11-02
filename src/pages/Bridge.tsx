@@ -5,7 +5,7 @@
  * progress, and Zib the alien. Central hub for navigation.
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../stores/appStore';
 import { Starfield } from '../components/Starfield';
@@ -13,6 +13,7 @@ import { Card } from '../components/Card';
 import { Button } from '../components/Button';
 import { Zib } from '../components/Zib';
 import { IntroVideo } from '../components/IntroVideo';
+import { useZibClips } from '../components/ZibClip';
 import { getAvatarById, DEFAULT_AVATAR } from '../data/avatars';
 import { MISSIONS, getNextMission, getAvailableMissions } from '../data/missions';
 import { RANK_THRESHOLDS } from '../types';
@@ -20,9 +21,22 @@ import { RANK_THRESHOLDS } from '../types';
 export function Bridge() {
   const navigate = useNavigate();
   const { activeProfile, activeProgress, logoutProfile } = useAppStore();
+  const { triggerWelcomeBack } = useZibClips();
+  const hasTriggeredWelcomeBack = useRef(false);
   
   const [showRankInfo, setShowRankInfo] = useState(false);
   const [showIntroVideo, setShowIntroVideo] = useState(false);
+
+  // Trigger welcome_back for returning cadets (once per bridge visit after first time)
+  useEffect(() => {
+    if (!hasTriggeredWelcomeBack.current && activeProgress && activeProgress.storiesCompleted.length > 0) {
+      hasTriggeredWelcomeBack.current = true;
+      // Delay to let UI render
+      setTimeout(() => {
+        triggerWelcomeBack();
+      }, 800);
+    }
+  }, [activeProgress, triggerWelcomeBack]);
 
   // Redirect if no active profile
   if (!activeProfile || !activeProgress) {

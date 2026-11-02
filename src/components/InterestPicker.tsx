@@ -7,11 +7,13 @@
  * - Tapping speaks the label aloud
  * - Fuel gauge counter that fills to 10 minimum
  * - Launch button unlocks at 10+ selections
+ * - Triggers Zib clips: interest_picker_intro on open, interests_done on launch
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { INTEREST_OPTIONS, MIN_INTERESTS, type InterestOption } from '../data/interests';
 import { getAudioService } from '../services/audio';
+import { useZibClips } from './ZibClip';
 import { Button } from './Button';
 import { Zib } from './Zib';
 
@@ -32,6 +34,19 @@ export function InterestPicker({
     new Set(initialInterests)
   );
   const audioService = getAudioService();
+  const { triggerInterestPickerIntro, triggerInterestsDone } = useZibClips();
+  const hasTriggeredIntro = useRef(false);
+
+  // Trigger intro clip when picker opens (only for first-time, not editing)
+  useEffect(() => {
+    if (!isEditing && !hasTriggeredIntro.current) {
+      hasTriggeredIntro.current = true;
+      // Small delay to let the UI render first
+      setTimeout(() => {
+        triggerInterestPickerIntro();
+      }, 500);
+    }
+  }, [isEditing, triggerInterestPickerIntro]);
 
   const handleTileClick = useCallback((interest: InterestOption) => {
     // Speak the label
@@ -50,8 +65,23 @@ export function InterestPicker({
   }, [audioService]);
 
   const handleComplete = useCallback(() => {
-    onComplete(Array.from(selectedInterests));
-  }, [selectedInterests, onComplete]);
+    const interests = Array.from(selectedInterests);
+    
+    // Trigger interests_done clip, then complete
+    const success = triggerInterestsDone({
+      onComplete: () => {
+        onComplete(interests);
+      },
+      onSkip: () => {
+        onComplete(interests);
+      }
+    });
+    
+    // If clip didn't play (disabled or already showing), complete immediately
+    if (!success) {
+      onComplete(interests);
+    }
+  }, [selectedInterests, onComplete, triggerInterestsDone]);
 
   const selectionCount = selectedInterests.size;
   const isReady = selectionCount >= MIN_INTERESTS;

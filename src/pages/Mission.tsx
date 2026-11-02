@@ -3,9 +3,10 @@
  * 
  * Shows mission briefing, story selection, and handles
  * story completion within a mission context.
+ * Triggers Zib clips for story_start, story_complete, planet_unlocked, rank_up.
  */
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAppStore } from '../stores/appStore';
 import { Starfield } from '../components/Starfield';
@@ -13,6 +14,7 @@ import { Card } from '../components/Card';
 import { Button } from '../components/Button';
 import { Zib } from '../components/Zib';
 import { StoryReader } from '../components/StoryReader';
+import { useZibClips } from '../components/ZibClip';
 import { getMissionById } from '../data/missions';
 import { getStoryById } from '../data/stories';
 import type { Story } from '../types';
@@ -28,12 +30,19 @@ export function Mission() {
     addAlienWord,
     recordWordHelp
   } = useAppStore();
+  const { 
+    triggerStoryStart, 
+    triggerStoryComplete, 
+    triggerPlanetUnlocked, 
+    triggerRankUp 
+  } = useZibClips();
 
   const [phase, setPhase] = useState<MissionPhase>('briefing');
   const [currentStory, setCurrentStory] = useState<Story | null>(null);
   const [completedStories, setCompletedStories] = useState<Set<string>>(new Set());
   const [zibDialogueIndex, setZibDialogueIndex] = useState(0);
   const [totalWordsThisMission, setTotalWordsThisMission] = useState(0);
+  const triggeredStoryStartFor = useRef<string | null>(null);
 
   // Get mission data
   const mission = useMemo(() => {
@@ -53,6 +62,20 @@ export function Mission() {
   const allStoriesCompleted = useMemo(() => {
     return stories.every(s => completedStories.has(s.id));
   }, [stories, completedStories]);
+
+  // Handle starting a story
+  const handleStartStory = useCallback((story: Story) => {
+    setCurrentStory(story);
+    setPhase('reading');
+    
+    // Trigger story_start clip (once per story)
+    if (triggeredStoryStartFor.current !== story.id) {
+      triggeredStoryStartFor.current = story.id;
+      setTimeout(() => {
+        triggerStoryStart(story.id);
+      }, 500);
+    }
+  }, [triggerStoryStart]);
 
   // Handle story completion
   const handleStoryComplete = useCallback(async (wordsDecoded: string[], durationMs: number) => {
@@ -75,6 +98,10 @@ export function Mission() {
     setCompletedStories(prev => new Set([...prev, currentStory.id]));
     setTotalWordsThisMission(prev => prev + wordsDecoded.length);
     setCurrentStory(null);
+    triggeredStoryStartFor.current = null;
+
+    // Trigger story_complete clip
+    triggerStoryComplete();
 
     // Check if mission is complete
     if (completedStories.size + 1 === stories.length) {
@@ -82,15 +109,23 @@ export function Mission() {
     } else {
       setPhase('stories');
     }
-  }, [currentStory, stories.length, completedStories.size, completeStory, addAlienWord, recordWordHelp]);
+  }, [currentStory, stories.length, completedStories.size, completeStory, addAlienWord, recordWordHelp, triggerStoryComplete]);
 
   // Handle mission completion
   const handleMissionComplete = useCallback(async () => {
     if (!mission) return;
 
     await completeMission(mission.id, mission.fuelReward, mission.starReward);
+    
+    // Trigger special clips for unlocks
+    if (mission.unlocksRank) {
+      setTimeout(() => triggerRankUp(), 300);
+    } else if (mission.unlocksPlanet) {
+      setTimeout(() => triggerPlanetUnlocked(), 300);
+    }
+    
     setPhase('complete');
-  }, [mission, completeMission]);
+  }, [mission, completeMission, triggerRankUp, triggerPlanetUnlocked]);
 
   // Navigate back
   const handleBack = () => {
@@ -225,10 +260,7 @@ export function Mission() {
                   <Card 
                     key={story.id}
                     glow={!isCompleted ? 'gold' : 'green'}
-                    onClick={() => {
-                      setCurrentStory(story);
-                      setPhase('reading');
-                    }}
+                    onClick={() => handleStartStory(story)}
                     className="cursor-pointer hover:scale-[1.02] transition-transform"
                   >
                     <div className="flex items-center gap-4">

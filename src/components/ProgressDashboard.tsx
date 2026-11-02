@@ -21,6 +21,8 @@ interface ProgressDashboardProps {
   onEditProfile: (profile: Profile) => void;
   onChangePin: () => void;
   onUpdateInterests?: (profile: Profile, interests: string[]) => void;
+  zibClipsEnabled?: boolean;
+  onToggleZibClips?: (enabled: boolean) => void;
 }
 
 export function ProgressDashboard({
@@ -29,7 +31,9 @@ export function ProgressDashboard({
   onClose,
   onEditProfile,
   onChangePin,
-  onUpdateInterests
+  onUpdateInterests,
+  zibClipsEnabled = true,
+  onToggleZibClips
 }: ProgressDashboardProps) {
   const [editingInterestsProfile, setEditingInterestsProfile] = useState<Profile | null>(null);
 
@@ -291,7 +295,35 @@ export function ProgressDashboard({
         {/* Settings section */}
         <div className="mt-8 mb-4">
           <h2 className="text-lg font-semibold mb-3 text-neon-cyan">⚙️ Settings</h2>
-          <Card>
+          <Card className="space-y-1">
+            {/* Zib Clips Toggle */}
+            {onToggleZibClips && (
+              <button
+                onClick={() => onToggleZibClips(!zibClipsEnabled)}
+                className="w-full flex items-center justify-between p-3 hover:bg-neon-cyan/10 rounded-lg transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">👽</span>
+                  <div className="text-left">
+                    <span className="block">Zib Story Clips</span>
+                    <span className="text-xs text-neon-cyan/60">
+                      Short videos throughout the app
+                    </span>
+                  </div>
+                </div>
+                <div className={`
+                  w-12 h-7 rounded-full transition-colors relative
+                  ${zibClipsEnabled ? 'bg-alien-green' : 'bg-white/20'}
+                `}>
+                  <div className={`
+                    absolute top-1 w-5 h-5 rounded-full bg-white transition-transform
+                    ${zibClipsEnabled ? 'translate-x-6' : 'translate-x-1'}
+                  `} />
+                </div>
+              </button>
+            )}
+            
+            {/* Change PIN */}
             <button
               onClick={onChangePin}
               className="w-full flex items-center justify-between p-3 hover:bg-neon-cyan/10 rounded-lg transition-colors"

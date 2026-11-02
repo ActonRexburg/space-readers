@@ -7,10 +7,12 @@
 import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAppStore } from './stores/appStore';
+import { getZibClipService } from './services/zibClips';
 import { ProfilePicker } from './pages/ProfilePicker';
 import { Bridge } from './pages/Bridge';
 import { Mission } from './pages/Mission';
 import { Onboarding } from './pages/Onboarding';
+import { ZibClip } from './components/ZibClip';
 
 // Protected route wrapper - redirects to onboarding if not completed
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -62,7 +64,7 @@ function OnboardingRoute() {
 }
 
 export function App() {
-  const { initialize, isInitialized } = useAppStore();
+  const { initialize, isInitialized, settings } = useAppStore();
 
   // Initialize app on mount
   useEffect(() => {
@@ -71,8 +73,17 @@ export function App() {
     }
   }, [initialize, isInitialized]);
 
+  // Sync Zib clips enabled setting with the service
+  useEffect(() => {
+    const service = getZibClipService();
+    service.setEnabled(settings.zibClipsEnabled);
+  }, [settings.zibClipsEnabled]);
+
   return (
     <BrowserRouter>
+      {/* Global Zib Clip popup - renders on top of everything */}
+      <ZibClip position="bottom-right" />
+      
       <Routes>
         {/* Profile picker / home */}
         <Route path="/" element={<ProfilePicker />} />

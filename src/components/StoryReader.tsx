@@ -3,6 +3,7 @@
  * 
  * Displays a decodable story with tappable words.
  * Tracks reading progress and words decoded.
+ * Triggers Zib word_cracked clip on successful decode.
  */
 
 import { useState, useCallback, useRef } from 'react';
@@ -10,6 +11,7 @@ import type { Story, DecodableWord } from '../types';
 import { WordDecoder } from './WordDecoder';
 import { Button } from './Button';
 import { getAudioService } from '../services/audio';
+import { useZibClips } from './ZibClip';
 
 interface StoryReaderProps {
   story: Story;
@@ -24,6 +26,7 @@ export function StoryReader({ story, onComplete, onExit }: StoryReaderProps) {
   const [isFinished, setIsFinished] = useState(false);
   const startTimeRef = useRef(Date.now());
   const audioService = useRef(getAudioService());
+  const { triggerWordCracked, triggerKeepTrying } = useZibClips();
 
   // Track total words decoded this session
   const wordsDecodedThisSession = useRef<string[]>([]);
@@ -39,9 +42,17 @@ export function StoryReader({ story, onComplete, onExit }: StoryReaderProps) {
       const wordText = selectedWord.word.toLowerCase().replace(/[^a-z]/g, '');
       setDecodedWords(prev => new Set([...prev, wordText]));
       wordsDecodedThisSession.current.push(wordText);
+      
+      // Trigger word_cracked clip (throttled by service)
+      triggerWordCracked(story.id);
     }
     setSelectedWord(null);
-  }, [selectedWord]);
+  }, [selectedWord, story.id, triggerWordCracked]);
+
+  // Handle keep_trying trigger from WordDecoder
+  const handleKeepTrying = useCallback(() => {
+    triggerKeepTrying();
+  }, [triggerKeepTrying]);
 
   // Handle paragraph navigation
   const handleNextParagraph = useCallback(() => {
@@ -228,6 +239,7 @@ export function StoryReader({ story, onComplete, onExit }: StoryReaderProps) {
         isOpen={selectedWord !== null}
         onClose={() => setSelectedWord(null)}
         onComplete={handleWordDecoded}
+        onKeepTrying={handleKeepTrying}
       />
     </div>
   );

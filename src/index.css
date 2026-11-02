@@ -725,3 +725,101 @@ button, .touch-button, .word-highlight, .profile-card, .interest-tile {
 .safe-area-bottom {
   padding-bottom: env(safe-area-inset-bottom, 0);
 }
+
+/* ============================================
+   ZIB COMM-LINK POPUP (Hologram Style)
+   ============================================ */
+
+.zib-comm-link {
+  width: min(380px, calc(100vw - 32px));
+  background: linear-gradient(135deg, rgba(5, 5, 16, 0.98) 0%, rgba(18, 18, 42, 0.95) 100%);
+  border: 2px solid var(--color-alien-green);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 
+    0 0 30px rgba(34, 197, 94, 0.4),
+    0 0 60px rgba(34, 197, 94, 0.2),
+    inset 0 0 30px rgba(34, 197, 94, 0.05);
+  position: relative;
+}
+
+/* Holographic scanline effect */
+.zib-comm-link::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(34, 197, 94, 0.03) 2px,
+    rgba(34, 197, 94, 0.03) 4px
+  );
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Animated scanline */
+.zib-scanline {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(34, 197, 94, 0.5), 
+    transparent
+  );
+  animation: scanline-move 3s linear infinite;
+  pointer-events: none;
+  z-index: 11;
+}
+
+@keyframes scanline-move {
+  0% { top: 0; }
+  100% { top: 100%; }
+}
+
+/* Mini comm-link for voice-only mode */
+.zib-comm-link-mini {
+  background: linear-gradient(135deg, rgba(5, 5, 16, 0.95) 0%, rgba(18, 18, 42, 0.9) 100%);
+  border: 2px solid var(--color-alien-green);
+  border-radius: 12px;
+  box-shadow: 
+    0 0 20px rgba(34, 197, 94, 0.3),
+    inset 0 0 15px rgba(34, 197, 94, 0.05);
+}
+
+/* Entrance animation */
+.zib-comm-link,
+.zib-comm-link-mini {
+  animation: comm-link-appear 0.3s ease-out;
+}
+
+@keyframes comm-link-appear {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .zib-scanline {
+    animation: none;
+    opacity: 0;
+  }
+  
+  .zib-comm-link,
+  .zib-comm-link-mini {
+    animation: none;
+  }
+}

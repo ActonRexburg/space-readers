@@ -181,6 +181,7 @@ export interface DeviceSettings {
   activeProfileId?: ProfileId;
   audioEnabled: boolean;
   speechRate: number;         // 0.5 to 2.0
+  zibClipsEnabled: boolean;   // Parent toggle for Zib story clips
   lastSyncedAt?: number;      // For future cloud sync
 }
 

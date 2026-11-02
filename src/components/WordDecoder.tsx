@@ -16,12 +16,15 @@ interface WordDecoderProps {
   isOpen: boolean;
   onClose: () => void;
   onComplete: () => void;
+  onKeepTrying?: () => void;
 }
 
-export function WordDecoder({ word, isOpen, onClose, onComplete }: WordDecoderProps) {
+export function WordDecoder({ word, isOpen, onClose, onComplete, onKeepTrying }: WordDecoderProps) {
   const [sliderValue, setSliderValue] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
+  const [missCount, setMissCount] = useState(0);
+  const [hasTriggeredKeepTrying, setHasTriggeredKeepTrying] = useState(false);
   const audioService = useRef(getAudioService());
   const lastSpokenIndex = useRef(-1);
 
@@ -31,9 +34,26 @@ export function WordDecoder({ word, isOpen, onClose, onComplete }: WordDecoderPr
       setSliderValue(0);
       setIsComplete(false);
       setHasStarted(false);
+      setMissCount(0);
+      setHasTriggeredKeepTrying(false);
       lastSpokenIndex.current = -1;
     }
   }, [isOpen, word.word]);
+
+  // Track incomplete slider attempts as "misses"
+  // If user drags but doesn't complete, count as a miss
+  const handleSliderRelease = useCallback(() => {
+    if (hasStarted && !isComplete && sliderValue > 10 && sliderValue < 90) {
+      const newMissCount = missCount + 1;
+      setMissCount(newMissCount);
+      
+      // Trigger keep_trying after 2+ misses (once per word)
+      if (newMissCount >= 2 && !hasTriggeredKeepTrying && onKeepTrying) {
+        setHasTriggeredKeepTrying(true);
+        onKeepTrying();
+      }
+    }
+  }, [hasStarted, isComplete, sliderValue, missCount, hasTriggeredKeepTrying, onKeepTrying]);
 
   // Calculate which grapheme is currently highlighted based on slider position
   const getActiveGraphemeIndex = useCallback((value: number): number => {
@@ -172,6 +192,8 @@ export function WordDecoder({ word, isOpen, onClose, onComplete }: WordDecoderPr
             max="100"
             value={sliderValue}
             onChange={handleSliderChange}
+            onMouseUp={handleSliderRelease}
+            onTouchEnd={handleSliderRelease}
             className="decoder-slider w-full"
             aria-label="Sound out slider"
           />

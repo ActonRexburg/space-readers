@@ -74,7 +74,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   settings: {
     parentPin: '1234',
     audioEnabled: true,
-    speechRate: 1.0
+    speechRate: 1.0,
+    zibClipsEnabled: true
   },
   isAdultGateOpen: false,
 

@@ -252,6 +252,10 @@ export function ProfilePicker() {
           onUpdateInterests={async (profile, interests) => {
             await updateProfile({ ...profile, interests });
           }}
+          zibClipsEnabled={settings.zibClipsEnabled}
+          onToggleZibClips={async (enabled) => {
+            await updateSettings({ zibClipsEnabled: enabled });
+          }}
         />
       )}
 
