@@ -64,7 +64,7 @@ interface AppState {
   // Progress updates
   recordWordHelp: (word: string) => Promise<void>;
   completeStory: (storyId: StoryId, wordsDecoded: string[], durationMs: number) => Promise<void>;
-  completeMission: (missionId: MissionId, fuelReward: number, starReward: number) => Promise<void>;
+  completeMission: (missionId: MissionId, fuelReward: number, starReward: number, unlocksPlanet?: string) => Promise<void>;
   addAlienWord: (word: string) => Promise<void>;
   
   // Rank calculation
@@ -298,11 +298,16 @@ export const useAppStore = create<AppState>((set, get) => ({
     });
   },
 
-  completeMission: async (missionId: MissionId, fuelReward: number, starReward: number) => {
+  completeMission: async (missionId: MissionId, fuelReward: number, starReward: number, unlocksPlanet?: string) => {
     const { activeProgress, allProgress, calculateRank } = get();
     if (!activeProgress) return;
 
     const newFuelCredits = activeProgress.fuelCredits + fuelReward;
+
+    // Add planet to unlocked list if provided and not already unlocked
+    const newPlanetsUnlocked = unlocksPlanet && !activeProgress.planetsUnlocked.includes(unlocksPlanet)
+      ? [...activeProgress.planetsUnlocked, unlocksPlanet]
+      : activeProgress.planetsUnlocked;
 
     const newProgress: ProfileProgress = {
       ...activeProgress,
@@ -311,7 +316,8 @@ export const useAppStore = create<AppState>((set, get) => ({
         : [...activeProgress.missionsCompleted, missionId],
       fuelCredits: newFuelCredits,
       starCredits: activeProgress.starCredits + starReward,
-      currentRank: calculateRank(newFuelCredits)
+      currentRank: calculateRank(newFuelCredits),
+      planetsUnlocked: newPlanetsUnlocked
     };
 
     await storageService.saveProgress(newProgress);

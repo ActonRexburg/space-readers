@@ -19,6 +19,10 @@ import { getMissionById } from '../data/missions';
 import { getStoryById } from '../data/stories';
 import type { Story } from '../types';
 
+function capitalize(str: string): string {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
 type MissionPhase = 'briefing' | 'stories' | 'reading' | 'debrief' | 'complete';
 
 export function Mission() {
@@ -28,7 +32,8 @@ export function Mission() {
     completeStory, 
     completeMission,
     addAlienWord,
-    recordWordHelp
+    recordWordHelp,
+    activeProgress
   } = useAppStore();
   const { 
     triggerStoryStart, 
@@ -43,6 +48,11 @@ export function Mission() {
   const [zibDialogueIndex, setZibDialogueIndex] = useState(0);
   const [totalWordsThisMission, setTotalWordsThisMission] = useState(0);
   const triggeredStoryStartFor = useRef<string | null>(null);
+  
+  // Track "before" values for visible reward math
+  const [fuelBefore, setFuelBefore] = useState(0);
+  const [starsBefore, setStarsBefore] = useState(0);
+  const [planetsBefore, setPlanetsBefore] = useState(0);
 
   // Get mission data
   const mission = useMemo(() => {
@@ -105,17 +115,23 @@ export function Mission() {
 
     // Check if mission is complete
     if (completedStories.size + 1 === stories.length) {
+      // Capture current values before rewards for visible math
+      if (activeProgress) {
+        setFuelBefore(activeProgress.fuelCredits);
+        setStarsBefore(activeProgress.starCredits);
+        setPlanetsBefore(activeProgress.planetsUnlocked.length);
+      }
       setPhase('debrief');
     } else {
       setPhase('stories');
     }
-  }, [currentStory, stories.length, completedStories.size, completeStory, addAlienWord, recordWordHelp, triggerStoryComplete]);
+  }, [currentStory, stories.length, completedStories.size, completeStory, addAlienWord, recordWordHelp, triggerStoryComplete, activeProgress]);
 
   // Handle mission completion
   const handleMissionComplete = useCallback(async () => {
     if (!mission) return;
 
-    await completeMission(mission.id, mission.fuelReward, mission.starReward);
+    await completeMission(mission.id, mission.fuelReward, mission.starReward, mission.unlocksPlanet);
     
     // Trigger special clips for unlocks
     if (mission.unlocksRank) {
@@ -314,8 +330,8 @@ export function Mission() {
 
       {/* Debrief Phase */}
       {phase === 'debrief' && (
-        <main className="flex-1 relative z-10 p-4 flex flex-col items-center justify-center">
-          <div className="max-w-md w-full space-y-6">
+        <main className="flex-1 relative z-10 p-4 flex flex-col items-center justify-center overflow-y-auto">
+          <div className="max-w-md w-full space-y-6 py-4">
             <div className="text-center">
               <div className="text-6xl mb-4">🎉</div>
               <h2 className="text-3xl font-bold text-star-gold">Mission Complete!</h2>
@@ -339,31 +355,60 @@ export function Mission() {
               </div>
             </Card>
 
-            {/* Rewards */}
+            {/* Rewards with visible math */}
             <Card glow="gold" className="text-center">
-              <h3 className="font-bold mb-3">Mission Rewards</h3>
-              <div className="flex justify-center gap-6">
-                <div>
-                  <div className="text-3xl font-bold text-fuel-orange">
-                    +{mission.fuelReward}
-                  </div>
-                  <div className="text-sm text-slate-400">Fuel</div>
+              <h3 className="font-bold mb-4 text-lg">Mission Rewards</h3>
+              
+              {/* Fuel math */}
+              <div className="bg-white/5 rounded-lg p-3 mb-3">
+                <div className="flex items-center justify-center gap-2 text-fuel-orange">
+                  <span className="text-xl">{fuelBefore}</span>
+                  <span className="text-lg">+</span>
+                  <span className="text-xl font-bold">{mission.fuelReward}</span>
+                  <span className="text-lg">=</span>
+                  <span className="text-2xl font-bold">{fuelBefore + mission.fuelReward}</span>
                 </div>
-                <div>
-                  <div className="text-3xl font-bold text-star-gold">
-                    +{mission.starReward}
-                  </div>
-                  <div className="text-sm text-slate-400">Stars</div>
-                </div>
+                <div className="text-sm text-slate-400 mt-1">🔥 Fuel Credits</div>
               </div>
+              
+              {/* Stars math */}
+              <div className="bg-white/5 rounded-lg p-3 mb-3">
+                <div className="flex items-center justify-center gap-2 text-star-gold">
+                  <span className="text-xl">{starsBefore}</span>
+                  <span className="text-lg">+</span>
+                  <span className="text-xl font-bold">{mission.starReward}</span>
+                  <span className="text-lg">=</span>
+                  <span className="text-2xl font-bold">{starsBefore + mission.starReward}</span>
+                </div>
+                <div className="text-sm text-slate-400 mt-1">⭐ Star Credits</div>
+              </div>
+              
+              {/* Rank up celebration */}
               {mission.unlocksRank && (
-                <div className="mt-3 text-alien-green">
-                  🎖️ Rank up to {mission.unlocksRank}!
+                <div className="mt-4 p-3 bg-alien-green/10 border border-alien-green/30 rounded-lg">
+                  <div className="text-2xl mb-1">🎖️</div>
+                  <div className="text-alien-green font-bold text-lg">
+                    Rank Up: {mission.unlocksRank}!
+                  </div>
+                  <p className="text-sm text-slate-300 mt-1">
+                    You've proven yourself, Commander!
+                  </p>
                 </div>
               )}
+              
+              {/* Planet unlock celebration */}
               {mission.unlocksPlanet && (
-                <div className="mt-1 text-nebula-blue">
-                  🌍 {mission.unlocksPlanet} unlocked!
+                <div className="mt-4 p-3 bg-neon-cyan/10 border border-neon-cyan/30 rounded-lg">
+                  <div className="text-2xl mb-1">🌍</div>
+                  <div className="text-neon-cyan font-bold text-lg">
+                    {capitalize(mission.unlocksPlanet)} Unlocked!
+                  </div>
+                  <div className="flex items-center justify-center gap-2 mt-2 text-slate-300">
+                    <span>Planets:</span>
+                    <span className="text-xl">{planetsBefore}</span>
+                    <span>→</span>
+                    <span className="text-xl font-bold text-neon-cyan">{planetsBefore + 1}</span>
+                  </div>
                 </div>
               )}
             </Card>

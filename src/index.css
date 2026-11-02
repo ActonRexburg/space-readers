@@ -21,6 +21,10 @@
   --color-alien-green: #22c55e;
   --color-zib-orange: #fb923c;
   
+  /* Nebula gradient colors */
+  --color-nebula-blue: #3b82f6;
+  --color-nebula-pink: #ec4899;
+  
   /* UI colors */
   --color-star-white: #f0f9ff;
   --color-grid-line: rgba(0, 245, 255, 0.1);
@@ -322,6 +326,38 @@ body {
   line-height: 2;
   letter-spacing: 0.02em;
   color: #f0f9ff;
+}
+
+/* Larger story text for Chromebook readability (28-32px) */
+.story-text-large {
+  font-family: var(--font-reading);
+  font-size: 1.75rem; /* 28px */
+  line-height: 2.2;
+  letter-spacing: 0.03em;
+  color: #f0f9ff;
+}
+
+@media (min-width: 768px) {
+  .story-text-large {
+    font-size: 2rem; /* 32px on larger screens */
+  }
+}
+
+/* Sight word styling - subtle underline instead of italics */
+.sight-word {
+  position: relative;
+  text-decoration: underline;
+  text-decoration-color: rgba(255, 215, 0, 0.4);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+
+/* Dot indicator for sight words */
+.sight-word-dot {
+  color: var(--color-star-gold);
+  font-size: 0.6em;
+  vertical-align: super;
+  margin-left: 1px;
   text-shadow: none;
 }
 
@@ -398,6 +434,37 @@ body {
   cursor: pointer;
   border: 2px solid rgba(255, 255, 255, 0.8);
   box-shadow: 0 0 15px var(--color-star-gold);
+}
+
+/* Larger slider for better touch targets */
+.decoder-slider-large {
+  height: 16px !important;
+  border-radius: 8px;
+}
+
+.decoder-slider-large::-webkit-slider-thumb {
+  width: 44px !important;
+  height: 44px !important;
+  margin-top: -14px;
+}
+
+.decoder-slider-large::-moz-range-thumb {
+  width: 44px !important;
+  height: 44px !important;
+}
+
+/* Horizontal bounce animation for hand hint */
+@keyframes bounce-x {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(40px);
+  }
+}
+
+.animate-bounce-x {
+  animation: bounce-x 1.5s ease-in-out infinite;
 }
 
 /* Grapheme display */
