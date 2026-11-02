@@ -10,15 +10,16 @@ import { useAppStore } from './stores/appStore';
 import { ProfilePicker } from './pages/ProfilePicker';
 import { Bridge } from './pages/Bridge';
 import { Mission } from './pages/Mission';
+import { Onboarding } from './pages/Onboarding';
 
-// Protected route wrapper
+// Protected route wrapper - redirects to onboarding if not completed
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { activeProfile, isLoading } = useAppStore();
 
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-space-dark">
-        <div className="text-2xl animate-pulse">Loading...</div>
+        <div className="text-2xl animate-pulse text-neon-cyan">Loading...</div>
       </div>
     );
   }
@@ -27,7 +28,37 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <Navigate to="/" replace />;
   }
 
+  // Check if onboarding is complete
+  const needsOnboarding = !activeProfile.hasWatchedIntro || !activeProfile.hasCompletedInterests;
+  if (needsOnboarding) {
+    return <Navigate to="/onboarding" replace />;
+  }
+
   return <>{children}</>;
+}
+
+// Onboarding route wrapper - only for profiles that need it
+function OnboardingRoute() {
+  const { activeProfile, isLoading } = useAppStore();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-space-dark">
+        <div className="text-2xl animate-pulse text-neon-cyan">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!activeProfile) {
+    return <Navigate to="/" replace />;
+  }
+
+  // If onboarding is already complete, go to bridge
+  if (activeProfile.hasWatchedIntro && activeProfile.hasCompletedInterests) {
+    return <Navigate to="/bridge" replace />;
+  }
+
+  return <Onboarding />;
 }
 
 export function App() {
@@ -46,7 +77,10 @@ export function App() {
         {/* Profile picker / home */}
         <Route path="/" element={<ProfilePicker />} />
         
-        {/* Ship bridge (requires profile) */}
+        {/* Onboarding (intro video + interest picker) */}
+        <Route path="/onboarding" element={<OnboardingRoute />} />
+        
+        {/* Ship bridge (requires profile + completed onboarding) */}
         <Route 
           path="/bridge" 
           element={

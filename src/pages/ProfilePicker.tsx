@@ -36,10 +36,19 @@ export function ProfilePicker() {
   const [showPinChange, setShowPinChange] = useState(false);
   const [newPin, setNewPin] = useState('');
 
-  // Handle profile selection
+  // Handle profile selection - goes to onboarding if needed, else bridge
   const handleSelectProfile = async (profileId: string) => {
     await selectProfile(profileId);
-    navigate('/bridge');
+    
+    // Check if onboarding is needed
+    const profile = profiles.find(p => p.id === profileId);
+    const needsOnboarding = profile && (!profile.hasWatchedIntro || !profile.hasCompletedInterests);
+    
+    if (needsOnboarding) {
+      navigate('/onboarding');
+    } else {
+      navigate('/bridge');
+    }
   };
 
   // Handle add profile button (requires adult gate)
@@ -86,10 +95,16 @@ export function ProfilePicker() {
         interests
       });
       setEditingProfile(null);
+      setShowProfileForm(false);
     } else {
-      await createProfile(name, avatarId, interests);
+      // Create new profile and select it
+      const newProfile = await createProfile(name, avatarId, interests);
+      setShowProfileForm(false);
+      
+      // Select the new profile and go to onboarding
+      await selectProfile(newProfile.id);
+      navigate('/onboarding');
     }
-    setShowProfileForm(false);
   };
 
   // Delete profile handler
@@ -129,35 +144,35 @@ export function ProfilePicker() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-space-dark">
         <Starfield />
-        <div className="text-2xl animate-pulse">Loading...</div>
+        <div className="text-2xl animate-pulse text-neon-cyan">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col relative">
+    <div className="min-h-screen flex flex-col relative bg-space-dark">
       <Starfield />
       
       {/* Header */}
-      <header className="relative z-10 p-4 flex justify-between items-center">
+      <header className="relative z-10 p-4 flex justify-between items-center border-b border-neon-cyan/20">
         <div className="flex items-center gap-3">
-          <span className="text-4xl">🚀</span>
+          <span className="text-4xl float">🚀</span>
           <div>
-            <h1 className="text-2xl font-bold text-star-gold">Space Readers</h1>
-            <p className="text-sm text-slate-400">Tap your name to begin!</p>
+            <h1 className="text-2xl font-bold text-star-gold text-glow-gold">Space Readers</h1>
+            <p className="text-sm text-neon-cyan/70">Tap your name to begin!</p>
           </div>
         </div>
         
         {/* Parent dashboard button */}
         <button
           onClick={handleOpenDashboard}
-          className="p-2 hover:bg-white/10 rounded-full text-2xl"
+          className="p-3 hover:bg-neon-cyan/10 rounded-lg border border-neon-cyan/30 hover:border-neon-cyan/60 transition-all"
           aria-label="Parent dashboard"
           title="Parent Zone"
         >
-          👤
+          <span className="text-xl">👤</span>
         </button>
       </header>
 
@@ -165,15 +180,15 @@ export function ProfilePicker() {
       <main className="flex-1 relative z-10 flex flex-col items-center justify-center p-6">
         {profiles.length === 0 ? (
           // Empty state
-          <div className="text-center max-w-md">
-            <div className="text-6xl mb-4">👽</div>
-            <h2 className="text-2xl font-bold mb-2">Welcome to Space Readers!</h2>
-            <p className="text-slate-300 mb-6">
+          <div className="text-center max-w-md space-card p-8">
+            <div className="text-7xl mb-4 float">👽</div>
+            <h2 className="text-3xl font-bold mb-3 text-glow-cyan">Welcome to Space Readers!</h2>
+            <p className="text-cyan-200/80 mb-6">
               Create a player profile to start your reading adventure across the galaxy!
             </p>
             <button
               onClick={handleAddProfile}
-              className="touch-button bg-gradient-to-r from-alien-green to-emerald-600 text-white px-8 py-4 text-xl font-bold glow-green"
+              className="touch-button btn-neon-green px-8 py-4 text-xl font-bold"
             >
               + Create Player
             </button>
@@ -181,7 +196,7 @@ export function ProfilePicker() {
         ) : (
           // Profile grid
           <div className="w-full max-w-2xl">
-            <h2 className="text-xl text-center mb-6">Who's playing today?</h2>
+            <h2 className="text-xl text-center mb-6 text-neon-cyan">Who's playing today?</h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               {profiles.map(profile => (
                 <ProfileCard
@@ -197,7 +212,7 @@ export function ProfilePicker() {
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 p-4 text-center text-sm text-slate-500">
+      <footer className="relative z-10 p-4 text-center text-sm text-neon-cyan/40 circuit-accent">
         Made with 💜 for young readers
       </footer>
 
@@ -234,6 +249,9 @@ export function ProfilePicker() {
           onClose={() => setShowDashboard(false)}
           onEditProfile={handleEditProfile}
           onChangePin={handleChangePin}
+          onUpdateInterests={async (profile, interests) => {
+            await updateProfile({ ...profile, interests });
+          }}
         />
       )}
 

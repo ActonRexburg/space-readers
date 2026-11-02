@@ -4,6 +4,9 @@ import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  // Base URL for GitHub Pages deployment
+  // Set VITE_BASE_URL=/space-readers/ when building for GitHub Pages
+  base: process.env.VITE_BASE_URL || '/',
   plugins: [
     react(),
     tailwindcss(),

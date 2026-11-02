@@ -12,6 +12,7 @@ import { Starfield } from '../components/Starfield';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
 import { Zib } from '../components/Zib';
+import { IntroVideo } from '../components/IntroVideo';
 import { getAvatarById, DEFAULT_AVATAR } from '../data/avatars';
 import { MISSIONS, getNextMission, getAvailableMissions } from '../data/missions';
 import { RANK_THRESHOLDS } from '../types';
@@ -21,6 +22,7 @@ export function Bridge() {
   const { activeProfile, activeProgress, logoutProfile } = useAppStore();
   
   const [showRankInfo, setShowRankInfo] = useState(false);
+  const [showIntroVideo, setShowIntroVideo] = useState(false);
 
   // Redirect if no active profile
   if (!activeProfile || !activeProgress) {
@@ -92,37 +94,41 @@ export function Bridge() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col relative overflow-hidden">
+    <div className="min-h-screen flex flex-col relative overflow-hidden bg-space-dark">
       <Starfield />
       
       {/* Header / Status Bar */}
-      <header className="relative z-10 p-4 flex items-center justify-between border-b border-white/10 bg-space-deep/50 backdrop-blur-sm">
+      <header className="relative z-10 p-4 flex items-center justify-between border-b border-neon-cyan/20 bg-space-deep/80 backdrop-blur-sm">
         {/* Profile info */}
         <button 
           onClick={handleLogout}
-          className="flex items-center gap-3 hover:bg-white/10 rounded-lg p-2 -m-2"
+          className="flex items-center gap-3 hover:bg-neon-cyan/10 rounded-lg p-2 -m-2 transition-colors"
         >
           <div 
             className="w-10 h-10 rounded-full flex items-center justify-center text-xl"
-            style={{ backgroundColor: `${avatar.color}30`, borderColor: avatar.color, borderWidth: '2px' }}
+            style={{ 
+              backgroundColor: `${avatar.color}20`, 
+              border: `2px solid ${avatar.color}`,
+              boxShadow: `0 0 10px ${avatar.color}40`
+            }}
           >
             {avatar.emoji}
           </div>
           <div className="text-left">
             <div className="font-semibold">{activeProfile.name}</div>
-            <div className="text-xs text-slate-400">Tap to switch</div>
+            <div className="text-xs text-neon-cyan/60">Tap to switch</div>
           </div>
         </button>
 
         {/* Resources */}
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1 bg-fuel-orange/20 px-3 py-1 rounded-full">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 px-3 py-1 rounded-full border border-fuel-orange/50 bg-fuel-orange/10">
             <span>🔥</span>
-            <span className="font-bold">{activeProgress.fuelCredits}</span>
+            <span className="font-bold text-fuel-orange">{activeProgress.fuelCredits}</span>
           </div>
-          <div className="flex items-center gap-1 bg-star-gold/20 px-3 py-1 rounded-full">
+          <div className="flex items-center gap-1 px-3 py-1 rounded-full border border-star-gold/50 bg-star-gold/10">
             <span>⭐</span>
-            <span className="font-bold">{activeProgress.starCredits}</span>
+            <span className="font-bold text-star-gold">{activeProgress.starCredits}</span>
           </div>
         </div>
       </header>
@@ -163,20 +169,20 @@ export function Bridge() {
               size="md"
             />
             <div className="flex-1 text-center sm:text-left">
-              <h3 className="font-bold text-lg mb-1">Zib's Reading Log</h3>
-              <p className="text-slate-300 text-sm mb-2">{zibDialogue}</p>
+              <h3 className="font-bold text-lg mb-1 text-neon-cyan">Zib's Reading Log</h3>
+              <p className="text-cyan-200/80 text-sm mb-2">{zibDialogue}</p>
               {activeProgress.alienLearnedWords.length > 0 && (
                 <div className="flex flex-wrap gap-1 justify-center sm:justify-start">
                   {activeProgress.alienLearnedWords.slice(-5).map(word => (
                     <span 
                       key={word}
-                      className="px-2 py-0.5 bg-alien-green/20 rounded text-xs text-alien-green"
+                      className="px-2 py-0.5 bg-alien-green/20 border border-alien-green/40 rounded text-xs text-alien-green"
                     >
                       {word}
                     </span>
                   ))}
                   {activeProgress.alienLearnedWords.length > 5 && (
-                    <span className="text-xs text-slate-400">
+                    <span className="text-xs text-neon-cyan/50">
                       +{activeProgress.alienLearnedWords.length - 5} more
                     </span>
                   )}
@@ -184,6 +190,15 @@ export function Bridge() {
               )}
             </div>
           </Card>
+
+          {/* Mission Briefing Rewatch Button */}
+          <button
+            onClick={() => setShowIntroVideo(true)}
+            className="w-full flex items-center justify-center gap-2 p-3 rounded-lg border border-neon-cyan/30 bg-neon-cyan/5 hover:bg-neon-cyan/10 hover:border-neon-cyan/50 transition-all"
+          >
+            <span className="text-xl">📺</span>
+            <span className="text-neon-cyan">Watch Mission Briefing</span>
+          </button>
 
           {/* Mission Card */}
           {nextMission ? (
@@ -292,24 +307,26 @@ export function Bridge() {
       {/* Rank Info Modal */}
       {showRankInfo && (
         <div 
-          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4"
           onClick={() => setShowRankInfo(false)}
         >
-          <div className="space-card p-4 max-w-sm w-full" onClick={e => e.stopPropagation()}>
-            <h2 className="text-xl font-bold text-center mb-4">🎖️ Space Ranks</h2>
+          <div className="space-card p-6 max-w-sm w-full neon-border-cyan" onClick={e => e.stopPropagation()}>
+            <h2 className="text-xl font-bold text-center mb-4 text-glow-cyan">🎖️ Space Ranks</h2>
             <div className="space-y-2">
               {Object.entries(RANK_THRESHOLDS).map(([rank, fuel]) => (
                 <div 
                   key={rank}
                   className={`
-                    flex items-center justify-between p-2 rounded-lg
-                    ${rank === activeProgress.currentRank ? 'bg-star-gold/20 border border-star-gold' : 'bg-white/5'}
+                    flex items-center justify-between p-3 rounded-lg border
+                    ${rank === activeProgress.currentRank 
+                      ? 'bg-star-gold/20 border-star-gold text-star-gold' 
+                      : 'bg-white/5 border-white/10'}
                   `}
                 >
-                  <span className={rank === activeProgress.currentRank ? 'font-bold text-star-gold' : ''}>
+                  <span className={rank === activeProgress.currentRank ? 'font-bold' : ''}>
                     {rank}
                   </span>
-                  <span className="text-sm text-slate-400">{fuel} fuel</span>
+                  <span className="text-sm opacity-70">{fuel} fuel</span>
                 </div>
               ))}
             </div>
@@ -318,6 +335,15 @@ export function Bridge() {
             </Button>
           </div>
         </div>
+      )}
+
+      {/* Intro Video Rewatch */}
+      {showIntroVideo && (
+        <IntroVideo
+          onComplete={() => setShowIntroVideo(false)}
+          onSkip={() => setShowIntroVideo(false)}
+          showSkip={true}
+        />
       )}
     </div>
   );

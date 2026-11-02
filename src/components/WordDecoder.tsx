@@ -100,19 +100,19 @@ export function WordDecoder({ word, isOpen, onClose, onComplete }: WordDecoderPr
   if (word.isSightWord) {
     return (
       <div 
-        className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+        className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4"
         onClick={(e) => e.target === e.currentTarget && onClose()}
       >
-        <div className="space-card p-6 max-w-md w-full">
-          <h3 className="text-xl font-semibold text-center text-slate-300 mb-4">
+        <div className="decoder-popup p-6 max-w-md w-full">
+          <h3 className="text-xl font-semibold text-center text-neon-cyan mb-4">
             Memory Word
           </h3>
           
-          <div className="text-5xl font-bold text-center text-star-gold mb-4 reading-text">
+          <div className="text-5xl font-bold text-center text-star-gold text-glow-gold mb-4 reading-text">
             {word.word}
           </div>
           
-          <p className="text-center text-slate-300 mb-6">
+          <p className="text-center text-cyan-200/70 mb-6">
             This is a special word to remember by heart!
           </p>
           
@@ -140,15 +140,15 @@ export function WordDecoder({ word, isOpen, onClose, onComplete }: WordDecoderPr
 
   return (
     <div 
-      className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="space-card p-6 max-w-lg w-full">
+      <div className="decoder-popup p-6 max-w-lg w-full">
         {/* Header */}
-        <h3 className="text-xl font-semibold text-center text-slate-300 mb-2">
+        <h3 className="text-xl font-semibold text-center text-neon-cyan text-glow-cyan mb-2">
           Sound It Out!
         </h3>
-        <p className="text-center text-sm text-slate-400 mb-4">
+        <p className="text-center text-sm text-cyan-200/60 mb-4">
           Drag the slider to hear each sound
         </p>
 

@@ -5,12 +5,14 @@
  * Accessible only through the adult gate.
  */
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { Profile, ProfileProgress, ProgressSummary } from '../types';
 import { getAvatarById, DEFAULT_AVATAR } from '../data/avatars';
+import { getInterestsByIds } from '../data/interests';
 import { RANK_THRESHOLDS } from '../types';
 import { Card } from './Card';
 import { Button } from './Button';
+import { InterestPicker } from './InterestPicker';
 
 interface ProgressDashboardProps {
   profiles: Profile[];
@@ -18,6 +20,7 @@ interface ProgressDashboardProps {
   onClose: () => void;
   onEditProfile: (profile: Profile) => void;
   onChangePin: () => void;
+  onUpdateInterests?: (profile: Profile, interests: string[]) => void;
 }
 
 export function ProgressDashboard({
@@ -25,8 +28,11 @@ export function ProgressDashboard({
   getProgress,
   onClose,
   onEditProfile,
-  onChangePin
+  onChangePin,
+  onUpdateInterests
 }: ProgressDashboardProps) {
+  const [editingInterestsProfile, setEditingInterestsProfile] = useState<Profile | null>(null);
+
   // Calculate summary for each profile
   const summaries: ProgressSummary[] = useMemo(() => {
     return profiles.map(profile => {
@@ -241,12 +247,41 @@ export function ProgressDashboard({
                   )}
 
                   {/* Interests */}
-                  {profile.interests.length > 0 && (
-                    <div className="mt-4 pt-4 border-t border-white/10">
-                      <span className="text-sm text-slate-400">Interests: </span>
-                      <span className="text-sm">{profile.interests.join(', ')}</span>
+                  <div className="mt-4 pt-4 border-t border-neon-cyan/20">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-sm font-semibold text-neon-cyan">
+                        🎯 Interests ({profile.interests.length})
+                      </h3>
+                      {onUpdateInterests && (
+                        <button
+                          onClick={() => setEditingInterestsProfile(profile)}
+                          className="text-xs text-star-gold hover:underline"
+                        >
+                          Edit interests
+                        </button>
+                      )}
                     </div>
-                  )}
+                    {profile.interests.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {getInterestsByIds(profile.interests).slice(0, 12).map(interest => (
+                          <span 
+                            key={interest.id}
+                            className="inline-flex items-center gap-1 px-2 py-1 bg-star-gold/10 border border-star-gold/30 rounded text-sm"
+                          >
+                            <span>{interest.emoji}</span>
+                            <span className="text-star-gold">{interest.label}</span>
+                          </span>
+                        ))}
+                        {profile.interests.length > 12 && (
+                          <span className="text-xs text-neon-cyan/50 self-center">
+                            +{profile.interests.length - 12} more
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-neon-cyan/50">No interests selected yet</p>
+                    )}
+                  </div>
                 </Card>
               );
             })}
@@ -255,18 +290,33 @@ export function ProgressDashboard({
 
         {/* Settings section */}
         <div className="mt-8 mb-4">
-          <h2 className="text-lg font-semibold mb-3">⚙️ Settings</h2>
+          <h2 className="text-lg font-semibold mb-3 text-neon-cyan">⚙️ Settings</h2>
           <Card>
             <button
               onClick={onChangePin}
-              className="w-full flex items-center justify-between p-3 hover:bg-white/10 rounded-lg"
+              className="w-full flex items-center justify-between p-3 hover:bg-neon-cyan/10 rounded-lg transition-colors"
             >
               <span>Change Parent PIN</span>
-              <span className="text-slate-400">→</span>
+              <span className="text-neon-cyan">→</span>
             </button>
           </Card>
         </div>
       </div>
+
+      {/* Interest Editing Modal */}
+      {editingInterestsProfile && onUpdateInterests && (
+        <div className="fixed inset-0 z-[60]">
+          <InterestPicker
+            initialInterests={editingInterestsProfile.interests}
+            isEditing={true}
+            onComplete={(newInterests) => {
+              onUpdateInterests(editingInterestsProfile, newInterests);
+              setEditingInterestsProfile(null);
+            }}
+            onBack={() => setEditingInterestsProfile(null)}
+          />
+        </div>
+      )}
     </div>
   );
 }

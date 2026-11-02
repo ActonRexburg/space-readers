@@ -1,5 +1,5 @@
 /**
- * Profile Card Component
+ * Profile Card Component (Tron Style)
  * 
  * Displays a child profile with avatar for selection.
  */
@@ -20,30 +20,37 @@ export function ProfileCard({ profile, onClick, isSelected }: ProfileCardProps) 
     <button
       onClick={onClick}
       className={`
-        flex flex-col items-center p-4 rounded-2xl
-        transition-all duration-200 touch-button
-        ${isSelected 
-          ? 'bg-star-gold/30 scale-105 glow-gold' 
-          : 'bg-white/10 hover:bg-white/20 hover:scale-105'}
-        active:scale-95
+        profile-card flex flex-col items-center
+        ${isSelected ? 'profile-card-selected' : ''}
       `}
-      style={{ 
-        borderColor: avatar.color,
-        borderWidth: '3px'
-      }}
     >
-      {/* Avatar */}
+      {/* Avatar with neon ring */}
       <div 
-        className="w-20 h-20 rounded-full flex items-center justify-center text-5xl mb-3"
-        style={{ backgroundColor: `${avatar.color}30` }}
+        className="w-20 h-20 rounded-full flex items-center justify-center text-5xl mb-3 relative"
+        style={{ 
+          backgroundColor: `${avatar.color}20`,
+          boxShadow: `0 0 15px ${avatar.color}40, inset 0 0 10px ${avatar.color}20`
+        }}
       >
-        {avatar.emoji}
+        <div 
+          className="absolute inset-0 rounded-full"
+          style={{ 
+            border: `2px solid ${avatar.color}`,
+            boxShadow: `0 0 10px ${avatar.color}60`
+          }}
+        />
+        <span className="relative z-10">{avatar.emoji}</span>
       </div>
       
       {/* Name */}
       <span className="text-lg font-semibold text-white truncate max-w-full">
         {profile.name}
       </span>
+      
+      {/* Status indicator */}
+      {!profile.hasCompletedInterests && (
+        <span className="text-xs text-star-gold mt-1">New!</span>
+      )}
     </button>
   );
 }
@@ -53,18 +60,12 @@ export function AddProfileCard({ onClick }: { onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className={`
-        flex flex-col items-center justify-center p-4 rounded-2xl
-        bg-white/5 border-2 border-dashed border-white/30
-        hover:bg-white/10 hover:border-white/50
-        transition-all duration-200 touch-button
-        min-h-[140px]
-      `}
+      className="profile-card flex flex-col items-center justify-center min-h-[140px] border-dashed"
     >
-      <div className="w-20 h-20 rounded-full flex items-center justify-center text-4xl mb-3 bg-white/10">
-        ➕
+      <div className="w-20 h-20 rounded-full flex items-center justify-center text-4xl mb-3 bg-neon-cyan/10 border border-neon-cyan/30">
+        <span className="text-neon-cyan">+</span>
       </div>
-      <span className="text-lg font-semibold text-white/70">
+      <span className="text-lg font-semibold text-neon-cyan/70">
         Add Player
       </span>
     </button>

@@ -2,11 +2,19 @@
 
 A space-mission-themed, gamified reading program for early readers (ages 8-9) who know letters and basic words but are too old for "baby" apps. Children become space-exploring heroes who help teach Zib, a friendly alien, to read English.
 
+## 🌐 Live Demo
+
+**Try it now:** https://actonrexburg.github.io/space-readers/
+
+*(If this link doesn't work yet, see [Deployment](#deployment) section for setup instructions)*
+
 ## Features (Phase 1)
 
 ### For Children
 - **Profile Picker**: Multiple child profiles on one device, tap-to-enter (no passwords)
-- **Ship Bridge**: Home screen with mission flow and progress tracking
+- **Intro Video**: 65-second mission briefing introducing Zib and the reading adventure
+- **Interest Picker**: 50 picture tiles for kids to pick what they love (dinosaurs, sharks, rockets, etc.) - used for AI story generation in Phase 2
+- **Ship Bridge**: Home screen with mission flow, progress tracking, and a "Watch Mission Briefing" button to rewatch the intro
 - **Decodable Stories**: 7 pre-written sci-fi stories with CVC words, digraphs, and sight words
 - **Word Decoder**: Tap any word to see it broken into sound units (graphemes) with a slider that highlights each sound as you drag
 - **Zib the Alien**: A cute character who "learns" words from the child
@@ -20,13 +28,15 @@ A space-mission-themed, gamified reading program for early readers (ages 8-9) wh
   - Most-helped words (what they struggle with)
   - Reading time
   - Words taught to Zib
+  - **Interests with emoji tiles** - view and edit a child's interests
 - **Profile Management**: Edit names, avatars, interests
 
 ### Technical
+- **Tron-Style Space UI**: Neon cyan/blue/magenta glow effects, animated parallax starfield, gold/orange reward accents
 - **PWA**: Installable on any device
-- **Offline-Ready**: Service worker for caching
-- **Touch-Friendly**: Large targets, kid-friendly fonts (Fredoka, Lexend)
-- **Performance**: Optimized for older Chromebooks
+- **Touch-Friendly**: Large 48px+ touch targets, kid-friendly fonts (Fredoka, Lexend)
+- **Performance**: Optimized for older Dell Chromebooks - CSS-only animations, no heavy blur filters
+- **Accessibility**: Respects `prefers-reduced-motion`, high contrast text
 
 ## Getting Started
 
@@ -233,6 +243,27 @@ See `src/services/phonics.ts` for the grapheme splitting logic.
 
 ## Deployment
 
+### GitHub Pages (Recommended for Testing)
+
+The app auto-deploys to GitHub Pages when you push to `main`. To enable:
+
+1. **Go to your repo Settings** → Pages
+2. **Source**: Select "GitHub Actions"
+3. **Push to main** or manually trigger the workflow
+
+**The live URL will be:** `https://<your-username>.github.io/space-readers/`
+
+The workflow is already configured in `.github/workflows/deploy.yml`.
+
+### Manual Build for GitHub Pages
+
+```bash
+# Build with the correct base path
+VITE_BASE_URL=/space-readers/ npm run build
+
+# The dist/ folder is ready to deploy
+```
+
 ### Static Hosting (Vercel, Netlify)
 
 ```bash
@@ -240,7 +271,11 @@ npm run build
 # Deploy the `dist/` folder
 ```
 
+For Vercel/Netlify, no base path modification is needed (they serve from root).
+
 ### Capacitor (Android App)
+
+The app is designed to be wrappable with Capacitor for Android:
 
 ```bash
 npm install @capacitor/core @capacitor/cli @capacitor/android

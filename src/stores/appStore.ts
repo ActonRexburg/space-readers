@@ -149,7 +149,9 @@ export const useAppStore = create<AppState>((set, get) => ({
       avatarId,
       interests,
       createdAt: Date.now(),
-      lastActiveAt: Date.now()
+      lastActiveAt: Date.now(),
+      hasWatchedIntro: false,
+      hasCompletedInterests: false
     };
 
     await storageService.saveProfile(profile);

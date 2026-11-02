@@ -30,6 +30,10 @@ export interface Profile {
   createdAt: number;    // Unix timestamp
   lastActiveAt: number;
   
+  // Onboarding state tracking
+  hasWatchedIntro: boolean;      // True after first intro video watch
+  hasCompletedInterests: boolean; // True after selecting 10+ interests
+  
   // Future multi-tenant fields (optional for Phase 1)
   schoolId?: SchoolId;
   classroomId?: ClassroomId;

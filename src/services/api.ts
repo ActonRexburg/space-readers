@@ -79,25 +79,49 @@ export async function apiFetch<T>(
  * - Include a word list with grapheme breakdowns
  * 
  * API key should NEVER be in the client - backend handles LLM calls.
+ * 
+ * Example request:
+ * {
+ *   profileId: "abc-123",
+ *   interests: ["sharks", "rockets", "dinosaurs"],  // From interest picker
+ *   knownPhonicsPatterns: ["CVC", "digraph-sh"],
+ *   targetPhonicsPatterns: ["digraph-ch"],
+ *   difficultyLevel: 2,
+ *   theme: "Zib and the shark adventure"  // Auto-generated from interests
+ * }
+ * 
+ * The LLM prompt will incorporate the interests like:
+ * "Generate a story where Zib the alien meets a shark in space..."
  */
 export async function generateStory(
   request: StoryGenerationRequest
 ): Promise<StoryGenerationResponse> {
-  // Phase 1: Return a stub response
+  // Phase 1: Return a stub response showing how interests will be used
   // In production, this would call the real endpoint:
   // return apiFetch<StoryGenerationResponse>('/stories/generate', {
   //   method: 'POST',
   //   body: JSON.stringify(request)
   // });
 
-  console.log('[API Stub] Story generation requested:', request);
+  console.log('[API Stub] Story generation requested:', {
+    profileId: request.profileId,
+    interests: request.interests,
+    knownPatterns: request.knownPhonicsPatterns,
+    targetPatterns: request.targetPhonicsPatterns,
+    theme: request.theme
+  });
+
+  // Log how interests would be used
+  if (request.interests.length > 0) {
+    console.log('[API Stub] Would generate story themed around:', request.interests.slice(0, 3).join(', '));
+  }
   
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 1000));
   
   return {
     success: false,
-    error: 'Story generation is not yet available. Coming in Phase 2!'
+    error: `Story generation coming in Phase 2! Your interests (${request.interests.slice(0, 3).join(', ')}) will be used to create personalized stories about Zib.`
   };
 }
 
