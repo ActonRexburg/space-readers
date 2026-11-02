@@ -1,0 +1,825 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Lexend:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  /* Tron-Space theme colors */
+  --color-space-dark: #050510;
+  --color-space-deep: #0a0a1f;
+  --color-space-purple: #12122a;
+  
+  /* Neon accent colors */
+  --color-neon-cyan: #00f5ff;
+  --color-neon-blue: #0080ff;
+  --color-neon-magenta: #ff00ff;
+  --color-neon-violet: #8b5cf6;
+  
+  /* Reward colors (matching intro video) */
+  --color-star-gold: #fbbf24;
+  --color-fuel-orange: #f97316;
+  
+  /* Character colors */
+  --color-alien-green: #22c55e;
+  --color-zib-orange: #fb923c;
+  
+  /* UI colors */
+  --color-star-white: #f0f9ff;
+  --color-grid-line: rgba(0, 245, 255, 0.1);
+  
+  /* Touch-friendly sizing */
+  --touch-min: 48px;
+  --touch-large: 64px;
+  
+  /* Kid-friendly fonts */
+  --font-display: 'Fredoka', 'Comic Sans MS', cursive, sans-serif;
+  --font-reading: 'Lexend', 'OpenDyslexic', Arial, sans-serif;
+}
+
+/* Base styles */
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-display);
+  background: var(--color-space-dark);
+  color: var(--color-star-white);
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
+/* ============================================
+   ANIMATED STARFIELD (Performance optimized)
+   ============================================ */
+
+.starfield-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+/* Layer 1: Distant stars (slowest) */
+.starfield-layer-1 {
+  position: absolute;
+  width: 200%;
+  height: 200%;
+  background-image: 
+    radial-gradient(1px 1px at 20px 30px, rgba(255,255,255,0.6), transparent),
+    radial-gradient(1px 1px at 80px 60px, rgba(255,255,255,0.5), transparent),
+    radial-gradient(1px 1px at 140px 40px, rgba(255,255,255,0.4), transparent),
+    radial-gradient(1px 1px at 200px 90px, rgba(255,255,255,0.6), transparent),
+    radial-gradient(1px 1px at 260px 20px, rgba(255,255,255,0.5), transparent),
+    radial-gradient(1px 1px at 320px 70px, rgba(255,255,255,0.4), transparent);
+  background-size: 400px 150px;
+  animation: starfield-drift 120s linear infinite;
+}
+
+/* Layer 2: Mid-distance stars */
+.starfield-layer-2 {
+  position: absolute;
+  width: 200%;
+  height: 200%;
+  background-image: 
+    radial-gradient(1.5px 1.5px at 50px 40px, rgba(255,255,255,0.8), transparent),
+    radial-gradient(1.5px 1.5px at 150px 100px, rgba(0,245,255,0.6), transparent),
+    radial-gradient(1.5px 1.5px at 250px 60px, rgba(255,255,255,0.7), transparent),
+    radial-gradient(1.5px 1.5px at 350px 130px, rgba(139,92,246,0.5), transparent);
+  background-size: 500px 200px;
+  animation: starfield-drift 80s linear infinite reverse;
+}
+
+/* Layer 3: Close stars with twinkle */
+.starfield-layer-3 {
+  position: absolute;
+  width: 200%;
+  height: 200%;
+  background-image: 
+    radial-gradient(2px 2px at 100px 80px, var(--color-neon-cyan), transparent),
+    radial-gradient(2px 2px at 300px 150px, var(--color-star-gold), transparent),
+    radial-gradient(2px 2px at 500px 50px, rgba(255,255,255,0.9), transparent);
+  background-size: 600px 250px;
+  animation: starfield-drift 60s linear infinite, twinkle 4s ease-in-out infinite alternate;
+}
+
+@keyframes starfield-drift {
+  from { transform: translate(0, 0); }
+  to { transform: translate(-50%, -25%); }
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .starfield-layer-1,
+  .starfield-layer-2,
+  .starfield-layer-3 {
+    animation: none;
+  }
+  .starfield-layer-3 {
+    opacity: 0.8;
+  }
+}
+
+/* ============================================
+   TRON-STYLE NEON UI ELEMENTS
+   ============================================ */
+
+/* Neon glow utilities */
+.glow-cyan {
+  box-shadow: 
+    0 0 5px var(--color-neon-cyan),
+    0 0 10px rgba(0, 245, 255, 0.5),
+    inset 0 0 5px rgba(0, 245, 255, 0.1);
+}
+
+.glow-blue {
+  box-shadow: 
+    0 0 5px var(--color-neon-blue),
+    0 0 10px rgba(0, 128, 255, 0.5),
+    inset 0 0 5px rgba(0, 128, 255, 0.1);
+}
+
+.glow-magenta {
+  box-shadow: 
+    0 0 5px var(--color-neon-magenta),
+    0 0 10px rgba(255, 0, 255, 0.4),
+    inset 0 0 5px rgba(255, 0, 255, 0.1);
+}
+
+.glow-gold {
+  box-shadow: 
+    0 0 8px var(--color-star-gold),
+    0 0 15px rgba(251, 191, 36, 0.5),
+    inset 0 0 5px rgba(251, 191, 36, 0.1);
+}
+
+.glow-green {
+  box-shadow: 
+    0 0 5px var(--color-alien-green),
+    0 0 10px rgba(34, 197, 94, 0.5),
+    inset 0 0 5px rgba(34, 197, 94, 0.1);
+}
+
+/* Text glow */
+.text-glow-cyan {
+  text-shadow: 0 0 10px var(--color-neon-cyan), 0 0 20px rgba(0, 245, 255, 0.5);
+}
+
+.text-glow-gold {
+  text-shadow: 0 0 10px var(--color-star-gold), 0 0 20px rgba(251, 191, 36, 0.5);
+}
+
+/* Neon border utilities */
+.neon-border-cyan {
+  border: 1px solid var(--color-neon-cyan);
+  box-shadow: 
+    0 0 5px var(--color-neon-cyan),
+    inset 0 0 5px rgba(0, 245, 255, 0.05);
+}
+
+.neon-border-blue {
+  border: 1px solid var(--color-neon-blue);
+  box-shadow: 
+    0 0 5px var(--color-neon-blue),
+    inset 0 0 5px rgba(0, 128, 255, 0.05);
+}
+
+.neon-border-gold {
+  border: 2px solid var(--color-star-gold);
+  box-shadow: 
+    0 0 8px var(--color-star-gold),
+    inset 0 0 5px rgba(251, 191, 36, 0.05);
+}
+
+/* ============================================
+   SPACE CARD (Tron style)
+   ============================================ */
+
+.space-card {
+  background: linear-gradient(135deg, rgba(10, 10, 31, 0.95) 0%, rgba(18, 18, 42, 0.9) 100%);
+  border: 1px solid rgba(0, 245, 255, 0.3);
+  border-radius: 12px;
+  backdrop-filter: blur(8px);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle grid pattern overlay */
+.space-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    linear-gradient(rgba(0, 245, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 245, 255, 0.03) 1px, transparent 1px);
+  background-size: 20px 20px;
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.space-card:hover {
+  border-color: rgba(0, 245, 255, 0.5);
+  box-shadow: 0 0 15px rgba(0, 245, 255, 0.2);
+}
+
+/* Card with gold accent (for rewards/achievements) */
+.space-card-gold {
+  background: linear-gradient(135deg, rgba(10, 10, 31, 0.95) 0%, rgba(30, 20, 10, 0.9) 100%);
+  border: 1px solid rgba(251, 191, 36, 0.4);
+}
+
+.space-card-gold:hover {
+  border-color: rgba(251, 191, 36, 0.6);
+  box-shadow: 0 0 15px rgba(251, 191, 36, 0.3);
+}
+
+/* ============================================
+   TOUCH-FRIENDLY BUTTONS (Tron style)
+   ============================================ */
+
+.touch-button {
+  min-height: var(--touch-min);
+  min-width: var(--touch-min);
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 1.125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  touch-action: manipulation;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Neon button variants */
+.btn-neon-cyan {
+  background: linear-gradient(135deg, rgba(0, 245, 255, 0.1) 0%, rgba(0, 128, 255, 0.1) 100%);
+  border: 1px solid var(--color-neon-cyan);
+  color: var(--color-neon-cyan);
+  box-shadow: 0 0 10px rgba(0, 245, 255, 0.3);
+}
+
+.btn-neon-cyan:hover {
+  background: linear-gradient(135deg, rgba(0, 245, 255, 0.2) 0%, rgba(0, 128, 255, 0.2) 100%);
+  box-shadow: 0 0 20px rgba(0, 245, 255, 0.5);
+}
+
+.btn-neon-gold {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.2) 0%, rgba(249, 115, 22, 0.2) 100%);
+  border: 2px solid var(--color-star-gold);
+  color: var(--color-star-gold);
+  box-shadow: 0 0 10px rgba(251, 191, 36, 0.4);
+}
+
+.btn-neon-gold:hover {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.3) 0%, rgba(249, 115, 22, 0.3) 100%);
+  box-shadow: 0 0 25px rgba(251, 191, 36, 0.6);
+}
+
+.btn-neon-green {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(22, 163, 74, 0.2) 100%);
+  border: 1px solid var(--color-alien-green);
+  color: var(--color-alien-green);
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.4);
+}
+
+.btn-neon-green:hover {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.3) 0%, rgba(22, 163, 74, 0.3) 100%);
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.6);
+}
+
+.touch-button:active {
+  transform: scale(0.95);
+}
+
+.touch-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ============================================
+   READING TEXT (No glow, high contrast)
+   ============================================ */
+
+.reading-text {
+  font-family: var(--font-reading);
+  font-size: 1.5rem;
+  line-height: 2;
+  letter-spacing: 0.02em;
+  color: #f0f9ff;
+  text-shadow: none;
+}
+
+.reading-container {
+  background: linear-gradient(180deg, rgba(5, 5, 16, 0.98) 0%, rgba(10, 10, 31, 0.98) 100%);
+  border: 1px solid rgba(0, 245, 255, 0.2);
+  border-radius: 12px;
+}
+
+/* Word highlighting for decoder - subtle on reading page */
+.word-highlight {
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+  display: inline-block;
+}
+
+.word-highlight:hover {
+  background: rgba(0, 245, 255, 0.15);
+  box-shadow: 0 0 8px rgba(0, 245, 255, 0.3);
+}
+
+.word-highlight:active {
+  background: rgba(0, 245, 255, 0.25);
+}
+
+/* ============================================
+   DECODER POPUP (Tron style)
+   ============================================ */
+
+.decoder-popup {
+  background: linear-gradient(135deg, rgba(5, 5, 16, 0.98) 0%, rgba(18, 18, 42, 0.98) 100%);
+  border: 2px solid var(--color-neon-cyan);
+  border-radius: 16px;
+  box-shadow: 
+    0 0 30px rgba(0, 245, 255, 0.3),
+    inset 0 0 30px rgba(0, 245, 255, 0.05);
+}
+
+.decoder-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, 
+    rgba(0, 245, 255, 0.2) 0%, 
+    rgba(139, 92, 246, 0.2) 50%,
+    rgba(255, 0, 255, 0.2) 100%
+  );
+  border: 1px solid rgba(0, 245, 255, 0.5);
+  outline: none;
+  cursor: pointer;
+}
+
+.decoder-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--color-star-gold);
+  cursor: pointer;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 0 15px var(--color-star-gold);
+}
+
+.decoder-slider::-moz-range-thumb {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--color-star-gold);
+  cursor: pointer;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 0 15px var(--color-star-gold);
+}
+
+/* Grapheme display */
+.grapheme {
+  display: inline-block;
+  padding: 10px 16px;
+  margin: 4px;
+  border-radius: 8px;
+  font-size: 2rem;
+  font-family: var(--font-reading);
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+}
+
+.grapheme-inactive {
+  background: rgba(0, 128, 255, 0.1);
+  border-color: rgba(0, 128, 255, 0.3);
+  color: rgba(240, 249, 255, 0.5);
+}
+
+.grapheme-active {
+  background: rgba(251, 191, 36, 0.2);
+  border-color: var(--color-star-gold);
+  color: var(--color-star-gold);
+  transform: scale(1.1);
+  box-shadow: 0 0 20px rgba(251, 191, 36, 0.5);
+}
+
+.grapheme-complete {
+  background: rgba(34, 197, 94, 0.2);
+  border-color: var(--color-alien-green);
+  color: var(--color-alien-green);
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.3);
+}
+
+/* ============================================
+   PROFILE PICKER (Tron style)
+   ============================================ */
+
+.profile-card {
+  background: linear-gradient(135deg, rgba(10, 10, 31, 0.9) 0%, rgba(18, 18, 42, 0.85) 100%);
+  border: 2px solid rgba(0, 245, 255, 0.3);
+  border-radius: 16px;
+  padding: 1rem;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.profile-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, 
+    transparent, 
+    var(--color-neon-cyan), 
+    transparent
+  );
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.profile-card:hover {
+  border-color: var(--color-neon-cyan);
+  box-shadow: 0 0 20px rgba(0, 245, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+.profile-card:hover::before {
+  opacity: 1;
+}
+
+.profile-card:active {
+  transform: scale(0.98);
+}
+
+/* Selected profile */
+.profile-card-selected {
+  border-color: var(--color-star-gold);
+  box-shadow: 0 0 25px rgba(251, 191, 36, 0.4);
+}
+
+.profile-card-selected::before {
+  background: linear-gradient(90deg, 
+    transparent, 
+    var(--color-star-gold), 
+    transparent
+  );
+  opacity: 1;
+}
+
+/* ============================================
+   INTEREST PICKER TILES
+   ============================================ */
+
+.interest-tile {
+  background: linear-gradient(135deg, rgba(10, 10, 31, 0.9) 0%, rgba(18, 18, 42, 0.85) 100%);
+  border: 2px solid rgba(0, 245, 255, 0.2);
+  border-radius: 12px;
+  padding: 0.75rem;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  cursor: pointer;
+  min-height: 80px;
+}
+
+.interest-tile:hover {
+  border-color: rgba(0, 245, 255, 0.5);
+  box-shadow: 0 0 15px rgba(0, 245, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.interest-tile-selected {
+  border-color: var(--color-star-gold);
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(249, 115, 22, 0.1) 100%);
+  box-shadow: 0 0 15px rgba(251, 191, 36, 0.3);
+}
+
+.interest-tile-selected:hover {
+  border-color: var(--color-star-gold);
+  box-shadow: 0 0 20px rgba(251, 191, 36, 0.4);
+}
+
+/* ============================================
+   FUEL GAUGE (for interest picker)
+   ============================================ */
+
+.fuel-gauge {
+  background: rgba(10, 10, 31, 0.9);
+  border: 2px solid rgba(0, 245, 255, 0.3);
+  border-radius: 999px;
+  height: 24px;
+  overflow: hidden;
+  position: relative;
+}
+
+.fuel-gauge-fill {
+  height: 100%;
+  background: linear-gradient(90deg, 
+    var(--color-fuel-orange) 0%, 
+    var(--color-star-gold) 100%
+  );
+  border-radius: 999px;
+  transition: width 0.3s ease;
+  position: relative;
+}
+
+.fuel-gauge-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, 
+    rgba(255, 255, 255, 0.3) 0%, 
+    transparent 50%,
+    rgba(0, 0, 0, 0.2) 100%
+  );
+}
+
+.fuel-gauge-ready {
+  border-color: var(--color-star-gold);
+  box-shadow: 0 0 15px rgba(251, 191, 36, 0.5);
+}
+
+/* ============================================
+   CIRCUIT TRACE ACCENTS
+   ============================================ */
+
+.circuit-accent {
+  position: relative;
+}
+
+.circuit-accent::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent,
+    var(--color-neon-cyan) 20%,
+    var(--color-neon-cyan) 40%,
+    transparent 40%,
+    transparent 60%,
+    var(--color-neon-cyan) 60%,
+    var(--color-neon-cyan) 80%,
+    transparent
+  );
+  opacity: 0.5;
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+
+.float {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+.pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { 
+    filter: drop-shadow(0 0 5px currentColor); 
+    opacity: 0.8;
+  }
+  50% { 
+    filter: drop-shadow(0 0 15px currentColor); 
+    opacity: 1;
+  }
+}
+
+.neon-flicker {
+  animation: neon-flicker 3s ease-in-out infinite;
+}
+
+@keyframes neon-flicker {
+  0%, 100% { opacity: 1; }
+  92% { opacity: 1; }
+  93% { opacity: 0.8; }
+  94% { opacity: 1; }
+  96% { opacity: 0.9; }
+  97% { opacity: 1; }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .float,
+  .pulse-glow,
+  .neon-flicker {
+    animation: none;
+  }
+  
+  .touch-button,
+  .profile-card,
+  .interest-tile,
+  .space-card {
+    transition: none;
+  }
+}
+
+/* ============================================
+   SCROLLBAR (Tron style)
+   ============================================ */
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(10, 10, 31, 0.8);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--color-neon-cyan), var(--color-neon-blue));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-neon-cyan);
+}
+
+/* ============================================
+   FOCUS STATES (Accessibility)
+   ============================================ */
+
+:focus-visible {
+  outline: 2px solid var(--color-neon-cyan);
+  outline-offset: 2px;
+  box-shadow: 0 0 10px rgba(0, 245, 255, 0.5);
+}
+
+/* ============================================
+   AVATAR RING (Tron style)
+   ============================================ */
+
+.avatar-ring {
+  border: 2px solid var(--color-neon-cyan);
+  border-radius: 50%;
+  padding: 3px;
+  box-shadow: 0 0 10px rgba(0, 245, 255, 0.3);
+}
+
+.avatar-ring-gold {
+  border-color: var(--color-star-gold);
+  box-shadow: 0 0 10px rgba(251, 191, 36, 0.3);
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+/* Prevent text selection on interactive elements */
+button, .touch-button, .word-highlight, .profile-card, .interest-tile {
+  user-select: none;
+}
+
+/* Allow text selection in reading area */
+.reading-text {
+  user-select: text;
+}
+
+/* Safe area padding for mobile */
+.safe-area-top {
+  padding-top: env(safe-area-inset-top, 0);
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+/* ============================================
+   ZIB COMM-LINK POPUP (Hologram Style)
+   ============================================ */
+
+.zib-comm-link {
+  width: min(380px, calc(100vw - 32px));
+  background: linear-gradient(135deg, rgba(5, 5, 16, 0.98) 0%, rgba(18, 18, 42, 0.95) 100%);
+  border: 2px solid var(--color-alien-green);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 
+    0 0 30px rgba(34, 197, 94, 0.4),
+    0 0 60px rgba(34, 197, 94, 0.2),
+    inset 0 0 30px rgba(34, 197, 94, 0.05);
+  position: relative;
+}
+
+/* Holographic scanline effect */
+.zib-comm-link::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(34, 197, 94, 0.03) 2px,
+    rgba(34, 197, 94, 0.03) 4px
+  );
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Animated scanline */
+.zib-scanline {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(34, 197, 94, 0.5), 
+    transparent
+  );
+  animation: scanline-move 3s linear infinite;
+  pointer-events: none;
+  z-index: 11;
+}
+
+@keyframes scanline-move {
+  0% { top: 0; }
+  100% { top: 100%; }
+}
+
+/* Mini comm-link for voice-only mode */
+.zib-comm-link-mini {
+  background: linear-gradient(135deg, rgba(5, 5, 16, 0.95) 0%, rgba(18, 18, 42, 0.9) 100%);
+  border: 2px solid var(--color-alien-green);
+  border-radius: 12px;
+  box-shadow: 
+    0 0 20px rgba(34, 197, 94, 0.3),
+    inset 0 0 15px rgba(34, 197, 94, 0.05);
+}
+
+/* Entrance animation */
+.zib-comm-link,
+.zib-comm-link-mini {
+  animation: comm-link-appear 0.3s ease-out;
+}
+
+@keyframes comm-link-appear {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .zib-scanline {
+    animation: none;
+    opacity: 0;
+  }
+  
+  .zib-comm-link,
+  .zib-comm-link-mini {
+    animation: none;
+  }
+}
