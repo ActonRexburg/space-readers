@@ -51,10 +51,9 @@ export function ProfilePicker() {
     }
   };
 
-  // Handle add profile button (requires adult gate)
+  // Handle add profile button - NO adult gate, kids can create their own profile
   const handleAddProfile = () => {
-    setPendingAction('add');
-    setShowAdultGate(true);
+    setShowProfileForm(true);
   };
 
   // Handle dashboard button (requires adult gate)
@@ -74,9 +73,7 @@ export function ProfilePicker() {
   const handleAdultGateSuccess = () => {
     setShowAdultGate(false);
     
-    if (pendingAction === 'add') {
-      setShowProfileForm(true);
-    } else if (pendingAction === 'dashboard') {
+    if (pendingAction === 'dashboard') {
       setShowDashboard(true);
     } else if (pendingAction === 'edit') {
       setShowProfileForm(true);
@@ -131,16 +128,8 @@ export function ProfilePicker() {
     }
   };
 
-  // Get progress for dashboard
-  const getProgress = (profileId: string) => {
-    const state = useAppStore.getState();
-    if (state.activeProgress?.profileId === profileId) {
-      return state.activeProgress;
-    }
-    // For other profiles, we need to load from storage
-    // This is a sync workaround - in a real app, we'd want async data fetching
-    return null;
-  };
+  // Get progress for dashboard - loads from store's cached progress
+  const getProgress = useAppStore(state => state.getProfileProgress);
 
   if (isLoading) {
     return (

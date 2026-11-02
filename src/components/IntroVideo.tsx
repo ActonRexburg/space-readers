@@ -9,6 +9,8 @@
  * - Zib's silhouette while loading
  * - Skip option if loading stalls on slow Wi-Fi
  * - Poster frame with tap-to-start once ready
+ * - WebM first, MP4 fallback for codec compatibility
+ * - Graceful fallback to "Continue" when video can't play
  * - Resolves assets via BASE_URL for GitHub Pages
  */
 
@@ -35,21 +37,29 @@ const LOADING_MESSAGES = [
   "Signal getting stronger..."
 ];
 
-// Asset URLs resolved with base path
-const INTRO_VIDEO_URL = resolveAssetUrl('intro.mp4');
+// Asset URLs resolved with base path (WebM first for better codec support)
+const INTRO_VIDEO_WEBM = resolveAssetUrl('intro.webm');
+const INTRO_VIDEO_MP4 = resolveAssetUrl('intro.mp4');
 const INTRO_POSTER_URL = resolveAssetUrl('intro-poster.jpg');
 
+// Max time to wait before offering skip (4 seconds)
+const MAX_LOADING_TIME_MS = 4000;
+
 export function IntroVideo({ onComplete, onSkip, showSkip = true }: IntroVideoProps) {
-  const [loadingState, setLoadingState] = useState<'loading' | 'ready' | 'playing' | 'stalled'>('loading');
+  // States: loading -> ready/unsupported -> playing -> done
+  // 'unsupported' means video can't play (codec issue, etc.)
+  const [loadingState, setLoadingState] = useState<'loading' | 'ready' | 'playing' | 'stalled' | 'unsupported'>('loading');
   const [bufferProgress, setBufferProgress] = useState(0);
   const [playProgress, setPlayProgress] = useState(0);
   const [messageIndex, setMessageIndex] = useState(0);
   const [showControls, setShowControls] = useState(true);
+  const [canPlayVideo, setCanPlayVideo] = useState(true);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const controlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const messageIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const stallTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const loadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Rotate loading messages
   useEffect(() => {
@@ -66,7 +76,7 @@ export function IntroVideo({ onComplete, onSkip, showSkip = true }: IntroVideoPr
     };
   }, [loadingState]);
 
-  // Monitor loading and detect stalls
+  // Monitor loading and detect stalls/unsupported codecs
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -81,34 +91,58 @@ export function IntroVideo({ onComplete, onSkip, showSkip = true }: IntroVideoPr
         // Clear stall timeout on progress
         if (stallTimeoutRef.current) {
           clearTimeout(stallTimeoutRef.current);
+          stallTimeoutRef.current = null;
         }
         
-        // Set new stall timeout (15 seconds without progress = stalled)
-        stallTimeoutRef.current = setTimeout(() => {
-          if (loadingState === 'loading') {
-            setLoadingState('stalled');
-          }
-        }, 15000);
+        // Clear loading timeout - we're making progress
+        if (loadingTimeoutRef.current) {
+          clearTimeout(loadingTimeoutRef.current);
+          loadingTimeoutRef.current = null;
+        }
+      }
+    };
+
+    const handleCanPlay = () => {
+      // Video can play - mark as ready
+      if (loadingState === 'loading') {
+        setLoadingState('ready');
+        setCanPlayVideo(true);
+      }
+      if (stallTimeoutRef.current) {
+        clearTimeout(stallTimeoutRef.current);
+      }
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
       }
     };
 
     const handleCanPlayThrough = () => {
       setLoadingState('ready');
       setBufferProgress(100);
+      setCanPlayVideo(true);
       if (stallTimeoutRef.current) {
         clearTimeout(stallTimeoutRef.current);
+      }
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
       }
     };
 
     const handleWaiting = () => {
-      // Video is buffering during playback
+      // Video is buffering during playback - only stall if it's been a while
       if (loadingState === 'playing') {
-        setLoadingState('stalled');
+        stallTimeoutRef.current = setTimeout(() => {
+          setLoadingState('stalled');
+        }, 5000);
       }
     };
 
     const handlePlaying = () => {
       setLoadingState('playing');
+      setCanPlayVideo(true);
+      if (stallTimeoutRef.current) {
+        clearTimeout(stallTimeoutRef.current);
+      }
     };
 
     const handleEnded = () => {
@@ -120,13 +154,22 @@ export function IntroVideo({ onComplete, onSkip, showSkip = true }: IntroVideoPr
       if (video.duration) {
         setPlayProgress((video.currentTime / video.duration) * 100);
       }
+      // If we're getting time updates, video is playing fine
+      if (stallTimeoutRef.current) {
+        clearTimeout(stallTimeoutRef.current);
+        stallTimeoutRef.current = null;
+      }
     };
 
     const handleError = () => {
-      setLoadingState('stalled');
+      // Video error - likely codec not supported
+      console.warn('Video error - codec may not be supported');
+      setCanPlayVideo(false);
+      setLoadingState('unsupported');
     };
 
     video.addEventListener('progress', handleProgress);
+    video.addEventListener('canplay', handleCanPlay);
     video.addEventListener('canplaythrough', handleCanPlayThrough);
     video.addEventListener('waiting', handleWaiting);
     video.addEventListener('playing', handlePlaying);
@@ -137,15 +180,17 @@ export function IntroVideo({ onComplete, onSkip, showSkip = true }: IntroVideoPr
     // Start loading
     video.load();
 
-    // Initial stall timeout
-    stallTimeoutRef.current = setTimeout(() => {
-      if (loadingState === 'loading' && bufferProgress < 10) {
+    // Quick loading timeout - offer skip after MAX_LOADING_TIME_MS
+    loadingTimeoutRef.current = setTimeout(() => {
+      if (loadingState === 'loading' && bufferProgress < 20) {
+        // Still loading with minimal progress - show stalled state with skip option
         setLoadingState('stalled');
       }
-    }, 10000);
+    }, MAX_LOADING_TIME_MS);
 
     return () => {
       video.removeEventListener('progress', handleProgress);
+      video.removeEventListener('canplay', handleCanPlay);
       video.removeEventListener('canplaythrough', handleCanPlayThrough);
       video.removeEventListener('waiting', handleWaiting);
       video.removeEventListener('playing', handlePlaying);
@@ -155,6 +200,9 @@ export function IntroVideo({ onComplete, onSkip, showSkip = true }: IntroVideoPr
       
       if (stallTimeoutRef.current) {
         clearTimeout(stallTimeoutRef.current);
+      }
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
       }
     };
   }, [onComplete, loadingState, bufferProgress]);
@@ -221,6 +269,7 @@ export function IntroVideo({ onComplete, onSkip, showSkip = true }: IntroVideoPr
   const isReady = loadingState === 'ready';
   const isPlaying = loadingState === 'playing';
   const isStalled = loadingState === 'stalled';
+  const isUnsupported = loadingState === 'unsupported';
 
   return (
     <div 
@@ -230,7 +279,7 @@ export function IntroVideo({ onComplete, onSkip, showSkip = true }: IntroVideoPr
       {/* Starfield background - always visible */}
       <Starfield />
 
-      {/* Hidden video element */}
+      {/* Video element - WebM first for better codec support, MP4 fallback */}
       <video
         ref={videoRef}
         className={`absolute inset-0 w-full h-full object-contain z-10 ${isPlaying ? 'opacity-100' : 'opacity-0'}`}
@@ -239,8 +288,8 @@ export function IntroVideo({ onComplete, onSkip, showSkip = true }: IntroVideoPr
         playsInline
         webkit-playsinline="true"
       >
-        <source src={INTRO_VIDEO_URL} type="video/mp4" />
-        Your browser does not support video playback.
+        <source src={INTRO_VIDEO_WEBM} type="video/webm" />
+        <source src={INTRO_VIDEO_MP4} type="video/mp4" />
       </video>
 
       {/* Loading / Ready overlay */}
@@ -250,9 +299,16 @@ export function IntroVideo({ onComplete, onSkip, showSkip = true }: IntroVideoPr
           {/* Transmission header */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-neon-cyan/10 border border-neon-cyan/30 mb-4">
-              <span className={`w-3 h-3 rounded-full ${isLoading ? 'bg-star-gold animate-pulse' : isStalled ? 'bg-red-500' : 'bg-alien-green'}`} />
+              <span className={`w-3 h-3 rounded-full ${
+                isLoading ? 'bg-star-gold animate-pulse' : 
+                (isStalled || isUnsupported) ? 'bg-fuel-orange' : 
+                'bg-alien-green'
+              }`} />
               <span className="text-sm text-neon-cyan uppercase tracking-wider font-medium">
-                {isLoading ? 'Incoming Transmission' : isStalled ? 'Signal Lost' : 'Transmission Ready'}
+                {isLoading ? 'Incoming Transmission' : 
+                 isUnsupported ? 'Transmission Unavailable' :
+                 isStalled ? 'Signal Weak' : 
+                 'Transmission Ready'}
               </span>
             </div>
             <h1 className="text-3xl md:text-5xl font-bold text-star-gold text-glow-gold">
@@ -273,7 +329,7 @@ export function IntroVideo({ onComplete, onSkip, showSkip = true }: IntroVideoPr
             <div className="absolute inset-0 flex items-center justify-center">
               <div className={`
                 w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden
-                border-4 ${isReady ? 'border-alien-green glow-green' : isStalled ? 'border-red-500' : 'border-neon-cyan/50'}
+                border-4 ${isReady ? 'border-alien-green glow-green' : (isStalled || isUnsupported) ? 'border-fuel-orange' : 'border-neon-cyan/50'}
                 bg-space-deep
                 transition-all duration-500
               `}>
@@ -286,51 +342,59 @@ export function IntroVideo({ onComplete, onSkip, showSkip = true }: IntroVideoPr
             </div>
           </div>
 
-          {/* Signal strength meter */}
-          <div className="w-full max-w-xs mb-6">
-            <div className="flex items-center justify-between text-xs text-neon-cyan/60 mb-2">
-              <span>Signal Strength</span>
-              <span>{Math.round(bufferProgress)}%</span>
-            </div>
-            <div className="h-4 bg-space-deep/80 rounded-full border border-neon-cyan/30 overflow-hidden">
-              <div 
-                className={`h-full transition-all duration-300 ${
-                  isStalled 
-                    ? 'bg-gradient-to-r from-red-600 to-red-500' 
-                    : bufferProgress >= 100 
-                      ? 'bg-gradient-to-r from-alien-green to-emerald-400 glow-green' 
-                      : 'bg-gradient-to-r from-star-gold to-fuel-orange'
-                }`}
-                style={{ width: `${bufferProgress}%` }}
-              />
-            </div>
-            
-            {/* Signal bars */}
-            <div className="flex justify-center gap-1 mt-3">
-              {[0, 20, 40, 60, 80].map((threshold, i) => (
+          {/* Signal strength meter - hide for unsupported */}
+          {!isUnsupported && (
+            <div className="w-full max-w-xs mb-6">
+              <div className="flex items-center justify-between text-xs text-neon-cyan/60 mb-2">
+                <span>Signal Strength</span>
+                <span>{Math.round(bufferProgress)}%</span>
+              </div>
+              <div className="h-4 bg-space-deep/80 rounded-full border border-neon-cyan/30 overflow-hidden">
                 <div 
-                  key={i}
-                  className={`w-3 transition-all duration-300 ${
-                    bufferProgress > threshold 
-                      ? isStalled ? 'bg-red-500' : 'bg-alien-green' 
-                      : 'bg-white/20'
+                  className={`h-full transition-all duration-300 ${
+                    isStalled 
+                      ? 'bg-gradient-to-r from-fuel-orange to-star-gold' 
+                      : bufferProgress >= 100 
+                        ? 'bg-gradient-to-r from-alien-green to-emerald-400 glow-green' 
+                        : 'bg-gradient-to-r from-star-gold to-fuel-orange'
                   }`}
-                  style={{ height: `${12 + i * 4}px` }}
+                  style={{ width: `${bufferProgress}%` }}
                 />
-              ))}
+              </div>
+              
+              {/* Signal bars */}
+              <div className="flex justify-center gap-1 mt-3">
+                {[0, 20, 40, 60, 80].map((threshold, i) => (
+                  <div 
+                    key={i}
+                    className={`w-3 transition-all duration-300 ${
+                      bufferProgress > threshold 
+                        ? isStalled ? 'bg-fuel-orange' : 'bg-alien-green' 
+                        : 'bg-white/20'
+                    }`}
+                    style={{ height: `${12 + i * 4}px` }}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Loading message */}
-          <p className={`text-lg text-center mb-6 h-8 transition-opacity duration-300 ${isLoading ? 'text-neon-cyan' : isStalled ? 'text-red-400' : 'text-alien-green'}`}>
+          <p className={`text-lg text-center mb-6 h-12 transition-opacity duration-300 ${
+            isLoading ? 'text-neon-cyan' : 
+            isUnsupported ? 'text-fuel-orange' :
+            isStalled ? 'text-fuel-orange' : 
+            'text-alien-green'
+          }`}>
             {isLoading && LOADING_MESSAGES[messageIndex]}
             {isReady && "✨ Transmission received! Tap to play"}
-            {isStalled && "Signal interrupted. Slow connection?"}
+            {isStalled && "Taking a while? You can skip ahead!"}
+            {isUnsupported && "Video unavailable — let's continue the mission!"}
           </p>
 
           {/* Action buttons */}
           <div className="flex flex-col gap-3 items-center">
-            {isReady && (
+            {isReady && canPlayVideo && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -355,10 +419,26 @@ export function IntroVideo({ onComplete, onSkip, showSkip = true }: IntroVideoPr
               </button>
             )}
 
+            {/* Unsupported codec - show friendly continue button */}
+            {isUnsupported && (
+              <Button
+                variant="success"
+                size="lg"
+                glow
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSkip();
+                }}
+                className="px-8"
+              >
+                🚀 Continue Mission
+              </Button>
+            )}
+
             {isStalled && (
               <div className="flex gap-3">
                 <Button
-                  variant="primary"
+                  variant="ghost"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleRetry();
@@ -367,24 +447,25 @@ export function IntroVideo({ onComplete, onSkip, showSkip = true }: IntroVideoPr
                   🔄 Try Again
                 </Button>
                 <Button
-                  variant="ghost"
+                  variant="success"
+                  glow
                   onClick={(e) => {
                     e.stopPropagation();
                     onSkip();
                   }}
                 >
-                  Skip for Now →
+                  Continue →
                 </Button>
               </div>
             )}
 
-            {showSkip && (isLoading || isReady) && (
+            {showSkip && (isLoading || isReady) && !isUnsupported && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onSkip();
                 }}
-                className="mt-4 px-4 py-2 text-white/60 hover:text-white text-sm transition-colors"
+                className="mt-4 px-6 py-3 text-white/70 hover:text-white hover:bg-white/10 rounded-lg text-base transition-colors"
               >
                 Skip intro →
               </button>

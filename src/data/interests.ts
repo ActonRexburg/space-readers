@@ -28,7 +28,7 @@ export const INTEREST_OPTIONS: InterestOption[] = [
   { id: 'birds', label: 'Birds', emoji: '🦅', category: 'animals' },
   { id: 'reptiles', label: 'Reptiles', emoji: '🦎', category: 'animals' },
   { id: 'bugs', label: 'Bugs', emoji: '🐛', category: 'animals' },
-  { id: 'ponies', label: 'Ponies', emoji: '🐴', category: 'animals' },
+  { id: 'ponies', label: 'Ponies', emoji: '🎠', category: 'animals' },
   { id: 'farm-animals', label: 'Farms', emoji: '🐄', category: 'animals' },
 
   // Sports (8)

@@ -187,10 +187,7 @@ export function Mission() {
             </Card>
 
             <Card className="flex items-center gap-4">
-              <Zib 
-                expression="curious" 
-                size="sm" 
-              />
+              <Zib size="sm" />
               <div className="flex-1">
                 <p className="text-slate-300 italic">
                   "{mission.alienDialogue[zibDialogueIndex]}"
@@ -331,7 +328,7 @@ export function Mission() {
             </Card>
 
             <Card className="flex items-center gap-4">
-              <Zib expression="excited" size="md" />
+              <Zib size="md" />
               <div className="flex-1 text-center">
                 <p className="text-alien-green font-bold text-lg">
                   Zib learned {totalWordsThisMission} new words!
