@@ -1,9 +1,8 @@
 /**
  * Mission Page
- * 
+ *
  * Shows mission briefing, story selection, and handles
  * story completion within a mission context.
- * Triggers Zib clips for story_start, story_complete, planet_unlocked, rank_up.
  */
 
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
@@ -16,6 +15,7 @@ import { Button } from '../components/Button';
 import { Zib } from '../components/Zib';
 import { StoryReader } from '../components/StoryReader';
 import { useZibClips } from '../components/ZibClip';
+import { SpeakButton, SpokenLine } from '../components/SpeakButton';
 import { getMissionById } from '../data/missions';
 import { getStoryById } from '../data/stories';
 import type { Story, Rank } from '../types';
@@ -40,17 +40,17 @@ type MissionPhase = 'briefing' | 'stories' | 'reading' | 'debrief' | 'rankup' | 
 export function Mission() {
   const { missionId } = useParams<{ missionId: string }>();
   const navigate = useNavigate();
-  const { 
-    completeStory, 
+  const {
+    completeStory,
     completeMission,
     addAlienWord,
     recordWordHelp
   } = useAppStore();
-  const { 
-    triggerStoryStart, 
-    triggerStoryComplete, 
-    triggerPlanetUnlocked, 
-    triggerRankUp 
+  const {
+    triggerStoryStart,
+    triggerStoryComplete,
+    triggerPlanetUnlocked,
+    triggerRankUp
   } = useZibClips();
 
   const [phase, setPhase] = useState<MissionPhase>('briefing');
@@ -59,8 +59,7 @@ export function Mission() {
   const [zibDialogueIndex, setZibDialogueIndex] = useState(0);
   const [totalWordsThisMission, setTotalWordsThisMission] = useState(0);
   const triggeredStoryStartFor = useRef<string | null>(null);
-  
-  // Track "before" values for visible reward math
+
   const [fuelBefore, setFuelBefore] = useState(0);
   const [starsBefore, setStarsBefore] = useState(0);
   const [planetsBefore, setPlanetsBefore] = useState(0);
@@ -76,13 +75,11 @@ export function Mission() {
     }))
   ), []);
 
-  // Get mission data
   const mission = useMemo(() => {
     if (!missionId) return null;
     return getMissionById(missionId);
   }, [missionId]);
 
-  // Get stories for this mission
   const stories = useMemo(() => {
     if (!mission) return [];
     return mission.storyIds
@@ -90,17 +87,14 @@ export function Mission() {
       .filter((s): s is Story => s !== undefined);
   }, [mission]);
 
-  // Check if all stories are completed
   const allStoriesCompleted = useMemo(() => {
     return stories.every(s => completedStories.has(s.id));
   }, [stories, completedStories]);
 
-  // Handle starting a story
   const handleStartStory = useCallback((story: Story) => {
     setCurrentStory(story);
     setPhase('reading');
-    
-    // Trigger story_start clip (once per story)
+
     if (triggeredStoryStartFor.current !== story.id) {
       triggeredStoryStartFor.current = story.id;
       setTimeout(() => {
@@ -109,13 +103,11 @@ export function Mission() {
     }
   }, [triggerStoryStart]);
 
-  // Handle story completion
   const handleStoryComplete = useCallback(async (wordsDecoded: string[], durationMs: number) => {
     if (!currentStory) return;
 
     const uniqueWords = wordsDecoded.filter(w => w && w.trim());
 
-    // Record the story completion (adds story fuel to the store)
     await completeStory(currentStory.id, uniqueWords, durationMs);
 
     for (const word of uniqueWords) {
@@ -134,7 +126,6 @@ export function Mission() {
     triggerStoryComplete();
 
     if (newCompletedStories.size === stories.length && mission) {
-      // Read the store AFTER story rewards so "before" matches what Claim Rewards adds to
       const latest = useAppStore.getState().activeProgress;
       const fuelAfterStories = latest?.fuelCredits ?? 0;
       const starsAfterStories = latest?.starCredits ?? 0;
@@ -157,18 +148,15 @@ export function Mission() {
     }
   }, [currentStory, stories.length, completedStories, completeStory, addAlienWord, recordWordHelp, triggerStoryComplete, mission]);
 
-  // Handle mission completion
   const handleMissionComplete = useCallback(async () => {
     if (!mission) return;
 
     await completeMission(mission.id, mission.fuelReward, mission.starReward, mission.unlocksPlanet);
-    
-    // Check for rank change - show full-screen celebration
+
     if (newRank && newRank !== rankBefore) {
       setTimeout(() => triggerRankUp(), 300);
       setPhase('rankup');
     } else {
-      // No rank change - trigger planet unlock if applicable and go to complete
       if (mission.unlocksPlanet) {
         setTimeout(() => triggerPlanetUnlocked(), 300);
       }
@@ -176,7 +164,6 @@ export function Mission() {
     }
   }, [mission, completeMission, triggerRankUp, triggerPlanetUnlocked, newRank, rankBefore]);
 
-  // Handle continuing after rank-up celebration
   const handleContinueAfterRankUp = useCallback(() => {
     if (mission?.unlocksPlanet) {
       setTimeout(() => triggerPlanetUnlocked(), 300);
@@ -184,14 +171,12 @@ export function Mission() {
     setPhase('complete');
   }, [mission, triggerPlanetUnlocked]);
 
-  // Dismiss lingering Zib popups when leaving a story or finishing the mission
   useEffect(() => {
     if (phase === 'stories' || phase === 'complete' || phase === 'briefing') {
       getZibClipService().skip();
     }
   }, [phase]);
 
-  // Navigate back
   const handleBack = () => {
     if (phase === 'reading') {
       setCurrentStory(null);
@@ -215,51 +200,54 @@ export function Mission() {
     );
   }
 
-  // Render based on current phase
+  const briefingText = `${mission.title}. ${mission.briefing}`;
+  const zibLine = mission.alienDialogue[zibDialogueIndex] || '';
+  const completionSpeak = mission.completionMessage.replace(/\s+/g, ' ').trim();
+  const rankSpeak = newRank ? `Rank up! You are now ${newRank}!` : '';
+
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden">
       <Starfield />
 
-      {/* Header */}
       {phase !== 'reading' && (
         <header className="relative z-10 p-4 flex items-center justify-between border-b border-white/10 bg-space-deep/50 backdrop-blur-sm">
-          <button 
+          <button
             onClick={handleBack}
-            className="flex items-center gap-2 hover:bg-white/10 rounded-lg p-2 -m-2"
+            className="flex items-center gap-2 hover:bg-white/10 rounded-lg p-3 min-h-[44px] -m-2 text-lg"
           >
             <span className="text-xl">←</span>
             <span>Back</span>
           </button>
-          <h1 className="font-bold">{mission.title}</h1>
-          <div className="w-16" /> {/* Spacer for centering */}
+          <div className="flex items-center gap-2 min-w-0">
+            <h1 className="font-bold text-lg truncate">{mission.title}</h1>
+            <SpeakButton text={mission.title} />
+          </div>
+          <div className="w-16" />
         </header>
       )}
 
-      {/* Mission Briefing Phase */}
       {phase === 'briefing' && (
-        <main className="flex-1 relative z-10 p-4 flex flex-col items-center justify-center">
-          <div className="max-w-md w-full space-y-6">
-            <div className="text-center">
-              <div className="text-4xl mb-2">🎯</div>
-              <h2 className="text-2xl font-bold text-star-gold">Mission Briefing</h2>
+        <main className="flex-1 relative z-10 p-6 flex flex-col items-center justify-center">
+          <div className="max-w-md w-full space-y-8">
+            <div className="flex flex-col items-center gap-3">
+              <div className="text-5xl">🎯</div>
+              <div className="flex items-center gap-3">
+                <h2 className="text-3xl font-bold text-star-gold">{mission.title}</h2>
+                <SpeakButton text={briefingText} autoPlay />
+              </div>
             </div>
 
-            <Card padding="lg">
-              <p className="text-slate-300 whitespace-pre-line leading-relaxed">
-                {mission.briefing}
-              </p>
-            </Card>
-
-            <Card className="flex items-center gap-4">
+            <Card className="flex items-center gap-4 p-5">
               <Zib size="sm" />
-              <div className="flex-1">
-                <p className="text-slate-300 italic">
-                  "{mission.alienDialogue[zibDialogueIndex]}"
-                </p>
+              <div className="flex-1 min-w-0">
+                <SpokenLine
+                  text={zibLine}
+                  textClassName="text-xl text-cyan-100 leading-snug"
+                />
                 {zibDialogueIndex < mission.alienDialogue.length - 1 && (
                   <button
                     onClick={() => setZibDialogueIndex(i => i + 1)}
-                    className="text-sm text-star-gold mt-1 hover:underline"
+                    className="mt-3 min-h-[44px] px-4 rounded-lg text-xl text-star-gold pulse-action"
                   >
                     Next →
                   </button>
@@ -267,58 +255,40 @@ export function Mission() {
               </div>
             </Card>
 
-            <div className="flex gap-2 justify-center text-sm text-slate-400">
-              <span>📚 {stories.length} stories</span>
-              <span>•</span>
-              <span>🔥 +{mission.fuelReward} fuel</span>
-              <span>•</span>
-              <span>⭐ +{mission.starReward} stars</span>
-            </div>
-
-            <Button 
-              variant="success" 
-              size="lg" 
-              glow 
+            <Button
+              variant="success"
+              size="lg"
+              glow
               onClick={() => setPhase('stories')}
-              className="w-full"
+              className="w-full pulse-action text-2xl"
             >
-              Accept Mission 🚀
+              🚀 Accept
             </Button>
           </div>
         </main>
       )}
 
-      {/* Story Selection Phase */}
       {phase === 'stories' && (
-        <main className="flex-1 relative z-10 p-4 overflow-y-auto">
-          <div className="max-w-2xl mx-auto space-y-4">
-            <div className="text-center mb-6">
-              <h2 className="text-xl font-bold">Choose a Story</h2>
-              <p className="text-slate-400">
-                Complete all stories to finish the mission
-              </p>
-            </div>
-
-            {/* Progress */}
-            <div className="flex items-center gap-2 mb-4">
-              <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
-                <div 
+        <main className="flex-1 relative z-10 p-6 overflow-y-auto">
+          <div className="max-w-2xl mx-auto space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-3 bg-white/10 rounded-full overflow-hidden">
+                <div
                   className="h-full bg-alien-green transition-all duration-300"
                   style={{ width: `${(completedStories.size / stories.length) * 100}%` }}
                 />
               </div>
-              <span className="text-sm text-slate-400">
+              <span className="text-lg text-white">
                 {completedStories.size}/{stories.length}
               </span>
             </div>
 
-            {/* Story List */}
-            <div className="space-y-3">
+            <div className="space-y-4">
               {stories.map((story, index) => {
                 const isCompleted = completedStories.has(story.id);
-                
+
                 return (
-                  <Card 
+                  <Card
                     key={story.id}
                     glow={!isCompleted ? 'gold' : 'green'}
                     onClick={() => handleStartStory(story)}
@@ -326,48 +296,41 @@ export function Mission() {
                   >
                     <div className="flex items-center gap-4">
                       <div className={`
-                        w-12 h-12 rounded-full flex items-center justify-center text-xl
+                        w-14 h-14 rounded-full flex items-center justify-center text-2xl
                         ${isCompleted ? 'bg-alien-green/30' : 'bg-white/10'}
                       `}>
                         {isCompleted ? '✅' : `${index + 1}`}
                       </div>
-                      <div className="flex-1">
-                        <h3 className="font-bold">{story.title}</h3>
-                        <p className="text-sm text-slate-400">
-                          {story.paragraphs.length} parts • Level {story.difficultyLevel}
-                        </p>
+                      <div className="flex-1 min-w-0 flex items-center gap-2">
+                        <h3 className="font-bold text-xl truncate">{story.title}</h3>
+                        <SpeakButton
+                          text={story.storyContext ? `${story.title}. ${story.storyContext}` : story.title}
+                        />
                       </div>
                       {!isCompleted && (
-                        <span className="text-star-gold">Read →</span>
+                        <span className="text-star-gold text-xl shrink-0">▶</span>
                       )}
                     </div>
-                    {story.storyContext && (
-                      <p className="mt-2 text-sm text-slate-300 italic">
-                        {story.storyContext}
-                      </p>
-                    )}
                   </Card>
                 );
               })}
             </div>
 
-            {/* Complete Mission Button */}
             {allStoriesCompleted && (
-              <Button 
-                variant="success" 
-                size="lg" 
-                glow 
+              <Button
+                variant="success"
+                size="lg"
+                glow
                 onClick={() => setPhase('debrief')}
-                className="w-full mt-6"
+                className="w-full mt-4 pulse-action text-xl"
               >
-                Complete Mission ✓
+                ✓ Complete
               </Button>
             )}
           </div>
         </main>
       )}
 
-      {/* Reading Phase */}
       {phase === 'reading' && currentStory && (
         <StoryReader
           story={currentStory}
@@ -376,101 +339,69 @@ export function Mission() {
         />
       )}
 
-      {/* Debrief Phase */}
       {phase === 'debrief' && (
-        <main className="flex-1 relative z-10 p-4 flex flex-col items-center justify-center overflow-y-auto">
-          <div className="max-w-md w-full space-y-6 py-4">
-            <div className="text-center">
-              <div className="text-6xl mb-4">🎉</div>
-              <h2 className="text-3xl font-bold text-star-gold">Mission Complete!</h2>
+        <main className="flex-1 relative z-10 p-6 flex flex-col items-center justify-center overflow-y-auto">
+          <div className="max-w-md w-full space-y-8 py-4">
+            <div className="text-center space-y-3">
+              <div className="text-6xl">🎉</div>
+              <div className="flex items-center justify-center gap-3">
+                <h2 className="text-3xl font-bold text-star-gold">Mission Complete!</h2>
+                <SpeakButton text={completionSpeak} autoPlay />
+              </div>
             </div>
 
-            <Card padding="lg">
-              <p className="text-slate-300 whitespace-pre-line leading-relaxed">
-                {mission.completionMessage}
-              </p>
-            </Card>
-
-            <Card className="flex items-center gap-4">
+            <Card className="flex items-center gap-4 p-5">
               <Zib size="md" />
-              <div className="flex-1 text-center">
-                <p className="text-alien-green font-bold text-lg">
-                  Zib learned {totalWordsThisMission} new words!
-                </p>
-                <p className="text-slate-300 text-sm mt-1">
-                  Thank you for teaching me!
-                </p>
-              </div>
+              <SpokenLine
+                text={`Zib learned ${totalWordsThisMission} new words!`}
+                textClassName="text-xl text-alien-green font-bold"
+              />
             </Card>
 
-            {/* Rewards with visible math */}
-            <Card glow="gold" className="text-center">
-              <h3 className="font-bold mb-4 text-lg">Mission Rewards</h3>
-              
-              {/* Fuel math */}
-              <div className="bg-white/5 rounded-lg p-3 mb-3">
-                <div className="flex items-center justify-center gap-2 text-fuel-orange">
-                  <span className="text-xl">{fuelBefore}</span>
-                  <span className="text-lg">+</span>
-                  <span className="text-xl font-bold">{mission.fuelReward}</span>
-                  <span className="text-lg">=</span>
-                  <span className="text-2xl font-bold">{fuelBefore + mission.fuelReward}</span>
-                </div>
-                <div className="text-sm text-slate-400 mt-1">🔥 Fuel Credits</div>
+            <Card glow="gold" className="text-center space-y-4">
+              <div className="flex items-center justify-center gap-3 text-fuel-orange text-2xl font-bold">
+                <span>{fuelBefore}</span>
+                <span>+</span>
+                <span>{mission.fuelReward}</span>
+                <span>=</span>
+                <span>{fuelBefore + mission.fuelReward} 🔥</span>
               </div>
-              
-              {/* Stars math */}
-              <div className="bg-white/5 rounded-lg p-3 mb-3">
-                <div className="flex items-center justify-center gap-2 text-star-gold">
-                  <span className="text-xl">{starsBefore}</span>
-                  <span className="text-lg">+</span>
-                  <span className="text-xl font-bold">{mission.starReward}</span>
-                  <span className="text-lg">=</span>
-                  <span className="text-2xl font-bold">{starsBefore + mission.starReward}</span>
-                </div>
-                <div className="text-sm text-slate-400 mt-1">⭐ Star Credits</div>
+              <div className="flex items-center justify-center gap-3 text-star-gold text-2xl font-bold">
+                <span>{starsBefore}</span>
+                <span>+</span>
+                <span>{mission.starReward}</span>
+                <span>=</span>
+                <span>{starsBefore + mission.starReward} ⭐</span>
               </div>
-              
-              {newRank && newRank !== rankBefore && (
-                <p className="mt-3 text-alien-green font-medium">
-                  🎖️ Rank up waiting after you claim rewards!
-                </p>
-              )}
 
-              {/* Planet unlock celebration */}
               {mission.unlocksPlanet && (
-                <div className="mt-4 p-3 bg-neon-cyan/10 border border-neon-cyan/30 rounded-lg">
-                  <div className="text-2xl mb-1">🌍</div>
-                  <div className="text-neon-cyan font-bold text-lg">
-                    {capitalize(mission.unlocksPlanet)} Unlocked!
+                <div className="p-4 bg-neon-cyan/10 border border-neon-cyan/30 rounded-lg">
+                  <div className="text-3xl mb-1">🌍</div>
+                  <div className="text-neon-cyan font-bold text-xl">
+                    {capitalize(mission.unlocksPlanet)}!
                   </div>
-                  <div className="flex items-center justify-center gap-2 mt-2 text-slate-300">
-                    <span>Planets:</span>
-                    <span className="text-xl">{planetsBefore}</span>
-                    <span>→</span>
-                    <span className="text-xl font-bold text-neon-cyan">{planetsBefore + 1}</span>
+                  <div className="text-lg text-white mt-1">
+                    {planetsBefore} → {planetsBefore + 1}
                   </div>
                 </div>
               )}
             </Card>
 
-            <Button 
-              variant="success" 
-              size="lg" 
-              glow 
+            <Button
+              variant="success"
+              size="lg"
+              glow
               onClick={handleMissionComplete}
-              className="w-full"
+              className="w-full pulse-action text-2xl"
             >
-              Claim Rewards 🎁
+              🎁 Claim Rewards
             </Button>
           </div>
         </main>
       )}
 
-      {/* Full-screen Rank-Up Celebration Phase */}
       {phase === 'rankup' && newRank && (
-        <main className="flex-1 relative z-10 p-4 flex flex-col items-center justify-center overflow-hidden">
-          {/* Confetti effect */}
+        <main className="flex-1 relative z-10 p-6 flex flex-col items-center justify-center overflow-hidden">
           <div className="absolute inset-0 pointer-events-none overflow-hidden">
             {confettiPieces.map((piece) => (
               <div
@@ -486,63 +417,53 @@ export function Mission() {
               </div>
             ))}
           </div>
-          
+
           <div className="max-w-md w-full text-center space-y-8 relative z-10">
-            {/* Big rank badge */}
             <div className="relative">
               <div className="text-8xl mb-4 animate-bounce">🎖️</div>
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="w-32 h-32 rounded-full bg-alien-green/20 animate-ping" />
               </div>
             </div>
-            
-            <h2 className="text-4xl font-bold text-alien-green text-glow-cyan">
-              RANK UP!
-            </h2>
-            
+
+            <div className="flex items-center justify-center gap-3">
+              <h2 className="text-4xl font-bold text-alien-green text-glow-cyan">RANK UP!</h2>
+              <SpeakButton text={rankSpeak} autoPlay />
+            </div>
+
             <div className="space-card p-6 glow-green">
               <div className="flex items-center justify-center gap-4 text-2xl">
                 <span className="text-slate-400">{rankBefore}</span>
                 <span className="text-alien-green text-3xl">→</span>
                 <span className="text-alien-green font-bold text-3xl text-glow-cyan">{newRank}</span>
               </div>
-              <p className="text-alien-green mt-4 italic">
-                "You did it, Cadet! You ranked up!"
-              </p>
-              <p className="text-slate-300 mt-2">
-                Congratulations, {newRank}! Your reading skills are out of this world!
-              </p>
             </div>
-            
-            <Button 
-              variant="success" 
-              size="lg" 
-              glow 
+
+            <Button
+              variant="success"
+              size="lg"
+              glow
               onClick={handleContinueAfterRankUp}
-              className="w-full"
+              className="w-full pulse-action text-xl"
             >
-              Continue 🚀
+              🚀 Continue
             </Button>
           </div>
         </main>
       )}
 
-      {/* Complete Phase */}
       {phase === 'complete' && (
-        <main className="flex-1 relative z-10 p-4 flex flex-col items-center justify-center">
-          <div className="max-w-md w-full text-center space-y-6">
-            <div className="text-6xl mb-4">🚀</div>
-            <h2 className="text-2xl font-bold">Ready for More Adventures?</h2>
-            <p className="text-slate-300">
-              Return to the bridge to see your progress and find new missions!
-            </p>
-            <Button 
-              variant="primary" 
-              size="lg" 
+        <main className="flex-1 relative z-10 p-6 flex flex-col items-center justify-center">
+          <div className="max-w-md w-full text-center space-y-8">
+            <div className="text-6xl">🚀</div>
+            <Button
+              variant="primary"
+              size="lg"
+              glow
               onClick={() => navigate('/bridge')}
-              className="w-full"
+              className="w-full pulse-action text-2xl"
             >
-              Return to Bridge
+              🏠 Bridge
             </Button>
           </div>
         </main>

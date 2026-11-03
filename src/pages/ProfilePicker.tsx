@@ -1,6 +1,6 @@
 /**
  * Profile Picker Page
- * 
+ *
  * Launch screen where kids tap their avatar to enter.
  * Includes adult-gated profile management.
  */
@@ -36,14 +36,12 @@ export function ProfilePicker() {
   const [showPinChange, setShowPinChange] = useState(false);
   const [newPin, setNewPin] = useState('');
 
-  // Handle profile selection - goes to onboarding if needed, else bridge
   const handleSelectProfile = async (profileId: string) => {
     await selectProfile(profileId);
-    
-    // Check if onboarding is needed
+
     const profile = profiles.find(p => p.id === profileId);
     const needsOnboarding = profile && (!profile.hasWatchedIntro || !profile.hasCompletedInterests);
-    
+
     if (needsOnboarding) {
       navigate('/onboarding');
     } else {
@@ -51,38 +49,33 @@ export function ProfilePicker() {
     }
   };
 
-  // Handle add profile button - NO adult gate, kids can create their own profile
   const handleAddProfile = () => {
     setShowProfileForm(true);
   };
 
-  // Handle dashboard button (requires adult gate)
   const handleOpenDashboard = () => {
     setPendingAction('dashboard');
     setShowAdultGate(true);
   };
 
-  // Handle edit profile (requires adult gate)
   const handleEditProfile = (profile: Profile) => {
     setEditingProfile(profile);
     setPendingAction('edit');
     setShowAdultGate(true);
   };
 
-  // Adult gate success handler
   const handleAdultGateSuccess = () => {
     setShowAdultGate(false);
-    
+
     if (pendingAction === 'dashboard') {
       setShowDashboard(true);
     } else if (pendingAction === 'edit') {
       setShowProfileForm(true);
     }
-    
+
     setPendingAction(null);
   };
 
-  // Save profile handler
   const handleSaveProfile = async (name: string, avatarId: string, interests: string[]) => {
     if (editingProfile) {
       await updateProfile({
@@ -94,17 +87,14 @@ export function ProfilePicker() {
       setEditingProfile(null);
       setShowProfileForm(false);
     } else {
-      // Create new profile and select it
       const newProfile = await createProfile(name, avatarId, interests);
       setShowProfileForm(false);
-      
-      // Select the new profile and go to onboarding
+
       await selectProfile(newProfile.id);
       navigate('/onboarding');
     }
   };
 
-  // Delete profile handler
   const handleDeleteProfile = async () => {
     if (editingProfile && confirm(`Delete ${editingProfile.name}'s profile? This cannot be undone.`)) {
       await deleteProfile(editingProfile.id);
@@ -113,7 +103,6 @@ export function ProfilePicker() {
     }
   };
 
-  // Change PIN handler
   const handleChangePin = () => {
     setShowDashboard(false);
     setShowPinChange(true);
@@ -128,7 +117,6 @@ export function ProfilePicker() {
     }
   };
 
-  // Get progress for dashboard - loads from store's cached progress
   const getProgress = useAppStore(state => state.getProfileProgress);
 
   if (isLoading) {
@@ -143,21 +131,16 @@ export function ProfilePicker() {
   return (
     <div className="min-h-screen flex flex-col relative bg-space-dark">
       <Starfield />
-      
-      {/* Header */}
-      <header className="relative z-10 p-4 flex justify-between items-center border-b border-neon-cyan/20">
+
+      <header className="relative z-10 p-5 flex justify-between items-center border-b border-neon-cyan/20">
         <div className="flex items-center gap-3">
           <span className="text-4xl float">🚀</span>
-          <div>
-            <h1 className="text-2xl font-bold text-star-gold text-glow-gold">Space Readers</h1>
-            <p className="text-sm text-neon-cyan/70">Tap your name to begin!</p>
-          </div>
+          <h1 className="text-2xl font-bold text-star-gold text-glow-gold">Space Readers</h1>
         </div>
-        
-        {/* Parent dashboard button */}
+
         <button
           onClick={handleOpenDashboard}
-          className="p-3 hover:bg-neon-cyan/10 rounded-lg border border-neon-cyan/30 hover:border-neon-cyan/60 transition-all"
+          className="p-3 min-w-[44px] min-h-[44px] hover:bg-neon-cyan/10 rounded-lg border border-neon-cyan/30 hover:border-neon-cyan/60 transition-all"
           aria-label="Parent dashboard"
           title="Parent Zone"
         >
@@ -165,28 +148,21 @@ export function ProfilePicker() {
         </button>
       </header>
 
-      {/* Main content */}
-      <main className="flex-1 relative z-10 flex flex-col items-center justify-center p-6">
+      <main className="flex-1 relative z-10 flex flex-col items-center justify-center p-8">
         {profiles.length === 0 ? (
-          // Empty state
-          <div className="text-center max-w-md space-card p-8">
-            <div className="text-7xl mb-4 float">👽</div>
-            <h2 className="text-3xl font-bold mb-3 text-glow-cyan">Welcome to Space Readers!</h2>
-            <p className="text-cyan-200/80 mb-6">
-              Create a player profile to start your reading adventure across the galaxy!
-            </p>
+          <div className="text-center max-w-md space-card p-10">
+            <div className="text-7xl mb-6 float">👽</div>
             <button
               onClick={handleAddProfile}
-              className="touch-button btn-neon-green px-8 py-4 text-xl font-bold"
+              className="touch-button btn-neon-gold pulse-action px-10 py-5 text-2xl font-bold"
             >
-              + Create Player
+              🚀 Create Player
             </button>
           </div>
         ) : (
-          // Profile grid
           <div className="w-full max-w-2xl">
-            <h2 className="text-xl text-center mb-6 text-neon-cyan">Who's playing today?</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <h2 className="text-2xl text-center mb-8 text-neon-cyan text-glow-cyan">Who's playing?</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
               {profiles.map(profile => (
                 <ProfileCard
                   key={profile.id}
@@ -200,12 +176,6 @@ export function ProfilePicker() {
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="relative z-10 p-4 text-center text-sm text-neon-cyan/40 circuit-accent">
-        Made with 💜 for young readers
-      </footer>
-
-      {/* Adult Gate Modal */}
       <AdultGate
         isOpen={showAdultGate}
         onSuccess={handleAdultGateSuccess}
@@ -218,7 +188,6 @@ export function ProfilePicker() {
         mode="math"
       />
 
-      {/* Profile Form Modal */}
       <ProfileForm
         isOpen={showProfileForm}
         onClose={() => {
@@ -230,7 +199,6 @@ export function ProfilePicker() {
         editProfile={editingProfile}
       />
 
-      {/* Progress Dashboard */}
       {showDashboard && (
         <ProgressDashboard
           profiles={profiles}
@@ -248,7 +216,6 @@ export function ProfilePicker() {
         />
       )}
 
-      {/* PIN Change Modal */}
       {showPinChange && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="space-card p-6 max-w-sm w-full">

@@ -1,18 +1,19 @@
 /**
  * Story Reader Component
- * 
- * Displays a decodable story with tappable words.
- * Tracks reading progress and words decoded.
- * Triggers Zib word_cracked clip on successful decode.
+ *
+ * Displays a decodable story with tappable words and per-sentence read-aloud.
+ * Tapping a word still opens the sound-out decoder.
  */
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import type { Story, DecodableWord } from '../types';
 import { WordDecoder } from './WordDecoder';
 import { Button } from './Button';
+import { SpeakButton } from './SpeakButton';
 import { getAudioService } from '../services/audio';
 import { useZibClips } from './ZibClip';
 import { getZibClipService } from '../services/zibClips';
+import { joinWords, sentenceRanges, wordIndexFromChar } from '../utils/readAloud';
 
 interface StoryReaderProps {
   story: Story;
@@ -25,20 +26,18 @@ export function StoryReader({ story, onComplete, onExit }: StoryReaderProps) {
   const [decodedWords, setDecodedWords] = useState<Set<string>>(new Set());
   const [currentParagraph, setCurrentParagraph] = useState(0);
   const [isFinished, setIsFinished] = useState(false);
+  const [spokenWordIndex, setSpokenWordIndex] = useState<number | null>(null);
   const startTimeRef = useRef(Date.now());
-  const audioService = useRef(getAudioService());
   const { triggerWordCracked, triggerKeepTrying } = useZibClips();
-
-  // Track total words decoded this session
   const wordsDecodedThisSession = useRef<string[]>([]);
 
-  // Handle word tap — dismiss any Zib popup so it cannot cover the decoder
   const handleWordTap = useCallback((word: DecodableWord) => {
+    getAudioService().stop();
     getZibClipService().skip();
+    setSpokenWordIndex(null);
     setSelectedWord(word);
   }, []);
 
-  // Handle word decode completion
   const handleWordDecoded = useCallback(() => {
     if (selectedWord) {
       const wordText = selectedWord.word.toLowerCase().replace(/[^a-z]/g, '').trim();
@@ -47,28 +46,25 @@ export function StoryReader({ story, onComplete, onExit }: StoryReaderProps) {
         return;
       }
 
-      // Only count as new if not already decoded in this session
       const isNewWord = !decodedWords.has(wordText);
       setDecodedWords(prev => new Set([...prev, wordText]));
-      
-      // Only add to session list if it's a new word (for consistent counts)
+
       if (isNewWord) {
         wordsDecodedThisSession.current.push(wordText);
       }
-      
-      // Trigger word_cracked clip (throttled by service)
+
       triggerWordCracked(story.id);
     }
     setSelectedWord(null);
   }, [selectedWord, story.id, triggerWordCracked, decodedWords]);
 
-  // Handle keep_trying trigger from WordDecoder
   const handleKeepTrying = useCallback(() => {
     triggerKeepTrying();
   }, [triggerKeepTrying]);
 
-  // Handle paragraph navigation
   const handleNextParagraph = useCallback(() => {
+    getAudioService().stop();
+    setSpokenWordIndex(null);
     if (currentParagraph < story.paragraphs.length - 1) {
       setCurrentParagraph(prev => prev + 1);
     } else {
@@ -77,51 +73,42 @@ export function StoryReader({ story, onComplete, onExit }: StoryReaderProps) {
   }, [currentParagraph, story.paragraphs.length]);
 
   const handlePrevParagraph = useCallback(() => {
+    getAudioService().stop();
+    setSpokenWordIndex(null);
     if (currentParagraph > 0) {
       setCurrentParagraph(prev => prev - 1);
     }
   }, [currentParagraph]);
 
-  // Handle story completion
   const handleFinish = useCallback(() => {
     const duration = Date.now() - startTimeRef.current;
     onComplete(wordsDecodedThisSession.current, duration);
   }, [onComplete]);
 
-  // Read entire paragraph aloud
-  const readParagraphAloud = useCallback(async () => {
-    const paragraph = story.paragraphs[currentParagraph];
-    await audioService.current.speakText(paragraph.rawText);
-  }, [story.paragraphs, currentParagraph]);
-
-  // Render a single word with styling
-  const renderWord = (word: DecodableWord, index: number) => {
+  const renderWord = (word: DecodableWord, index: number, isSpeaking: boolean) => {
     const wordKey = word.word.toLowerCase().replace(/[^a-z]/g, '');
     const wasDecoded = decodedWords.has(wordKey);
-    
+
     return (
       <span
         key={`${word.word}-${index}`}
         onClick={() => handleWordTap(word)}
         className={`
           word-highlight inline-block mx-1 cursor-pointer transition-colors
-          ${wasDecoded ? 'text-alien-green' : 'text-white'}
+          ${isSpeaking ? 'word-speaking' : wasDecoded ? 'text-alien-green' : 'text-white'}
           ${word.isSightWord ? 'sight-word' : ''}
         `}
-        title={word.isSightWord ? 'Memory word - tap to learn!' : undefined}
       >
         {word.word}
-        {word.isSightWord && !wasDecoded && (
-          <span className="sight-word-dot" aria-hidden="true">•</span>
-        )}
       </span>
     );
   };
 
   const paragraph = story.paragraphs[currentParagraph];
   const progress = ((currentParagraph + 1) / story.paragraphs.length) * 100;
+  const ranges = sentenceRanges(paragraph.words);
+  const completeMessage = `Story complete! ${story.title}`;
 
-  // Dismiss Zib when the story-complete overlay appears
   useEffect(() => {
     if (isFinished) {
       getZibClipService().skip();
@@ -131,44 +118,22 @@ export function StoryReader({ story, onComplete, onExit }: StoryReaderProps) {
   if (isFinished) {
     return (
       <div className="fixed inset-0 bg-gradient-to-b from-space-deep to-space-purple flex flex-col items-center justify-center p-6 z-40">
-        <div className="space-card p-8 max-w-md w-full text-center">
-          <div className="text-6xl mb-4">🎉</div>
-          <h2 className="text-3xl font-bold text-star-gold mb-4">
-            Story Complete!
-          </h2>
-          <p className="text-xl text-slate-300 mb-2">
-            "{story.title}"
-          </p>
-          
-          <div className="grid grid-cols-2 gap-4 my-6">
-            <div className="bg-white/10 rounded-lg p-4">
-              <div className="text-3xl font-bold text-alien-green">
-                {decodedWords.size}
-              </div>
-              <div className="text-sm text-slate-400">Words Decoded</div>
-            </div>
-            <div className="bg-white/10 rounded-lg p-4">
-              <div className="text-3xl font-bold text-star-gold">
-                +{10 + decodedWords.size * 2}
-              </div>
-              <div className="text-sm text-slate-400">Fuel Earned</div>
-            </div>
+        <div className="space-card p-8 max-w-md w-full text-center space-y-6">
+          <div className="text-6xl">🎉</div>
+          <div className="flex items-center justify-center gap-3">
+            <h2 className="text-3xl font-bold text-star-gold">Story Complete!</h2>
+            <SpeakButton text={completeMessage} autoPlay />
           </div>
+          <p className="text-xl text-white">{story.title}</p>
 
-          {decodedWords.size > 0 && (
-            <p className="text-alien-green mb-4">
-              🛸 Zib learned {decodedWords.size} new words from you!
-            </p>
-          )}
-
-          <Button 
-            variant="success" 
-            size="lg" 
-            glow 
+          <Button
+            variant="success"
+            size="lg"
+            glow
             onClick={handleFinish}
-            className="w-full"
+            className="w-full pulse-action text-xl"
           >
-            Continue Mission
+            🚀 Continue
           </Button>
         </div>
       </div>
@@ -177,74 +142,56 @@ export function StoryReader({ story, onComplete, onExit }: StoryReaderProps) {
 
   return (
     <div className="fixed inset-0 bg-gradient-to-b from-space-dark to-space-deep flex flex-col z-40">
-      {/* Header - bigger touch targets */}
       <div className="flex items-center justify-between p-3 border-b border-white/10">
-        <button 
+        <button
           onClick={onExit}
-          className="text-xl px-4 py-3 hover:bg-white/10 rounded-lg flex items-center gap-2 min-w-[100px]"
+          className="text-xl px-4 py-3 min-h-[44px] hover:bg-white/10 rounded-lg flex items-center gap-2"
         >
           ← Exit
         </button>
-        
-        <h1 className="text-lg font-semibold truncate px-2 flex-1 text-center">
-          {story.title}
-        </h1>
-        
-        <button
-          onClick={readParagraphAloud}
-          className="text-xl px-4 py-3 hover:bg-white/10 rounded-lg flex items-center gap-2"
-          aria-label="Read aloud"
-        >
-          🔊 Read
-        </button>
+
+        <div className="flex items-center gap-2 min-w-0 flex-1 justify-center px-2">
+          <h1 className="text-xl font-semibold truncate">{story.title}</h1>
+          <SpeakButton text={story.title} />
+        </div>
+
+        <div className="w-[88px]" />
       </div>
 
-      {/* Progress bar */}
       <div className="h-2 bg-white/10">
-        <div 
+        <div
           className="h-full bg-gradient-to-r from-nebula-blue to-nebula-pink transition-all duration-300"
           style={{ width: `${progress}%` }}
         />
       </div>
 
-      {/* Story context */}
-      {currentParagraph === 0 && story.storyContext && (
-        <div className="p-4 bg-star-gold/10 border-b border-star-gold/30">
-          <p className="text-star-gold text-sm italic">
-            📖 {story.storyContext}
-          </p>
-        </div>
-      )}
-
-      {/* Main reading area */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-        <div className="max-w-3xl mx-auto">
-          {/* Paragraph number */}
-          <div className="text-sm text-slate-400 mb-4">
-            Part {currentParagraph + 1} of {story.paragraphs.length}
-          </div>
-
-          {/* Story text - 28-32px for Chromebook readability */}
-          <p className="story-text-large leading-loose">
-            {paragraph.words.map((word, i) => renderWord(word, i))}
-          </p>
-
-          {/* Sight word legend */}
-          <div className="mt-6 p-3 bg-white/5 rounded-lg border border-white/10">
-            <p className="text-sm text-slate-300">
-              <span className="sight-word">Words<span className="sight-word-dot">•</span></span>
-              {' '}with a dot are "memory words" - tap them to learn by heart!
-            </p>
-          </div>
-
-          {/* Tap hint */}
-          <p className="text-base text-slate-400 mt-4 text-center">
-            👆 Tap any word to sound it out
-          </p>
+      <div className="flex-1 overflow-y-auto p-4 sm:p-8">
+        <div className="max-w-3xl mx-auto space-y-8">
+          {ranges.map((range, si) => {
+            const sentenceText = joinWords(paragraph.words, range.start, range.end);
+            return (
+              <div key={`${paragraph.id}-${si}`} className="flex items-start gap-3">
+                <SpeakButton
+                  text={sentenceText}
+                  className="mt-2"
+                  onStart={() => setSpokenWordIndex(null)}
+                  onWord={(charIndex) => {
+                    const local = wordIndexFromChar(sentenceText, charIndex);
+                    setSpokenWordIndex(range.start + local);
+                  }}
+                  onEnd={() => setSpokenWordIndex(null)}
+                />
+                <p className="story-text-large leading-loose flex-1 min-w-0">
+                  {paragraph.words.slice(range.start, range.end).map((word, i) =>
+                    renderWord(word, range.start + i, spokenWordIndex === range.start + i)
+                  )}
+                </p>
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* Navigation - bigger buttons for kids */}
       <div className="p-4 border-t border-white/10 flex gap-3">
         <Button
           variant="ghost"
@@ -254,18 +201,17 @@ export function StoryReader({ story, onComplete, onExit }: StoryReaderProps) {
         >
           ← Back
         </Button>
-        
+
         <Button
           variant="primary"
           onClick={handleNextParagraph}
-          glow={currentParagraph === story.paragraphs.length - 1}
-          className="flex-1 py-4 text-lg"
+          glow
+          className="flex-1 py-4 text-lg pulse-action"
         >
-          {currentParagraph === story.paragraphs.length - 1 ? 'Finish ✓' : 'Next →'}
+          {currentParagraph === story.paragraphs.length - 1 ? '✓ Finish' : 'Next →'}
         </Button>
       </div>
 
-      {/* Word decoder popup */}
       <WordDecoder
         word={selectedWord || { word: '', graphemes: [], isSightWord: false, phonicsPatterns: [] }}
         isOpen={selectedWord !== null}

@@ -233,7 +233,7 @@ export function ZibClip({ position = 'top-right' }: ZibClipProps) {
             </div>
             {/* Caption */}
             <div className="flex-1">
-              <p className="text-sm text-white font-medium leading-snug">
+              <p className="text-lg text-white font-medium leading-snug">
                 "{clip.caption}"
               </p>
             </div>
@@ -333,7 +333,7 @@ export function ZibClip({ position = 'top-right' }: ZibClipProps) {
 
         {/* Caption and dismiss button */}
         <div className="px-4 py-3 bg-space-deep/80 flex items-center gap-3">
-          <p className="flex-1 text-white font-medium leading-relaxed">
+          <p className="flex-1 text-lg text-white font-medium leading-relaxed">
             "{clip.caption}"
           </p>
           <button

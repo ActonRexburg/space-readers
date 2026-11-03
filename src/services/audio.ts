@@ -14,6 +14,10 @@ import type { Grapheme, TTSConfig } from '../types';
 import { resolveAssetUrl } from '../utils/assets';
 import { phonemeClipKey } from '../data/phonemes';
 
+export interface SpeakTextOptions {
+  onWord?: (charIndex: number) => void;
+}
+
 // Default TTS configuration
 const DEFAULT_TTS_CONFIG: TTSConfig = {
   engine: 'web-speech',
@@ -29,8 +33,9 @@ export interface AudioService {
   // Speak an individual phoneme/sound (for decoder slider)
   speakPhoneme(grapheme: Grapheme): Promise<void>;
   
-  // Speak a phrase or sentence
-  speakText(text: string): Promise<void>;
+  // Speak a phrase or sentence. onWord receives the character index of the
+  // current word (Web Speech utterance boundary) so the UI can highlight it.
+  speakText(text: string, options?: SpeakTextOptions): Promise<void>;
   
   // Stop any current speech
   stop(): void;
@@ -174,9 +179,19 @@ class WebSpeechAudioService implements AudioService {
     }
   }
 
-  async speakText(text: string): Promise<void> {
+  async speakText(text: string, options?: SpeakTextOptions): Promise<void> {
     if (!this.synth) return;
-    const utterance = this.createUtterance(text);
+    const trimmed = text.replace(/\s+/g, ' ').trim();
+    if (!trimmed) return;
+    this.stopPhoneme();
+    const utterance = this.createUtterance(trimmed);
+    if (options?.onWord) {
+      utterance.onboundary = (event) => {
+        // Some engines omit event.name; still highlight from charIndex.
+        if (event.name && event.name !== 'word') return;
+        options.onWord!(event.charIndex);
+      };
+    }
     return this.speak(utterance);
   }
 
