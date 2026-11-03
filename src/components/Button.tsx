@@ -10,6 +10,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;
   variant?: 'primary' | 'secondary' | 'success' | 'danger' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
+  /** Static gold neon — looping pulse lives on `.idle-glow` / useIdleGlow, one CTA per screen. */
   glow?: boolean;
 }
 

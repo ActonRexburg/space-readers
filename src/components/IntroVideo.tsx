@@ -9,6 +9,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { resolveAssetUrl } from '../utils/assets';
 import { Button } from './Button';
 import { Starfield } from './Starfield';
+import { useIdleGlow } from '../hooks/useIdleGlow';
 
 interface IntroVideoProps {
   onComplete: () => void;
@@ -182,6 +183,8 @@ export function IntroVideo({ onComplete, onSkip, showSkip = true }: IntroVideoPr
   const isPlaying = loadingState === 'playing';
   const isStalled = loadingState === 'stalled';
   const isUnsupported = loadingState === 'unsupported';
+  // Play when ready; Continue when stalled/unsupported. Rings stay static.
+  const idleGlow = useIdleGlow(!isPlaying && (isReady || isStalled || isUnsupported));
 
   return (
     <div className="fixed inset-0 bg-space-dark z-50 flex flex-col overflow-hidden">
@@ -205,7 +208,7 @@ export function IntroVideo({ onComplete, onSkip, showSkip = true }: IntroVideoPr
           <div className="text-center mb-8">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-neon-cyan/10 border border-neon-cyan/30 mb-4">
               <span className={`w-3 h-3 rounded-full ${
-                isLoading ? 'bg-star-gold animate-pulse' :
+                isLoading ? 'bg-star-gold' :
                 (isStalled || isUnsupported) ? 'bg-fuel-orange' :
                 'bg-alien-green'
               }`} />
@@ -223,9 +226,9 @@ export function IntroVideo({ onComplete, onSkip, showSkip = true }: IntroVideoPr
 
           <div className="relative w-48 h-48 md:w-64 md:h-64 mb-8">
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className={`absolute w-full h-full rounded-full border-2 border-neon-cyan/20 ${isLoading ? 'animate-ping' : ''}`} style={{ animationDuration: '3s' }} />
-              <div className={`absolute w-3/4 h-3/4 rounded-full border border-neon-cyan/30 ${isLoading ? 'animate-ping' : ''}`} style={{ animationDuration: '2.5s', animationDelay: '0.5s' }} />
-              <div className={`absolute w-1/2 h-1/2 rounded-full border border-neon-cyan/40 ${isLoading ? 'animate-ping' : ''}`} style={{ animationDuration: '2s', animationDelay: '1s' }} />
+              <div className="absolute w-full h-full rounded-full border-2 border-neon-cyan/20" />
+              <div className="absolute w-3/4 h-3/4 rounded-full border border-neon-cyan/30" />
+              <div className="absolute w-1/2 h-1/2 rounded-full border border-neon-cyan/40" />
             </div>
             <div className="absolute inset-0 flex items-center justify-center">
               <div className={`
@@ -294,13 +297,14 @@ export function IntroVideo({ onComplete, onSkip, showSkip = true }: IntroVideoPr
               <button
                 type="button"
                 onClick={handlePlay}
-                className="
+                className={`
                   w-20 h-20 rounded-full flex items-center justify-center
                   bg-gradient-to-br from-alien-green to-emerald-600
                   hover:from-alien-green/90 hover:to-emerald-600/90
                   active:scale-95 transition-all
                   shadow-lg shadow-alien-green/30 glow-green
-                "
+                  ${isReady && !isStalled ? idleGlow : ''}
+                `}
                 aria-label="Play video"
               >
                 <svg
@@ -322,7 +326,7 @@ export function IntroVideo({ onComplete, onSkip, showSkip = true }: IntroVideoPr
                   e.stopPropagation();
                   onSkip();
                 }}
-                className="px-8"
+                className={`px-8 ${idleGlow}`}
               >
                 🚀 Continue Mission
               </Button>
@@ -340,6 +344,7 @@ export function IntroVideo({ onComplete, onSkip, showSkip = true }: IntroVideoPr
                     e.stopPropagation();
                     onSkip();
                   }}
+                  className={idleGlow}
                 >
                   Continue →
                 </Button>

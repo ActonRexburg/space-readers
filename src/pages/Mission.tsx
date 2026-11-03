@@ -23,6 +23,7 @@ import { zibLearnedLine, zibRankUpLine, planetUnlockedLine, UI } from '../data/v
 import { splitSentences } from '../utils/readAloud';
 import type { Story, Rank } from '../types';
 import { RANK_ORDER, RANK_THRESHOLDS } from '../types';
+import { useIdleGlow } from '../hooks/useIdleGlow';
 
 function calculateRank(fuelCredits: number): Rank {
   let rank: Rank = 'Recruit';
@@ -66,13 +67,14 @@ export function Mission() {
 
   // Hide Zib popups on Mission Complete and rank-up overlays.
   useZibOverlayLock(phase === 'debrief' || phase === 'rankup');
+  // One idle-glow CTA per mission phase; StoryReader owns the reading-phase CTA.
+  const idleGlow = useIdleGlow(phase !== 'reading');
 
   const confettiPieces = useMemo(() => (
     Array.from({ length: 30 }, (_, i) => ({
       id: i,
       left: `${(i * 17) % 100}%`,
-      delay: `${(i % 8) * 0.25}s`,
-      duration: `${2 + (i % 4) * 0.5}s`,
+      delay: `${(i % 8) * 0.4}s`,
       emoji: ['🎉', '⭐', '🌟', '✨', '🏆', '🎖️'][i % 6]
     }))
   ), []);
@@ -92,6 +94,8 @@ export function Mission() {
   const allStoriesCompleted = useMemo(() => {
     return stories.every(s => completedStories.has(s.id));
   }, [stories, completedStories]);
+
+  const firstIncompleteStoryId = stories.find(s => !completedStories.has(s.id))?.id;
 
   const handleStartStory = useCallback((story: Story) => {
     setCurrentStory(story);
@@ -265,7 +269,7 @@ export function Mission() {
                 {zibDialogueIndex < mission.alienDialogue.length - 1 && (
                   <button
                     onClick={() => setZibDialogueIndex(i => i + 1)}
-                    className="mt-3 min-h-[44px] px-4 rounded-lg text-xl text-star-gold pulse-idle"
+                    className={`mt-3 min-h-[44px] px-4 rounded-lg text-xl text-star-gold ${idleGlow}`}
                   >
                     Next →
                   </button>
@@ -278,7 +282,7 @@ export function Mission() {
               size="lg"
               glow
               onClick={() => setPhase('stories')}
-              className="w-full pulse-idle text-2xl"
+              className={`w-full text-2xl ${zibDialogueIndex >= mission.alienDialogue.length - 1 ? idleGlow : ''}`}
             >
               🚀 Accept
             </Button>
@@ -304,13 +308,14 @@ export function Mission() {
             <div className="space-y-4">
               {stories.map((story, index) => {
                 const isCompleted = completedStories.has(story.id);
+                const isPrimary = !allStoriesCompleted && story.id === firstIncompleteStoryId;
 
                 return (
                   <Card
                     key={story.id}
                     glow={!isCompleted ? 'gold' : 'green'}
                     onClick={() => handleStartStory(story)}
-                    className="cursor-pointer hover:scale-[1.02] transition-transform"
+                    className={`cursor-pointer hover:scale-[1.02] transition-transform ${isPrimary ? idleGlow : ''}`}
                   >
                     <div className="flex items-center gap-4">
                       <div className={`
@@ -341,7 +346,7 @@ export function Mission() {
                 size="lg"
                 glow
                 onClick={() => setPhase('debrief')}
-                className="w-full mt-4 pulse-action text-xl"
+                className={`w-full mt-4 text-xl ${idleGlow}`}
               >
                 ✓ Complete
               </Button>
@@ -427,7 +432,7 @@ export function Mission() {
               size="lg"
               glow
               onClick={handleMissionComplete}
-              className="w-full pulse-action text-2xl"
+              className={`w-full text-2xl ${idleGlow}`}
             >
               🎁 Claim Rewards
             </Button>
@@ -445,7 +450,6 @@ export function Mission() {
                 style={{
                   left: piece.left,
                   animationDelay: piece.delay,
-                  animationDuration: piece.duration,
                 }}
               >
                 {piece.emoji}
@@ -455,10 +459,7 @@ export function Mission() {
 
           <div className="max-w-md w-full text-center space-y-8 relative z-10">
             <div className="relative">
-              <div className="text-8xl mb-4 animate-bounce">🎖️</div>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-32 h-32 rounded-full bg-alien-green/20 animate-ping" />
-              </div>
+              <div className="text-8xl mb-4">🎖️</div>
             </div>
 
             <SpokenLine
@@ -490,7 +491,7 @@ export function Mission() {
               size="lg"
               glow
               onClick={handleContinueAfterRankUp}
-              className="w-full pulse-action text-xl"
+              className={`w-full text-xl ${idleGlow}`}
             >
               🚀 Continue
             </Button>

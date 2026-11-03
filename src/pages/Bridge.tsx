@@ -21,6 +21,7 @@ import { getAvatarById, DEFAULT_AVATAR } from '../data/avatars';
 import { getNextMission } from '../data/missions';
 import { UI, zibWordsKnownLine, ZIB } from '../data/voiceLines';
 import { RANK_THRESHOLDS } from '../types';
+import { useIdleGlow } from '../hooks/useIdleGlow';
 
 export function Bridge() {
   const navigate = useNavigate();
@@ -31,6 +32,15 @@ export function Bridge() {
   const [showRankInfo, setShowRankInfo] = useState(false);
   const [showIntroVideo, setShowIntroVideo] = useState(false);
   useZibOverlayLock(showRankInfo || showIntroVideo);
+  const nextMission = useMemo(() => {
+    if (!activeProgress) return null;
+    return getNextMission(
+      activeProgress.missionsCompleted,
+      activeProgress.currentRank
+    );
+  }, [activeProgress]);
+  // Start Mission is the only idle-glow on the Bridge (none if every mission is done).
+  const idleGlow = useIdleGlow(!!nextMission && !showRankInfo && !showIntroVideo);
 
   useEffect(() => {
     if (!hasTriggeredWelcomeBack.current && activeProgress && activeProgress.storiesCompleted.length > 0) {
@@ -40,14 +50,6 @@ export function Bridge() {
       }, 800);
     }
   }, [activeProgress, triggerWelcomeBack]);
-
-  const nextMission = useMemo(() => {
-    if (!activeProgress) return null;
-    return getNextMission(
-      activeProgress.missionsCompleted,
-      activeProgress.currentRank
-    );
-  }, [activeProgress]);
 
   const rankProgress = useMemo(() => {
     if (!activeProgress) return { percent: 0, nextRank: null as string | null };
@@ -222,7 +224,7 @@ export function Bridge() {
                 size="lg"
                 glow
                 onClick={handleStartMission}
-                className="w-full pulse-idle text-2xl py-5"
+                className={`w-full text-2xl py-5 ${idleGlow}`}
               >
                 🚀 Start Mission
               </Button>

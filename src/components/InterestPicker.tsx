@@ -2,7 +2,7 @@
  * InterestPicker Component
  *
  * A kid-friendly grid of interest tiles. Tapping speaks the label.
- * Fuel gauge fills to 10; Launch pulses when ready.
+ * Fuel gauge fills to 10; Launch is the only idle-glow CTA once ready.
  */
 
 import { useState, useCallback, useEffect, useRef } from 'react';
@@ -13,6 +13,7 @@ import { Button } from './Button';
 import { Zib } from './Zib';
 import { SpokenLine } from './SpeakButton';
 import { UI, pickMoreLine, ZIB } from '../data/voiceLines';
+import { useIdleGlow } from '../hooks/useIdleGlow';
 
 interface InterestPickerProps {
   initialInterests?: string[];
@@ -65,6 +66,7 @@ export function InterestPicker({
   const selectionCount = selectedInterests.size;
   const isReady = selectionCount >= MIN_INTERESTS;
   const gaugePercent = Math.min(100, (selectionCount / MIN_INTERESTS) * 100);
+  const idleGlow = useIdleGlow(isReady);
 
   // 10th pick: glow Launch and have Mission Control say the cue — no second Zib popup.
   useEffect(() => {
@@ -189,7 +191,7 @@ export function InterestPicker({
             disabled={!isReady && !isEditing}
             onClick={handleComplete}
             className={`
-              ${isReady ? 'btn-neon-gold pulse-action' : ''}
+              ${isReady ? `btn-neon-gold ${idleGlow}` : ''}
               min-w-[140px] text-xl
             `}
           >

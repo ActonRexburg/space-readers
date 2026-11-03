@@ -15,6 +15,7 @@ import { ProfileForm } from '../components/ProfileForm';
 import { ParentZone } from '../components/ParentZone';
 import { SpokenLine } from '../components/SpeakButton';
 import { UI } from '../data/voiceLines';
+import { useIdleGlow } from '../hooks/useIdleGlow';
 
 export function ProfilePicker() {
   const navigate = useNavigate();
@@ -26,6 +27,9 @@ export function ProfilePicker() {
   } = useAppStore();
 
   const [showProfileForm, setShowProfileForm] = useState(false);
+  // Empty picker: Create Player is the only next action. With players, cards
+  // are equally primary so none of them idle-glow.
+  const idleGlow = useIdleGlow(profiles.length === 0 && !showProfileForm);
 
   const handleSelectProfile = async (profileId: string) => {
     await selectProfile(profileId);
@@ -51,7 +55,7 @@ export function ProfilePicker() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-space-dark">
         <Starfield />
-        <div className="text-2xl animate-pulse text-neon-cyan">Loading...</div>
+        <div className="text-2xl text-neon-cyan">Loading...</div>
       </div>
     );
   }
@@ -65,7 +69,7 @@ export function ProfilePicker() {
           so the header/grid sit above the starfield. */}
       <header className="relative z-10 p-5 flex justify-between items-center border-b border-neon-cyan/20">
         <div className="flex items-center gap-3">
-          <span className="text-4xl float">🚀</span>
+          <span className="text-4xl">🚀</span>
           <h1 className="text-2xl font-bold text-star-gold text-glow-gold">Space Readers</h1>
         </div>
 
@@ -75,7 +79,7 @@ export function ProfilePicker() {
       <main className="flex-1 relative z-10 flex flex-col items-center justify-center p-8">
         {profiles.length === 0 ? (
           <div className="text-center max-w-md space-card p-10">
-            <div className="text-7xl mb-6 float">👽</div>
+            <div className="text-7xl mb-6">👽</div>
             <SpokenLine
               text={UI.tapToCreate}
               voice="control"
@@ -85,7 +89,7 @@ export function ProfilePicker() {
             />
             <button
               onClick={() => setShowProfileForm(true)}
-              className="touch-button btn-neon-gold pulse-idle px-10 py-5 text-2xl font-bold"
+              className={`touch-button btn-neon-gold px-10 py-5 text-2xl font-bold ${idleGlow}`}
             >
               🚀 Create Player
             </button>

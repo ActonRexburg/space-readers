@@ -20,6 +20,7 @@ import { useZibOverlayLock } from '../hooks/useZibOverlayLock';
 import { storyCompleteLine } from '../data/voiceLines';
 import { getZibClipService } from '../services/zibClips';
 import { sentenceRanges } from '../utils/readAloud';
+import { useIdleGlow } from '../hooks/useIdleGlow';
 
 interface StoryReaderProps {
   story: Story;
@@ -120,6 +121,8 @@ export function StoryReader({ story, onComplete, onExit }: StoryReaderProps) {
   const completeMessage = storyCompleteLine(story.title);
 
   useZibOverlayLock(selectedWord !== null || isFinished);
+  // Next/Finish while reading; Continue on the complete overlay. Decoder has its own CTA.
+  const idleGlow = useIdleGlow(selectedWord === null);
 
   useEffect(() => {
     if (isFinished) {
@@ -143,7 +146,7 @@ export function StoryReader({ story, onComplete, onExit }: StoryReaderProps) {
             size="lg"
             glow
             onClick={handleFinish}
-            className="w-full pulse-action text-xl"
+            className={`w-full text-xl ${idleGlow}`}
           >
             🚀 Continue
           </Button>
@@ -203,7 +206,7 @@ export function StoryReader({ story, onComplete, onExit }: StoryReaderProps) {
           variant="primary"
           onClick={handleNextParagraph}
           glow
-          className="flex-1 py-4 text-lg pulse-idle"
+          className={`flex-1 py-4 text-lg ${idleGlow}`}
         >
           {currentParagraph === story.paragraphs.length - 1 ? '✓ Finish' : 'Next →'}
         </Button>
