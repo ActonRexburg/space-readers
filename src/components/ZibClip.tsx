@@ -14,6 +14,7 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import { getZibClipService, type PendingClip } from '../services/zibClips';
 import { resolveAssetUrl } from '../utils/assets';
 
@@ -36,6 +37,14 @@ export function ZibClip({ position = 'top-right' }: ZibClipProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const loadTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const service = getZibClipService();
+  const location = useLocation();
+
+  // Dismiss popup on route change
+  useEffect(() => {
+    if (pendingClip) {
+      service.skip();
+    }
+  }, [location.pathname]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Subscribe to clip changes
   useEffect(() => {
@@ -133,7 +142,13 @@ export function ZibClip({ position = 'top-right' }: ZibClipProps) {
         setIsPlaying(true);
       }
     } else {
-      // Video mode - set timeout to fall back to voice if video doesn't load
+      // Video mode - explicitly load the video and set timeout
+      if (videoRef.current) {
+        // Set sources and load - this is critical since we use preload="metadata"
+        videoRef.current.load();
+      }
+      
+      // Set timeout to fall back to voice if video doesn't load
       loadTimeoutRef.current = setTimeout(() => {
         if (!isVideoLoaded) {
           console.warn('Zib clip video load timeout - falling back to voice');
@@ -153,11 +168,11 @@ export function ZibClip({ position = 'top-right' }: ZibClipProps) {
 
   const { clip, mode } = pendingClip;
 
-  // Position classes - top-right to avoid covering story's Next button
+  // Position classes - offset below header (≈60px) to avoid overlap with Read button
   const positionClasses = {
-    'top-right': 'top-4 right-4',
+    'top-right': 'top-16 right-4',
     'center': 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2',
-    'bottom-center': 'bottom-20 left-1/2 -translate-x-1/2'
+    'bottom-center': 'bottom-24 left-1/2 -translate-x-1/2'
   };
 
   // Voice-only mode OR video failed: show poster with voice
@@ -187,10 +202,10 @@ export function ZibClip({ position = 'top-right' }: ZibClipProps) {
                 "{clip.caption}"
               </p>
             </div>
-            {/* Big dismiss button - at least 48px */}
+            {/* Big dismiss button - at least 48px tall for touch targets */}
             <button
               onClick={handleDismiss}
-              className="shrink-0 px-4 py-2 min-w-[48px] min-h-[48px] bg-alien-green/20 hover:bg-alien-green/30 border border-alien-green/50 rounded-lg text-alien-green font-medium transition-colors"
+              className="shrink-0 px-5 py-3 min-w-[80px] min-h-[48px] bg-alien-green/20 hover:bg-alien-green/30 border-2 border-alien-green/60 rounded-lg text-alien-green font-bold text-lg transition-colors"
             >
               Got it!
             </button>
@@ -243,12 +258,20 @@ export function ZibClip({ position = 'top-right' }: ZibClipProps) {
           )}
           
           {/* Video element - WebM first, MP4 fallback */}
+          {/* Use preload="metadata" to start loading immediately */}
           <video
             ref={videoRef}
             className={`w-full h-full object-cover ${isVideoLoaded ? 'opacity-100' : 'opacity-0'}`}
             poster={clip.posterUrl}
-            preload="none"
+            preload="metadata"
             playsInline
+            onLoadedMetadata={() => {
+              // Metadata loaded - video is accessible, clear timeout
+              if (loadTimeoutRef.current) {
+                clearTimeout(loadTimeoutRef.current);
+                loadTimeoutRef.current = null;
+              }
+            }}
             onCanPlay={handleVideoCanPlay}
             onEnded={handleVideoEnded}
             onError={handleVideoError}
@@ -281,7 +304,7 @@ export function ZibClip({ position = 'top-right' }: ZibClipProps) {
           </p>
           <button
             onClick={handleDismiss}
-            className="shrink-0 px-4 py-2 min-w-[48px] min-h-[48px] bg-alien-green/20 hover:bg-alien-green/30 border border-alien-green/50 rounded-lg text-alien-green font-medium transition-colors"
+            className="shrink-0 px-5 py-3 min-w-[80px] min-h-[48px] bg-alien-green/20 hover:bg-alien-green/30 border-2 border-alien-green/60 rounded-lg text-alien-green font-bold text-lg transition-colors"
           >
             Got it!
           </button>
