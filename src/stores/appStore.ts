@@ -249,7 +249,8 @@ export const useAppStore = create<AppState>((set, get) => ({
     const { activeProgress, allProgress } = get();
     if (!activeProgress) return;
 
-    const normalizedWord = word.toLowerCase();
+    const normalizedWord = word.toLowerCase().trim();
+    if (!normalizedWord) return;
     const newProgress: ProfileProgress = {
       ...activeProgress,
       wordHelpCount: {
@@ -270,16 +271,18 @@ export const useAppStore = create<AppState>((set, get) => ({
     const { activeProgress, allProgress, calculateRank } = get();
     if (!activeProgress) return;
 
+    const cleanWords = wordsDecoded.filter(w => w && w.trim());
+
     const sessionRecord: SessionRecord = {
       date: Date.now(),
       storyId,
       durationMs,
-      wordsDecoded,
+      wordsDecoded: cleanWords,
       completed: true
     };
 
     // Award fuel credits for completion (base + bonus for words decoded)
-    const fuelEarned = 10 + wordsDecoded.length * 2;
+    const fuelEarned = 10 + cleanWords.length * 2;
 
     const newProgress: ProfileProgress = {
       ...activeProgress,
@@ -331,7 +334,9 @@ export const useAppStore = create<AppState>((set, get) => ({
     const { activeProgress, allProgress } = get();
     if (!activeProgress) return;
 
-    const normalizedWord = word.toLowerCase();
+    // Normalize and filter out empty/whitespace-only words
+    const normalizedWord = word.toLowerCase().trim();
+    if (!normalizedWord) return;
     if (activeProgress.alienLearnedWords.includes(normalizedWord)) return;
 
     const newProgress: ProfileProgress = {

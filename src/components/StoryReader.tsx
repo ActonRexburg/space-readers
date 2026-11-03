@@ -6,12 +6,13 @@
  * Triggers Zib word_cracked clip on successful decode.
  */
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import type { Story, DecodableWord } from '../types';
 import { WordDecoder } from './WordDecoder';
 import { Button } from './Button';
 import { getAudioService } from '../services/audio';
 import { useZibClips } from './ZibClip';
+import { getZibClipService } from '../services/zibClips';
 
 interface StoryReaderProps {
   story: Story;
@@ -31,16 +32,21 @@ export function StoryReader({ story, onComplete, onExit }: StoryReaderProps) {
   // Track total words decoded this session
   const wordsDecodedThisSession = useRef<string[]>([]);
 
-  // Handle word tap
+  // Handle word tap — dismiss any Zib popup so it cannot cover the decoder
   const handleWordTap = useCallback((word: DecodableWord) => {
+    getZibClipService().skip();
     setSelectedWord(word);
   }, []);
 
   // Handle word decode completion
   const handleWordDecoded = useCallback(() => {
     if (selectedWord) {
-      const wordText = selectedWord.word.toLowerCase().replace(/[^a-z]/g, '');
-      
+      const wordText = selectedWord.word.toLowerCase().replace(/[^a-z]/g, '').trim();
+      if (!wordText) {
+        setSelectedWord(null);
+        return;
+      }
+
       // Only count as new if not already decoded in this session
       const isNewWord = !decodedWords.has(wordText);
       setDecodedWords(prev => new Set([...prev, wordText]));
@@ -114,6 +120,13 @@ export function StoryReader({ story, onComplete, onExit }: StoryReaderProps) {
 
   const paragraph = story.paragraphs[currentParagraph];
   const progress = ((currentParagraph + 1) / story.paragraphs.length) * 100;
+
+  // Dismiss Zib when the story-complete overlay appears
+  useEffect(() => {
+    if (isFinished) {
+      getZibClipService().skip();
+    }
+  }, [isFinished]);
 
   if (isFinished) {
     return (

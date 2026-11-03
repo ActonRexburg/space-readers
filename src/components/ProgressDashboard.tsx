@@ -57,8 +57,9 @@ export function ProgressDashboard({
         };
       }
 
-      // Calculate most helped words
-      const wordEntries = Object.entries(progress.wordHelpCount);
+      // Calculate most helped words (filter out empty/whitespace words)
+      const wordEntries = Object.entries(progress.wordHelpCount)
+        .filter(([word]) => word && word.trim());
       const mostHelpedWords = wordEntries
         .sort((a, b) => b[1] - a[1])
         .slice(0, 10)
@@ -80,7 +81,7 @@ export function ProgressDashboard({
         totalReadingTimeMs,
         mostHelpedWords,
         recentSessions: progress.sessionHistory.slice(-5).reverse(),
-        alienWordsLearned: progress.alienLearnedWords.length
+        alienWordsLearned: progress.alienLearnedWords.filter(w => w && w.trim()).length
       };
     });
   }, [profiles, getProgress]);

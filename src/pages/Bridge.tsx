@@ -185,9 +185,9 @@ export function Bridge() {
             <div className="flex-1 text-center sm:text-left">
               <h3 className="font-bold text-lg mb-1 text-neon-cyan">Zib's Reading Log</h3>
               <p className="text-cyan-200/80 text-sm mb-2">{zibDialogue}</p>
-              {activeProgress.alienLearnedWords.length > 0 && (
+              {activeProgress.alienLearnedWords.filter(w => w && w.trim()).length > 0 && (
                 <div className="flex flex-wrap gap-1 justify-center sm:justify-start">
-                  {activeProgress.alienLearnedWords.slice(-5).map(word => (
+                  {activeProgress.alienLearnedWords.filter(w => w && w.trim()).slice(-5).map(word => (
                     <span 
                       key={word}
                       className="px-2 py-0.5 bg-alien-green/20 border border-alien-green/40 rounded text-xs text-alien-green"
@@ -195,9 +195,9 @@ export function Bridge() {
                       {word}
                     </span>
                   ))}
-                  {activeProgress.alienLearnedWords.length > 5 && (
+                  {activeProgress.alienLearnedWords.filter(w => w && w.trim()).length > 5 && (
                     <span className="text-xs text-neon-cyan/50">
-                      +{activeProgress.alienLearnedWords.length - 5} more
+                      +{activeProgress.alienLearnedWords.filter(w => w && w.trim()).length - 5} more
                     </span>
                   )}
                 </div>

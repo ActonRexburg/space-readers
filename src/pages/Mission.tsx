@@ -6,9 +6,10 @@
  * Triggers Zib clips for story_start, story_complete, planet_unlocked, rank_up.
  */
 
-import { useState, useMemo, useCallback, useRef } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAppStore } from '../stores/appStore';
+import { getZibClipService } from '../services/zibClips';
 import { Starfield } from '../components/Starfield';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
@@ -34,7 +35,7 @@ function capitalize(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-type MissionPhase = 'briefing' | 'stories' | 'reading' | 'debrief' | 'complete';
+type MissionPhase = 'briefing' | 'stories' | 'reading' | 'debrief' | 'rankup' | 'complete';
 
 export function Mission() {
   const { missionId } = useParams<{ missionId: string }>();
@@ -43,8 +44,7 @@ export function Mission() {
     completeStory, 
     completeMission,
     addAlienWord,
-    recordWordHelp,
-    activeProgress
+    recordWordHelp
   } = useAppStore();
   const { 
     triggerStoryStart, 
@@ -66,6 +66,15 @@ export function Mission() {
   const [planetsBefore, setPlanetsBefore] = useState(0);
   const [rankBefore, setRankBefore] = useState<string | null>(null);
   const [newRank, setNewRank] = useState<string | null>(null);
+  const confettiPieces = useMemo(() => (
+    Array.from({ length: 30 }, (_, i) => ({
+      id: i,
+      left: `${(i * 17) % 100}%`,
+      delay: `${(i % 8) * 0.25}s`,
+      duration: `${2 + (i % 4) * 0.5}s`,
+      emoji: ['🎉', '⭐', '🌟', '✨', '🏆', '🎖️'][i % 6]
+    }))
+  ), []);
 
   // Get mission data
   const mission = useMemo(() => {
@@ -104,53 +113,49 @@ export function Mission() {
   const handleStoryComplete = useCallback(async (wordsDecoded: string[], durationMs: number) => {
     if (!currentStory) return;
 
-    // Record the story completion
-    await completeStory(currentStory.id, wordsDecoded, durationMs);
+    const uniqueWords = wordsDecoded.filter(w => w && w.trim());
 
-    // Add words to Zib's learned list
-    for (const word of wordsDecoded) {
+    // Record the story completion (adds story fuel to the store)
+    await completeStory(currentStory.id, uniqueWords, durationMs);
+
+    for (const word of uniqueWords) {
       await addAlienWord(word);
     }
-
-    // Record each word help
-    for (const word of wordsDecoded) {
+    for (const word of uniqueWords) {
       await recordWordHelp(word);
     }
 
-    // Update local state - compute new set first
     const newCompletedStories = new Set([...completedStories, currentStory.id]);
     setCompletedStories(newCompletedStories);
-    setTotalWordsThisMission(prev => prev + wordsDecoded.length);
+    setTotalWordsThisMission(prev => prev + uniqueWords.length);
     setCurrentStory(null);
     triggeredStoryStartFor.current = null;
 
-    // Trigger story_complete clip
     triggerStoryComplete();
 
-    // Check if mission is complete - use the computed new set size
-    if (newCompletedStories.size === stories.length) {
-      // Capture current values before rewards for visible math
-      if (activeProgress && mission) {
-        const currentFuel = activeProgress.fuelCredits;
-        const currentRank = activeProgress.currentRank;
-        const fuelAfterMission = currentFuel + mission.fuelReward;
-        const rankAfterMission = calculateRank(fuelAfterMission);
-        
-        setFuelBefore(currentFuel);
-        setStarsBefore(activeProgress.starCredits);
-        setPlanetsBefore(activeProgress.planetsUnlocked.length);
-        setRankBefore(currentRank);
-        
-        // Check if rank will change (regardless of mission.unlocksRank)
-        if (rankAfterMission !== currentRank) {
-          setNewRank(rankAfterMission);
-        }
+    if (newCompletedStories.size === stories.length && mission) {
+      // Read the store AFTER story rewards so "before" matches what Claim Rewards adds to
+      const latest = useAppStore.getState().activeProgress;
+      const fuelAfterStories = latest?.fuelCredits ?? 0;
+      const starsAfterStories = latest?.starCredits ?? 0;
+      const planetsAfterStories = latest?.planetsUnlocked.length ?? 0;
+      const rankAfterStories = latest?.currentRank ?? 'Recruit';
+      const fuelAfterMission = fuelAfterStories + mission.fuelReward;
+      const rankAfterMission = calculateRank(fuelAfterMission);
+
+      setFuelBefore(fuelAfterStories);
+      setStarsBefore(starsAfterStories);
+      setPlanetsBefore(planetsAfterStories);
+      setRankBefore(rankAfterStories);
+
+      if (rankAfterMission !== rankAfterStories) {
+        setNewRank(rankAfterMission);
       }
       setPhase('debrief');
     } else {
       setPhase('stories');
     }
-  }, [currentStory, stories.length, completedStories.size, completeStory, addAlienWord, recordWordHelp, triggerStoryComplete, activeProgress, mission]);
+  }, [currentStory, stories.length, completedStories, completeStory, addAlienWord, recordWordHelp, triggerStoryComplete, mission]);
 
   // Handle mission completion
   const handleMissionComplete = useCallback(async () => {
@@ -158,16 +163,33 @@ export function Mission() {
 
     await completeMission(mission.id, mission.fuelReward, mission.starReward, mission.unlocksPlanet);
     
-    // Trigger special clips for unlocks
-    // Check for rank change (either from mission.unlocksRank or natural fuel progression)
+    // Check for rank change - show full-screen celebration
     if (newRank && newRank !== rankBefore) {
       setTimeout(() => triggerRankUp(), 300);
-    } else if (mission.unlocksPlanet) {
+      setPhase('rankup');
+    } else {
+      // No rank change - trigger planet unlock if applicable and go to complete
+      if (mission.unlocksPlanet) {
+        setTimeout(() => triggerPlanetUnlocked(), 300);
+      }
+      setPhase('complete');
+    }
+  }, [mission, completeMission, triggerRankUp, triggerPlanetUnlocked, newRank, rankBefore]);
+
+  // Handle continuing after rank-up celebration
+  const handleContinueAfterRankUp = useCallback(() => {
+    if (mission?.unlocksPlanet) {
       setTimeout(() => triggerPlanetUnlocked(), 300);
     }
-    
     setPhase('complete');
-  }, [mission, completeMission, triggerRankUp, triggerPlanetUnlocked, newRank, rankBefore]);
+  }, [mission, triggerPlanetUnlocked]);
+
+  // Dismiss lingering Zib popups when leaving a story or finishing the mission
+  useEffect(() => {
+    if (phase === 'stories' || phase === 'complete' || phase === 'briefing') {
+      getZibClipService().skip();
+    }
+  }, [phase]);
 
   // Navigate back
   const handleBack = () => {
@@ -409,24 +431,12 @@ export function Mission() {
                 <div className="text-sm text-slate-400 mt-1">⭐ Star Credits</div>
               </div>
               
-              {/* Rank up celebration - show if rank changed for any reason */}
               {newRank && newRank !== rankBefore && (
-                <div className="mt-4 p-4 bg-alien-green/10 border-2 border-alien-green/50 rounded-lg animate-pulse">
-                  <div className="text-4xl mb-2">🎖️</div>
-                  <div className="text-alien-green font-bold text-xl">
-                    RANK UP!
-                  </div>
-                  <div className="flex items-center justify-center gap-3 mt-2 text-lg">
-                    <span className="text-slate-400">{rankBefore}</span>
-                    <span className="text-alien-green">→</span>
-                    <span className="text-alien-green font-bold text-glow-cyan">{newRank}</span>
-                  </div>
-                  <p className="text-sm text-slate-300 mt-2">
-                    You've proven yourself, Commander!
-                  </p>
-                </div>
+                <p className="mt-3 text-alien-green font-medium">
+                  🎖️ Rank up waiting after you claim rewards!
+                </p>
               )}
-              
+
               {/* Planet unlock celebration */}
               {mission.unlocksPlanet && (
                 <div className="mt-4 p-3 bg-neon-cyan/10 border border-neon-cyan/30 rounded-lg">
@@ -452,6 +462,66 @@ export function Mission() {
               className="w-full"
             >
               Claim Rewards 🎁
+            </Button>
+          </div>
+        </main>
+      )}
+
+      {/* Full-screen Rank-Up Celebration Phase */}
+      {phase === 'rankup' && newRank && (
+        <main className="flex-1 relative z-10 p-4 flex flex-col items-center justify-center overflow-hidden">
+          {/* Confetti effect */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            {confettiPieces.map((piece) => (
+              <div
+                key={piece.id}
+                className="absolute animate-confetti"
+                style={{
+                  left: piece.left,
+                  animationDelay: piece.delay,
+                  animationDuration: piece.duration,
+                }}
+              >
+                {piece.emoji}
+              </div>
+            ))}
+          </div>
+          
+          <div className="max-w-md w-full text-center space-y-8 relative z-10">
+            {/* Big rank badge */}
+            <div className="relative">
+              <div className="text-8xl mb-4 animate-bounce">🎖️</div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-32 h-32 rounded-full bg-alien-green/20 animate-ping" />
+              </div>
+            </div>
+            
+            <h2 className="text-4xl font-bold text-alien-green text-glow-cyan">
+              RANK UP!
+            </h2>
+            
+            <div className="space-card p-6 glow-green">
+              <div className="flex items-center justify-center gap-4 text-2xl">
+                <span className="text-slate-400">{rankBefore}</span>
+                <span className="text-alien-green text-3xl">→</span>
+                <span className="text-alien-green font-bold text-3xl text-glow-cyan">{newRank}</span>
+              </div>
+              <p className="text-alien-green mt-4 italic">
+                "You did it, Cadet! You ranked up!"
+              </p>
+              <p className="text-slate-300 mt-2">
+                Congratulations, {newRank}! Your reading skills are out of this world!
+              </p>
+            </div>
+            
+            <Button 
+              variant="success" 
+              size="lg" 
+              glow 
+              onClick={handleContinueAfterRankUp}
+              className="w-full"
+            >
+              Continue 🚀
             </Button>
           </div>
         </main>
