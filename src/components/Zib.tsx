@@ -2,10 +2,13 @@
  * Zib - The Alien Character
  * 
  * A friendly alien who the player teaches to read.
- * Shows expressions and learned words.
+ * Shows the actual Zib poster image from the clips.
  */
 
-import { useState, useEffect } from 'react';
+import { resolveAssetUrl } from '../utils/assets';
+
+// Use the real Zib poster image
+const ZIB_IMAGE = resolveAssetUrl('zib-clips/poster/zib_interest_picker_intro.jpg');
 
 interface ZibProps {
   expression?: 'happy' | 'thinking' | 'excited' | 'curious' | 'learning';
@@ -16,86 +19,34 @@ interface ZibProps {
 }
 
 export function Zib({
-  expression = 'happy',
   dialogue,
   learnedWordsCount = 0,
   animate = true,
   size = 'md'
 }: ZibProps) {
-  const [isBlinking, setIsBlinking] = useState(false);
-
-  // Random blinking animation
-  useEffect(() => {
-    if (!animate) return;
-    
-    const blink = () => {
-      setIsBlinking(true);
-      setTimeout(() => setIsBlinking(false), 150);
-    };
-
-    const interval = setInterval(() => {
-      if (Math.random() > 0.7) blink();
-    }, 2000);
-
-    return () => clearInterval(interval);
-  }, [animate]);
-
   const sizeClasses = {
-    sm: 'w-16 h-16 text-2xl',
-    md: 'w-24 h-24 text-4xl',
-    lg: 'w-32 h-32 text-6xl'
+    sm: 'w-16 h-16',
+    md: 'w-24 h-24',
+    lg: 'w-32 h-32'
   };
-
-  const bodyColor = 'bg-gradient-to-b from-alien-green/80 to-emerald-600/80';
 
   return (
     <div className="flex flex-col items-center">
-      {/* Zib's body */}
+      {/* Zib's image */}
       <div 
         className={`
-          ${sizeClasses[size]} ${bodyColor} rounded-full
-          flex items-center justify-center relative
+          ${sizeClasses[size]} rounded-full
+          overflow-hidden relative
           ${animate ? 'float' : ''}
-          border-4 border-alien-green
+          border-3 border-alien-green
           glow-green
         `}
       >
-        {/* Eyes */}
-        <div className="flex gap-2 absolute top-1/4">
-          <div className={`
-            w-3 h-4 bg-black rounded-full
-            ${isBlinking ? 'scale-y-0' : 'scale-y-100'}
-            transition-transform duration-100
-          `}>
-            <div className="w-1.5 h-1.5 bg-white rounded-full mt-0.5 ml-0.5" />
-          </div>
-          <div className={`
-            w-3 h-4 bg-black rounded-full
-            ${isBlinking ? 'scale-y-0' : 'scale-y-100'}
-            transition-transform duration-100
-          `}>
-            <div className="w-1.5 h-1.5 bg-white rounded-full mt-0.5 ml-0.5" />
-          </div>
-        </div>
-
-        {/* Antennae */}
-        <div className="absolute -top-4 left-1/3">
-          <div className="w-1 h-4 bg-alien-green rounded-full" />
-          <div className="w-2 h-2 bg-star-gold rounded-full -mt-1 -ml-0.5 pulse-glow" />
-        </div>
-        <div className="absolute -top-3 right-1/3">
-          <div className="w-1 h-3 bg-alien-green rounded-full" />
-          <div className="w-2 h-2 bg-star-gold rounded-full -mt-1 -ml-0.5 pulse-glow" />
-        </div>
-
-        {/* Mouth based on expression */}
-        <div className="absolute bottom-1/4 text-lg">
-          {expression === 'happy' && '⌣'}
-          {expression === 'thinking' && '○'}
-          {expression === 'excited' && '◡'}
-          {expression === 'curious' && '?'}
-          {expression === 'learning' && '•'}
-        </div>
+        <img 
+          src={ZIB_IMAGE} 
+          alt="Zib the alien"
+          className="w-full h-full object-cover"
+        />
       </div>
 
       {/* Name tag */}

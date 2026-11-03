@@ -91,12 +91,16 @@ export function StoryReader({ story, onComplete, onExit }: StoryReaderProps) {
         key={`${word.word}-${index}`}
         onClick={() => handleWordTap(word)}
         className={`
-          word-highlight inline-block mx-0.5 cursor-pointer
+          word-highlight inline-block mx-1 cursor-pointer transition-colors
           ${wasDecoded ? 'text-alien-green' : 'text-white'}
-          ${word.isSightWord ? 'italic' : ''}
+          ${word.isSightWord ? 'sight-word' : ''}
         `}
+        title={word.isSightWord ? 'Memory word - tap to learn!' : undefined}
       >
         {word.word}
+        {word.isSightWord && !wasDecoded && (
+          <span className="sight-word-dot" aria-hidden="true">•</span>
+        )}
       </span>
     );
   };
@@ -153,25 +157,25 @@ export function StoryReader({ story, onComplete, onExit }: StoryReaderProps) {
 
   return (
     <div className="fixed inset-0 bg-gradient-to-b from-space-dark to-space-deep flex flex-col z-40">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-white/10">
+      {/* Header - bigger touch targets */}
+      <div className="flex items-center justify-between p-3 border-b border-white/10">
         <button 
           onClick={onExit}
-          className="text-2xl p-2 hover:bg-white/10 rounded-full"
+          className="text-xl px-4 py-3 hover:bg-white/10 rounded-lg flex items-center gap-2 min-w-[100px]"
         >
-          ←
+          ← Exit
         </button>
         
-        <h1 className="text-lg font-semibold truncate px-2">
+        <h1 className="text-lg font-semibold truncate px-2 flex-1 text-center">
           {story.title}
         </h1>
         
         <button
           onClick={readParagraphAloud}
-          className="text-2xl p-2 hover:bg-white/10 rounded-full"
+          className="text-xl px-4 py-3 hover:bg-white/10 rounded-lg flex items-center gap-2"
           aria-label="Read aloud"
         >
-          🔊
+          🔊 Read
         </button>
       </div>
 
@@ -193,32 +197,40 @@ export function StoryReader({ story, onComplete, onExit }: StoryReaderProps) {
       )}
 
       {/* Main reading area */}
-      <div className="flex-1 overflow-y-auto p-6">
-        <div className="max-w-2xl mx-auto">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+        <div className="max-w-3xl mx-auto">
           {/* Paragraph number */}
           <div className="text-sm text-slate-400 mb-4">
             Part {currentParagraph + 1} of {story.paragraphs.length}
           </div>
 
-          {/* Story text */}
-          <p className="reading-text leading-relaxed">
+          {/* Story text - 28-32px for Chromebook readability */}
+          <p className="story-text-large leading-loose">
             {paragraph.words.map((word, i) => renderWord(word, i))}
           </p>
 
+          {/* Sight word legend */}
+          <div className="mt-6 p-3 bg-white/5 rounded-lg border border-white/10">
+            <p className="text-sm text-slate-300">
+              <span className="sight-word">Words<span className="sight-word-dot">•</span></span>
+              {' '}with a dot are "memory words" - tap them to learn by heart!
+            </p>
+          </div>
+
           {/* Tap hint */}
-          <p className="text-sm text-slate-400 mt-6 text-center">
+          <p className="text-base text-slate-400 mt-4 text-center">
             👆 Tap any word to sound it out
           </p>
         </div>
       </div>
 
-      {/* Navigation */}
+      {/* Navigation - bigger buttons for kids */}
       <div className="p-4 border-t border-white/10 flex gap-3">
         <Button
           variant="ghost"
           onClick={handlePrevParagraph}
           disabled={currentParagraph === 0}
-          className="flex-1"
+          className="flex-1 py-4 text-lg"
         >
           ← Back
         </Button>
@@ -227,7 +239,7 @@ export function StoryReader({ story, onComplete, onExit }: StoryReaderProps) {
           variant="primary"
           onClick={handleNextParagraph}
           glow={currentParagraph === story.paragraphs.length - 1}
-          className="flex-1"
+          className="flex-1 py-4 text-lg"
         >
           {currentParagraph === story.paragraphs.length - 1 ? 'Finish ✓' : 'Next →'}
         </Button>

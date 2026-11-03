@@ -6,24 +6,35 @@
  * - Neon-styled holographic panel (not full screen)
  * - Shows video with poster, or plays voice-only
  * - Caption text from manifest always visible
- * - Tap to dismiss/skip
+ * - Large tap target to dismiss (48px+ "Got it" button)
+ * - Auto-dismisses after clip ends
+ * - Falls back to voice+poster if video won't load in 4s
+ * - Position avoids story's Next button (top-right instead of bottom-right)
  * - Lazy-loads video (no preloading)
- * - Doesn't block reading flow for long
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { getZibClipService, type PendingClip } from '../services/zibClips';
+import { resolveAssetUrl } from '../utils/assets';
+
+// Max time to wait for video before falling back to voice+poster
+const VIDEO_LOAD_TIMEOUT_MS = 4000;
+
+// Zib poster image for avatar
+const ZIB_POSTER = resolveAssetUrl('zib-clips/poster/zib_interest_picker_intro.jpg');
 
 interface ZibClipProps {
-  position?: 'bottom-right' | 'center' | 'bottom-center';
+  position?: 'top-right' | 'center' | 'bottom-center';
 }
 
-export function ZibClip({ position = 'bottom-right' }: ZibClipProps) {
+export function ZibClip({ position = 'top-right' }: ZibClipProps) {
   const [pendingClip, setPendingClip] = useState<PendingClip | null>(null);
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [videoFailed, setVideoFailed] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const loadTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const service = getZibClipService();
 
   // Subscribe to clip changes
@@ -32,22 +43,52 @@ export function ZibClip({ position = 'bottom-right' }: ZibClipProps) {
       setPendingClip(clip);
       setIsVideoLoaded(false);
       setIsPlaying(false);
+      setVideoFailed(false);
+      
+      // Clear any existing timeout
+      if (loadTimeoutRef.current) {
+        clearTimeout(loadTimeoutRef.current);
+        loadTimeoutRef.current = null;
+      }
     });
     
     // Check if there's already a clip showing
     setPendingClip(service.getCurrentClip());
     
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+      if (loadTimeoutRef.current) {
+        clearTimeout(loadTimeoutRef.current);
+      }
+    };
   }, [service]);
 
   // Handle video loaded
   const handleVideoCanPlay = useCallback(() => {
+    // Clear load timeout since video loaded
+    if (loadTimeoutRef.current) {
+      clearTimeout(loadTimeoutRef.current);
+      loadTimeoutRef.current = null;
+    }
+    
     setIsVideoLoaded(true);
     if (videoRef.current) {
       videoRef.current.play().catch(() => {
-        // Autoplay blocked - user needs to tap
+        // Autoplay blocked or failed - fall back to voice mode
+        setVideoFailed(true);
       });
       setIsPlaying(true);
+    }
+  }, []);
+
+  // Handle video error - fall back to voice mode
+  const handleVideoError = useCallback(() => {
+    console.warn('Zib clip video error - falling back to voice mode');
+    setVideoFailed(true);
+    // Clear timeout
+    if (loadTimeoutRef.current) {
+      clearTimeout(loadTimeoutRef.current);
+      loadTimeoutRef.current = null;
     }
   }, []);
 
@@ -84,30 +125,43 @@ export function ZibClip({ position = 'bottom-right' }: ZibClipProps) {
   useEffect(() => {
     if (!pendingClip) return;
 
-    if (pendingClip.mode === 'voice') {
+    if (pendingClip.mode === 'voice' || videoFailed) {
       // Voice-only mode - play audio immediately
       if (audioRef.current) {
         audioRef.current.src = pendingClip.clip.voiceUrl;
         audioRef.current.play().catch(() => {});
         setIsPlaying(true);
       }
+    } else {
+      // Video mode - set timeout to fall back to voice if video doesn't load
+      loadTimeoutRef.current = setTimeout(() => {
+        if (!isVideoLoaded) {
+          console.warn('Zib clip video load timeout - falling back to voice');
+          setVideoFailed(true);
+        }
+      }, VIDEO_LOAD_TIMEOUT_MS);
     }
-    // Video mode is handled by the video element's onCanPlay
-  }, [pendingClip]);
+    
+    return () => {
+      if (loadTimeoutRef.current) {
+        clearTimeout(loadTimeoutRef.current);
+      }
+    };
+  }, [pendingClip, videoFailed, isVideoLoaded]);
 
   if (!pendingClip) return null;
 
   const { clip, mode } = pendingClip;
 
-  // Position classes
+  // Position classes - top-right to avoid covering story's Next button
   const positionClasses = {
-    'bottom-right': 'bottom-4 right-4',
+    'top-right': 'top-4 right-4',
     'center': 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2',
-    'bottom-center': 'bottom-4 left-1/2 -translate-x-1/2'
+    'bottom-center': 'bottom-20 left-1/2 -translate-x-1/2'
   };
 
-  // Voice-only mode: smaller, simpler display
-  if (mode === 'voice') {
+  // Voice-only mode OR video failed: show poster with voice
+  if (mode === 'voice' || videoFailed) {
     return (
       <>
         <audio
@@ -116,21 +170,30 @@ export function ZibClip({ position = 'bottom-right' }: ZibClipProps) {
           preload="none"
         />
         <div 
-          className={`fixed ${positionClasses[position]} z-50 cursor-pointer`}
-          onClick={handleDismiss}
+          className={`fixed ${positionClasses[position]} z-50`}
         >
-          <div className="zib-comm-link-mini p-3 flex items-center gap-3 max-w-xs">
-            {/* Small Zib avatar */}
-            <div className="w-12 h-12 rounded-full bg-alien-green/20 border-2 border-alien-green flex items-center justify-center text-2xl shrink-0 pulse-glow">
-              👽
+          <div className="zib-comm-link-mini p-3 flex items-center gap-3 max-w-sm">
+            {/* Zib poster image */}
+            <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-alien-green shrink-0 glow-green">
+              <img 
+                src={clip.posterUrl || ZIB_POSTER} 
+                alt="Zib"
+                className="w-full h-full object-cover"
+              />
             </div>
             {/* Caption */}
             <div className="flex-1">
               <p className="text-sm text-white font-medium leading-snug">
                 "{clip.caption}"
               </p>
-              <p className="text-xs text-neon-cyan/60 mt-1">Tap to dismiss</p>
             </div>
+            {/* Big dismiss button - at least 48px */}
+            <button
+              onClick={handleDismiss}
+              className="shrink-0 px-4 py-2 min-w-[48px] min-h-[48px] bg-alien-green/20 hover:bg-alien-green/30 border border-alien-green/50 rounded-lg text-alien-green font-medium transition-colors"
+            >
+              Got it!
+            </button>
           </div>
         </div>
       </>
@@ -141,9 +204,8 @@ export function ZibClip({ position = 'bottom-right' }: ZibClipProps) {
   return (
     <div 
       className={`fixed ${positionClasses[position]} z-50`}
-      onClick={handleDismiss}
     >
-      <div className="zib-comm-link cursor-pointer">
+      <div className="zib-comm-link">
         {/* Header - Zib's Comm-Link */}
         <div className="flex items-center justify-between px-4 py-2 border-b border-neon-cyan/30">
           <div className="flex items-center gap-2">
@@ -153,13 +215,13 @@ export function ZibClip({ position = 'bottom-right' }: ZibClipProps) {
             </span>
           </div>
           <button 
-            className="text-white/60 hover:text-white text-sm px-2 py-1"
+            className="px-4 py-2 min-w-[48px] min-h-[48px] text-white/80 hover:text-white hover:bg-white/10 rounded-lg font-medium transition-colors flex items-center gap-1"
             onClick={(e) => {
               e.stopPropagation();
               handleDismiss();
             }}
           >
-            ✕ Skip
+            Skip ✕
           </button>
         </div>
 
@@ -174,13 +236,13 @@ export function ZibClip({ position = 'bottom-right' }: ZibClipProps) {
                 className="absolute inset-0 w-full h-full object-cover opacity-50"
               />
               <div className="relative z-10 text-center">
-                <div className="text-4xl animate-pulse mb-2">👽</div>
-                <p className="text-sm text-neon-cyan">Loading transmission...</p>
+                <div className="w-12 h-12 rounded-full border-2 border-neon-cyan border-t-transparent animate-spin mx-auto mb-2" />
+                <p className="text-sm text-neon-cyan">Incoming...</p>
               </div>
             </div>
           )}
           
-          {/* Video element - lazy loaded */}
+          {/* Video element - WebM first, MP4 fallback */}
           <video
             ref={videoRef}
             className={`w-full h-full object-cover ${isVideoLoaded ? 'opacity-100' : 'opacity-0'}`}
@@ -189,7 +251,9 @@ export function ZibClip({ position = 'bottom-right' }: ZibClipProps) {
             playsInline
             onCanPlay={handleVideoCanPlay}
             onEnded={handleVideoEnded}
+            onError={handleVideoError}
           >
+            <source src={clip.videoUrl.replace('.mp4', '.webm')} type="video/webm" />
             <source src={clip.videoUrl} type="video/mp4" />
           </video>
 
@@ -210,14 +274,17 @@ export function ZibClip({ position = 'bottom-right' }: ZibClipProps) {
           )}
         </div>
 
-        {/* Caption */}
-        <div className="px-4 py-3 bg-space-deep/80">
-          <p className="text-white text-center font-medium leading-relaxed">
+        {/* Caption and dismiss button */}
+        <div className="px-4 py-3 bg-space-deep/80 flex items-center gap-3">
+          <p className="flex-1 text-white font-medium leading-relaxed">
             "{clip.caption}"
           </p>
-          <p className="text-xs text-neon-cyan/50 text-center mt-2">
-            Tap anywhere to continue
-          </p>
+          <button
+            onClick={handleDismiss}
+            className="shrink-0 px-4 py-2 min-w-[48px] min-h-[48px] bg-alien-green/20 hover:bg-alien-green/30 border border-alien-green/50 rounded-lg text-alien-green font-medium transition-colors"
+          >
+            Got it!
+          </button>
         </div>
 
         {/* Scanline effect */}

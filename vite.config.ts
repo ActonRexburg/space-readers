@@ -21,6 +21,8 @@ export default defineConfig({
         background_color: '#0f0a1a',
         display: 'standalone',
         orientation: 'portrait',
+        start_url: '.',
+        scope: '.',
         icons: [
           {
             src: 'pwa-192x192.png',
@@ -44,7 +46,7 @@ export default defineConfig({
         // Include core app assets in precache (not videos - too large)
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,jpg}'],
         // Exclude large video files from precache
-        globIgnores: ['**/*.mp4', '**/*.mp3'],
+        globIgnores: ['**/*.mp4', '**/*.webm', '**/*.mp3'],
         // Force new service worker to take control immediately
         skipWaiting: true,
         clientsClaim: true,
@@ -69,12 +71,12 @@ export default defineConfig({
           },
           // Cache video files with NetworkFirst strategy (show latest, fallback to cache)
           {
-            urlPattern: /\.mp4$/i,
+            urlPattern: /\.(mp4|webm)$/i,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'video-cache',
               expiration: {
-                maxEntries: 20,
+                maxEntries: 40,
                 maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
               },
               cacheableResponse: {

@@ -79,10 +79,14 @@ export function App() {
     service.setEnabled(settings.zibClipsEnabled);
   }, [settings.zibClipsEnabled]);
 
+  // Get basename from Vite's BASE_URL (e.g., "/space-readers/")
+  // Remove trailing slash for react-router compatibility
+  const basename = import.meta.env.BASE_URL.replace(/\/$/, '') || '/';
+
   return (
-    <BrowserRouter>
-      {/* Global Zib Clip popup - renders on top of everything */}
-      <ZibClip position="bottom-right" />
+    <BrowserRouter basename={basename}>
+      {/* Global Zib Clip popup - renders on top of everything, positioned away from Next button */}
+      <ZibClip position="top-right" />
       
       <Routes>
         {/* Profile picker / home */}

@@ -118,7 +118,7 @@ export function InterestPicker({
       {/* Zib helper */}
       <div className="relative z-10 px-4 py-3 bg-space-deep/50">
         <div className="max-w-4xl mx-auto flex items-center gap-4">
-          <Zib expression="curious" size="sm" />
+          <Zib size="sm" />
           <div className="flex-1 space-card p-3">
             <p className="text-sm text-cyan-200">
               {selectionCount === 0 
@@ -211,8 +211,8 @@ export function InterestPicker({
         </div>
       )}
 
-      {/* Bottom bar with fuel gauge and launch button */}
-      <footer className="relative z-10 p-4 bg-space-deep/90 border-t border-cyan-500/20 safe-area-bottom">
+      {/* Bottom bar with fuel gauge and launch button - sticky so never cut off */}
+      <footer className="sticky bottom-0 z-20 p-4 bg-space-deep/95 backdrop-blur-sm border-t border-cyan-500/20 safe-area-bottom">
         <div className="max-w-4xl mx-auto space-y-3">
           {/* Fuel gauge */}
           <div className="flex items-center gap-3">

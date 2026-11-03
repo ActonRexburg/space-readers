@@ -31,6 +31,9 @@ interface AppState {
   // All profiles on this device
   profiles: Profile[];
   
+  // Progress cache for all profiles (for dashboard)
+  allProgress: Record<string, ProfileProgress>;
+  
   // Device settings
   settings: DeviceSettings;
   
@@ -39,6 +42,9 @@ interface AppState {
   
   // Actions
   initialize: () => Promise<void>;
+  
+  // Get progress for any profile (from cache)
+  getProfileProgress: (profileId: string) => ProfileProgress | null;
   
   // Profile management
   selectProfile: (profileId: string) => Promise<void>;
@@ -58,7 +64,7 @@ interface AppState {
   // Progress updates
   recordWordHelp: (word: string) => Promise<void>;
   completeStory: (storyId: StoryId, wordsDecoded: string[], durationMs: number) => Promise<void>;
-  completeMission: (missionId: MissionId, fuelReward: number, starReward: number) => Promise<void>;
+  completeMission: (missionId: MissionId, fuelReward: number, starReward: number, unlocksPlanet?: string) => Promise<void>;
   addAlienWord: (word: string) => Promise<void>;
   
   // Rank calculation
@@ -71,6 +77,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   activeProfile: null,
   activeProgress: null,
   profiles: [],
+  allProgress: {},
   settings: {
     parentPin: '1234',
     audioEnabled: true,
@@ -86,6 +93,15 @@ export const useAppStore = create<AppState>((set, get) => ({
         storageService.getSettings()
       ]);
 
+      // Load progress for all profiles (for dashboard)
+      const allProgress: Record<string, ProfileProgress> = {};
+      for (const profile of profiles) {
+        const progress = await storageService.getProgress(profile.id);
+        if (progress) {
+          allProgress[profile.id] = progress;
+        }
+      }
+
       // If there was a previously active profile, try to restore it
       let activeProfile: Profile | null = null;
       let activeProgress: ProfileProgress | null = null;
@@ -93,12 +109,13 @@ export const useAppStore = create<AppState>((set, get) => ({
       if (settings.activeProfileId) {
         activeProfile = profiles.find(p => p.id === settings.activeProfileId) ?? null;
         if (activeProfile) {
-          activeProgress = await storageService.getProgress(activeProfile.id);
+          activeProgress = allProgress[activeProfile.id] || await storageService.getProgress(activeProfile.id);
         }
       }
 
       set({
         profiles,
+        allProgress,
         settings,
         activeProfile,
         activeProgress,
@@ -111,8 +128,17 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
   },
 
+  getProfileProgress: (profileId: string) => {
+    const { allProgress, activeProgress } = get();
+    // Return active progress if it's for this profile (most up-to-date)
+    if (activeProgress?.profileId === profileId) {
+      return activeProgress;
+    }
+    return allProgress[profileId] || null;
+  },
+
   selectProfile: async (profileId: string) => {
-    const { profiles, settings } = get();
+    const { profiles, settings, allProgress } = get();
     const profile = profiles.find(p => p.id === profileId);
     
     if (!profile) {
@@ -125,7 +151,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     await storageService.saveProfile(updatedProfile);
 
     // Get or create progress
-    let progress = await storageService.getProgress(profileId);
+    let progress = allProgress[profileId] || await storageService.getProgress(profileId);
     if (!progress) {
       progress = createInitialProgress(profileId);
       await storageService.saveProgress(progress);
@@ -139,7 +165,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       activeProfile: updatedProfile,
       activeProgress: progress,
       settings: newSettings,
-      profiles: get().profiles.map(p => p.id === profileId ? updatedProfile : p)
+      profiles: get().profiles.map(p => p.id === profileId ? updatedProfile : p),
+      allProgress: { ...allProgress, [profileId]: progress }
     });
   },
 
@@ -219,7 +246,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   closeAdultGate: () => set({ isAdultGateOpen: false }),
 
   recordWordHelp: async (word: string) => {
-    const { activeProgress } = get();
+    const { activeProgress, allProgress } = get();
     if (!activeProgress) return;
 
     const normalizedWord = word.toLowerCase();
@@ -233,11 +260,14 @@ export const useAppStore = create<AppState>((set, get) => ({
     };
 
     await storageService.saveProgress(newProgress);
-    set({ activeProgress: newProgress });
+    set({ 
+      activeProgress: newProgress,
+      allProgress: { ...allProgress, [newProgress.profileId]: newProgress }
+    });
   },
 
   completeStory: async (storyId: StoryId, wordsDecoded: string[], durationMs: number) => {
-    const { activeProgress, calculateRank } = get();
+    const { activeProgress, allProgress, calculateRank } = get();
     if (!activeProgress) return;
 
     const sessionRecord: SessionRecord = {
@@ -262,14 +292,22 @@ export const useAppStore = create<AppState>((set, get) => ({
     };
 
     await storageService.saveProgress(newProgress);
-    set({ activeProgress: newProgress });
+    set({ 
+      activeProgress: newProgress,
+      allProgress: { ...allProgress, [newProgress.profileId]: newProgress }
+    });
   },
 
-  completeMission: async (missionId: MissionId, fuelReward: number, starReward: number) => {
-    const { activeProgress, calculateRank } = get();
+  completeMission: async (missionId: MissionId, fuelReward: number, starReward: number, unlocksPlanet?: string) => {
+    const { activeProgress, allProgress, calculateRank } = get();
     if (!activeProgress) return;
 
     const newFuelCredits = activeProgress.fuelCredits + fuelReward;
+
+    // Add planet to unlocked list if provided and not already unlocked
+    const newPlanetsUnlocked = unlocksPlanet && !activeProgress.planetsUnlocked.includes(unlocksPlanet)
+      ? [...activeProgress.planetsUnlocked, unlocksPlanet]
+      : activeProgress.planetsUnlocked;
 
     const newProgress: ProfileProgress = {
       ...activeProgress,
@@ -278,15 +316,19 @@ export const useAppStore = create<AppState>((set, get) => ({
         : [...activeProgress.missionsCompleted, missionId],
       fuelCredits: newFuelCredits,
       starCredits: activeProgress.starCredits + starReward,
-      currentRank: calculateRank(newFuelCredits)
+      currentRank: calculateRank(newFuelCredits),
+      planetsUnlocked: newPlanetsUnlocked
     };
 
     await storageService.saveProgress(newProgress);
-    set({ activeProgress: newProgress });
+    set({ 
+      activeProgress: newProgress,
+      allProgress: { ...allProgress, [newProgress.profileId]: newProgress }
+    });
   },
 
   addAlienWord: async (word: string) => {
-    const { activeProgress } = get();
+    const { activeProgress, allProgress } = get();
     if (!activeProgress) return;
 
     const normalizedWord = word.toLowerCase();
@@ -298,7 +340,10 @@ export const useAppStore = create<AppState>((set, get) => ({
     };
 
     await storageService.saveProgress(newProgress);
-    set({ activeProgress: newProgress });
+    set({ 
+      activeProgress: newProgress,
+      allProgress: { ...allProgress, [newProgress.profileId]: newProgress }
+    });
   },
 
   calculateRank: (fuelCredits: number): Rank => {

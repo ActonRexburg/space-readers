@@ -84,11 +84,19 @@ export function WordDecoder({ word, isOpen, onClose, onComplete, onKeepTrying }:
       audioService.current.speakPhoneme(word.graphemes[newActiveIndex]);
     }
     
-    // Check if slider reached the end
-    if (value >= 95 && !isComplete) {
+    // Check if slider reached the end (lowered to 90 for easier touch completion)
+    if (value >= 90 && !isComplete) {
       setIsComplete(true);
     }
   }, [getActiveGraphemeIndex, word.graphemes, isComplete]);
+
+  // Handle touch/mouse input to mark complete when dragged to end
+  const handleSliderInput = useCallback((e: React.FormEvent<HTMLInputElement>) => {
+    const value = parseInt((e.target as HTMLInputElement).value, 10);
+    if (value >= 90 && !isComplete) {
+      setIsComplete(true);
+    }
+  }, [isComplete]);
 
   // Handle completion (checkmark press)
   const handleComplete = useCallback(async () => {
@@ -184,25 +192,38 @@ export function WordDecoder({ word, isOpen, onClose, onComplete, onKeepTrying }:
           ))}
         </div>
 
-        {/* Slider */}
+        {/* Slider with animated hint */}
         <div className="relative mb-6 px-2">
+          {/* Animated hand hint when not started */}
+          {!hasStarted && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+              <div className="animate-bounce-x text-4xl">
+                👆
+              </div>
+            </div>
+          )}
+          
           <input
             type="range"
             min="0"
             max="100"
             value={sliderValue}
             onChange={handleSliderChange}
+            onInput={handleSliderInput}
             onMouseUp={handleSliderRelease}
             onTouchEnd={handleSliderRelease}
-            className="decoder-slider w-full"
-            aria-label="Sound out slider"
+            className="decoder-slider decoder-slider-large w-full h-12 cursor-grab active:cursor-grabbing"
+            aria-label="Sound out slider - drag to hear each sound"
+            style={{ touchAction: 'none' }}
           />
           
-          {/* Visual indicators above slider */}
-          <div className="absolute top-[-20px] left-0 right-0 flex justify-between px-4 text-sm text-slate-400">
-            <span>Start</span>
-            <span>→ Drag →</span>
-            <span>End</span>
+          {/* Visual indicators */}
+          <div className="flex justify-between px-2 mt-2 text-sm">
+            <span className="text-neon-cyan">Start</span>
+            <span className={`font-bold ${isComplete ? 'text-alien-green' : 'text-star-gold'}`}>
+              {isComplete ? '✓ Done!' : '→ Drag all the way →'}
+            </span>
+            <span className="text-alien-green">End</span>
           </div>
         </div>
 
@@ -224,20 +245,26 @@ export function WordDecoder({ word, isOpen, onClose, onComplete, onKeepTrying }:
 
         {/* Instructions or completion */}
         {!hasStarted && (
-          <p className="text-center text-star-gold mb-4 animate-pulse">
-            👆 Drag the slider to start!
+          <p className="text-center text-star-gold mb-4 text-lg">
+            Drag the slider from start to end!
+          </p>
+        )}
+        
+        {hasStarted && !isComplete && (
+          <p className="text-center text-fuel-orange mb-4">
+            Keep going! Drag all the way to the right →
           </p>
         )}
         
         {isComplete && (
           <p className="text-center text-alien-green mb-4 text-lg font-semibold">
-            ✨ Great! Now say the whole word!
+            ✨ Great job! Now tap the green button!
           </p>
         )}
 
         {/* Actions */}
         <div className="flex gap-3">
-          <Button variant="ghost" onClick={onClose} className="flex-1">
+          <Button variant="ghost" onClick={onClose} className="flex-1 py-4">
             Close
           </Button>
           
@@ -246,9 +273,9 @@ export function WordDecoder({ word, isOpen, onClose, onComplete, onKeepTrying }:
             onClick={handleComplete}
             disabled={!isComplete}
             glow={isComplete}
-            className="flex-1"
+            className="flex-1 py-4 text-lg"
           >
-            {isComplete ? 'Say Word ✓' : 'Complete slider first'}
+            {isComplete ? '🔊 Say the Word!' : 'Finish sliding first'}
           </Button>
         </div>
 
