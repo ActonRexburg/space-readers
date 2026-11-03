@@ -385,6 +385,75 @@ body {
   background: rgba(0, 245, 255, 0.25);
 }
 
+/* Currently-spoken word during read-aloud */
+.word-speaking {
+  background: rgba(251, 191, 36, 0.35);
+  color: var(--color-star-gold);
+  box-shadow: 0 0 12px rgba(251, 191, 36, 0.55);
+  border-radius: 6px;
+}
+
+/* ============================================
+   KID READ-ALOUD + PRIMARY ACTION CUES
+   ============================================ */
+
+.speak-btn {
+  min-width: 44px;
+  min-height: 44px;
+  height: 44px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  border: 2px solid rgba(0, 245, 255, 0.55);
+  background: rgba(0, 245, 255, 0.08);
+  color: var(--color-neon-cyan);
+  box-shadow: 0 0 8px rgba(0, 245, 255, 0.25);
+  cursor: pointer;
+  flex-shrink: 0;
+  touch-action: manipulation;
+}
+
+.speak-btn:hover {
+  background: rgba(0, 245, 255, 0.18);
+  box-shadow: 0 0 14px rgba(0, 245, 255, 0.45);
+}
+
+.speak-btn-playing {
+  border-color: var(--color-star-gold);
+  color: var(--color-star-gold);
+  background: rgba(251, 191, 36, 0.15);
+  box-shadow: 0 0 14px rgba(251, 191, 36, 0.45);
+}
+
+.pulse-action {
+  animation: pulse-action 1.6s ease-in-out infinite;
+}
+
+@keyframes pulse-action {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 12px rgba(251, 191, 36, 0.4), 0 0 24px rgba(251, 191, 36, 0.15);
+  }
+  50% {
+    transform: scale(1.04);
+    box-shadow: 0 0 28px rgba(251, 191, 36, 0.85), 0 0 48px rgba(251, 191, 36, 0.35);
+  }
+}
+
+.kid-text {
+  font-size: 1.125rem; /* 18px minimum for kid-facing labels */
+  line-height: 1.4;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse-action {
+    animation: none;
+  }
+}
+
 /* ============================================
    DECODER POPUP (Tron style)
    ============================================ */
@@ -575,7 +644,7 @@ body {
   justify-content: center;
   gap: 0.25rem;
   cursor: pointer;
-  min-height: 80px;
+  min-height: 96px;
 }
 
 .interest-tile:hover {
@@ -705,6 +774,23 @@ body {
   94% { opacity: 1; }
   96% { opacity: 0.9; }
   97% { opacity: 1; }
+}
+
+/* Confetti falling animation */
+@keyframes confetti {
+  0% {
+    transform: translateY(-100vh) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+.animate-confetti {
+  animation: confetti 4s ease-out forwards;
+  font-size: 2rem;
 }
 
 /* Respect reduced motion */

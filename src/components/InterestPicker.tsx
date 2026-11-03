@@ -1,13 +1,8 @@
 /**
  * InterestPicker Component
- * 
- * A kid-friendly grid of 50 interest tiles for AI book generation.
- * Features:
- * - Emoji icons (swappable for AI art later)
- * - Tapping speaks the label aloud
- * - Fuel gauge counter that fills to 10 minimum
- * - Launch button unlocks at 10+ selections
- * - Triggers Zib clips: interest_picker_intro on open, interests_done on launch
+ *
+ * A kid-friendly grid of interest tiles. Tapping speaks the label.
+ * Fuel gauge fills to 10; Launch pulses when ready.
  */
 
 import { useState, useCallback, useEffect, useRef } from 'react';
@@ -16,6 +11,7 @@ import { getAudioService } from '../services/audio';
 import { useZibClips } from './ZibClip';
 import { Button } from './Button';
 import { Zib } from './Zib';
+import { SpeakButton } from './SpeakButton';
 
 interface InterestPickerProps {
   initialInterests?: string[];
@@ -24,8 +20,8 @@ interface InterestPickerProps {
   isEditing?: boolean;
 }
 
-export function InterestPicker({ 
-  initialInterests = [], 
+export function InterestPicker({
+  initialInterests = [],
   onComplete,
   onBack,
   isEditing = false
@@ -37,11 +33,9 @@ export function InterestPicker({
   const { triggerInterestPickerIntro, triggerInterestsDone } = useZibClips();
   const hasTriggeredIntro = useRef(false);
 
-  // Trigger intro clip when picker opens (only for first-time, not editing)
   useEffect(() => {
     if (!isEditing && !hasTriggeredIntro.current) {
       hasTriggeredIntro.current = true;
-      // Small delay to let the UI render first
       setTimeout(() => {
         triggerInterestPickerIntro();
       }, 500);
@@ -49,10 +43,8 @@ export function InterestPicker({
   }, [isEditing, triggerInterestPickerIntro]);
 
   const handleTileClick = useCallback((interest: InterestOption) => {
-    // Speak the label
     audioService.speakWord(interest.label);
 
-    // Toggle selection
     setSelectedInterests(prev => {
       const newSet = new Set(prev);
       if (newSet.has(interest.id)) {
@@ -66,8 +58,7 @@ export function InterestPicker({
 
   const handleComplete = useCallback(() => {
     const interests = Array.from(selectedInterests);
-    
-    // Trigger interests_done clip, then complete
+
     const success = triggerInterestsDone({
       onComplete: () => {
         onComplete(interests);
@@ -76,8 +67,7 @@ export function InterestPicker({
         onComplete(interests);
       }
     });
-    
-    // If clip didn't play (disabled or already showing), complete immediately
+
     if (!success) {
       onComplete(interests);
     }
@@ -87,55 +77,45 @@ export function InterestPicker({
   const isReady = selectionCount >= MIN_INTERESTS;
   const gaugePercent = Math.min(100, (selectionCount / MIN_INTERESTS) * 100);
 
-  // Get selected interests as array with their data for display
-  const selectedItems = INTEREST_OPTIONS.filter(i => selectedInterests.has(i.id));
+  const zibLine = selectionCount === 0
+    ? "Tap the pictures you love."
+    : isReady
+      ? "Fuel tank full. Tap Launch!"
+      : `Pick ${MIN_INTERESTS - selectionCount} more.`;
 
   return (
     <div className="min-h-screen flex flex-col bg-space-dark relative overflow-hidden">
-      {/* Background gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-space-dark via-space-deep to-space-purple" />
-      
-      {/* Header */}
+
       <header className="relative z-10 p-4 border-b border-cyan-500/20">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
-          {onBack && (
-            <button 
+          {onBack ? (
+            <button
               onClick={onBack}
-              className="p-2 hover:bg-white/10 rounded-lg text-neon-cyan"
+              className="p-3 min-h-[44px] hover:bg-white/10 rounded-lg text-neon-cyan text-lg"
             >
               ← Back
             </button>
+          ) : (
+            <div className="w-16" />
           )}
-          <div className="flex-1 text-center">
-            <h1 className="text-2xl font-bold text-glow-cyan">
-              {isEditing ? '✏️ Edit Interests' : '🎯 Pick What You Love!'}
-            </h1>
-          </div>
+          <h1 className="text-2xl font-bold text-glow-cyan text-center flex-1">
+            {isEditing ? '✏️ Interests' : '🎯 Your Picks'}
+          </h1>
           <div className="w-16" />
         </div>
       </header>
 
-      {/* Zib helper */}
-      <div className="relative z-10 px-4 py-3 bg-space-deep/50">
-        <div className="max-w-4xl mx-auto flex items-center gap-4">
+      <div className="relative z-10 px-4 py-4">
+        <div className="max-w-4xl mx-auto flex items-center justify-center gap-4">
           <Zib size="sm" />
-          <div className="flex-1 space-card p-3">
-            <p className="text-sm text-cyan-200">
-              {selectionCount === 0 
-                ? "Help me learn what Earth kids love! Tap pictures to pick your favorites."
-                : selectionCount < MIN_INTERESTS
-                  ? `Great choices! Pick ${MIN_INTERESTS - selectionCount} more to fill up the fuel tank!`
-                  : "Wow, so many cool things! Ready for liftoff when you are!"}
-            </p>
-          </div>
+          <SpeakButton text={zibLine} />
         </div>
       </div>
 
-      {/* Main content - add bottom padding for fixed footer */}
-      <main className="flex-1 relative z-10 overflow-y-auto p-4 pb-40">
+      <main className="flex-1 relative z-10 overflow-y-auto p-4 pb-36">
         <div className="max-w-4xl mx-auto">
-          {/* Interest grid */}
-          <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-2 sm:gap-3">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
             {INTEREST_OPTIONS.map((interest) => {
               const isSelected = selectedInterests.has(interest.id);
               return (
@@ -144,8 +124,8 @@ export function InterestPicker({
                   onClick={() => handleTileClick(interest)}
                   className={`
                     interest-tile aspect-square relative
-                    ${isSelected 
-                      ? 'interest-tile-selected ring-2 ring-alien-green ring-offset-2 ring-offset-space-dark' 
+                    ${isSelected
+                      ? 'interest-tile-selected ring-2 ring-alien-green ring-offset-2 ring-offset-space-dark'
                       : ''}
                   `}
                   style={isSelected ? {
@@ -155,22 +135,21 @@ export function InterestPicker({
                   aria-pressed={isSelected}
                   aria-label={`${interest.label}${isSelected ? ', selected' : ''}`}
                 >
-                  {/* Emoji icon */}
-                  <span className="text-3xl sm:text-4xl" role="img" aria-hidden="true">
+                  <span className="text-4xl sm:text-5xl" role="img" aria-hidden="true">
                     {interest.emoji}
                   </span>
-                  {/* Label */}
                   <span className={`
-                    text-xs font-medium text-center leading-tight
-                    ${isSelected ? 'text-alien-green font-bold' : 'text-white/70'}
+                    kid-text font-medium text-center leading-tight
+                    ${isSelected ? 'text-alien-green font-bold' : 'text-white'}
                   `}>
                     {interest.label}
                   </span>
-                  {/* Selection indicator - prominent checkmark */}
                   {isSelected && (
-                    <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-alien-green flex items-center justify-center shadow-lg"
-                      style={{ boxShadow: '0 0 10px rgba(76, 255, 153, 0.8)' }}>
-                      <span className="text-sm text-space-dark font-bold">✓</span>
+                    <div
+                      className="absolute -top-1 -right-1 w-7 h-7 rounded-full bg-alien-green flex items-center justify-center"
+                      style={{ boxShadow: '0 0 10px rgba(76, 255, 153, 0.8)' }}
+                    >
+                      <span className="text-lg text-space-dark font-bold">✓</span>
                     </div>
                   )}
                 </button>
@@ -180,77 +159,33 @@ export function InterestPicker({
         </div>
       </main>
 
-      {/* Selected items row - shows what you picked so you can see/undo */}
-      {selectedItems.length > 0 && (
-        <div className="relative z-10 px-4 py-3 bg-space-purple/30 border-t border-alien-green/30">
-          <div className="max-w-4xl mx-auto">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-sm text-alien-green font-medium">Your Picks:</span>
-              <span className="text-xs text-white/50">(tap to remove)</span>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {selectedItems.map((interest) => (
-                <button
-                  key={interest.id}
-                  onClick={() => handleTileClick(interest)}
-                  className="
-                    flex items-center gap-1.5 px-3 py-1.5 rounded-full
-                    bg-alien-green/20 border border-alien-green/50
-                    hover:bg-red-500/20 hover:border-red-500/50
-                    transition-colors group
-                  "
-                  aria-label={`Remove ${interest.label}`}
-                >
-                  <span className="text-lg">{interest.emoji}</span>
-                  <span className="text-sm text-white/90">{interest.label}</span>
-                  <span className="text-xs text-white/50 group-hover:text-red-400">✕</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Bottom bar with fuel gauge and launch button - fixed to always be visible */}
       <footer className="fixed bottom-0 left-0 right-0 z-20 p-4 bg-space-deep/95 backdrop-blur-sm border-t border-cyan-500/20 safe-area-bottom">
-        <div className="max-w-4xl mx-auto space-y-3">
-          {/* Fuel gauge */}
-          <div className="flex items-center gap-3">
-            <span className="text-xl">🔥</span>
-            <div className={`flex-1 fuel-gauge ${isReady ? 'fuel-gauge-ready' : ''}`}>
-              <div 
-                className="fuel-gauge-fill"
-                style={{ width: `${gaugePercent}%` }}
-              />
-            </div>
-            <span className={`
-              font-bold text-lg min-w-[3rem] text-right
-              ${isReady ? 'text-star-gold text-glow-gold' : 'text-white/60'}
-            `}>
-              {selectionCount}/{MIN_INTERESTS}
-            </span>
+        <div className="max-w-4xl mx-auto flex items-center gap-4">
+          <span className="text-2xl" aria-hidden="true">🔥</span>
+          <div className={`flex-1 fuel-gauge ${isReady ? 'fuel-gauge-ready' : ''}`}>
+            <div
+              className="fuel-gauge-fill"
+              style={{ width: `${gaugePercent}%` }}
+            />
           </div>
-
-          {/* Helper text and launch button */}
-          <div className="flex items-center justify-between gap-4">
-            <p className={`text-sm ${isReady ? 'text-alien-green' : 'text-white/50'}`}>
-              {isReady 
-                ? '✨ Fuel tank full! Ready for launch!' 
-                : `Pick at least ${MIN_INTERESTS} interests`}
-            </p>
-            <Button
-              variant={isReady ? 'success' : 'secondary'}
-              glow={isReady}
-              disabled={!isReady && !isEditing}
-              onClick={handleComplete}
-              className={`
-                ${isReady ? 'btn-neon-gold' : ''}
-                min-w-[140px]
-              `}
-            >
-              {isReady ? '🚀 Launch!' : `${MIN_INTERESTS - selectionCount} more`}
-            </Button>
-          </div>
+          <span className={`
+            font-bold text-xl min-w-[4rem] text-right
+            ${isReady ? 'text-star-gold text-glow-gold' : 'text-white'}
+          `}>
+            {selectionCount}/{MIN_INTERESTS}
+          </span>
+          <Button
+            variant={isReady ? 'success' : 'secondary'}
+            glow={isReady}
+            disabled={!isReady && !isEditing}
+            onClick={handleComplete}
+            className={`
+              ${isReady ? 'btn-neon-gold pulse-action' : ''}
+              min-w-[140px] text-xl
+            `}
+          >
+            🚀 Launch
+          </Button>
         </div>
       </footer>
     </div>

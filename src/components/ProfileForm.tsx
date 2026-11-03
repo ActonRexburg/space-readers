@@ -1,6 +1,6 @@
 /**
  * Profile Creation/Edit Form
- * 
+ *
  * Modal form for creating or editing a child profile.
  * For NEW profiles: only name + avatar (interests are picked in onboarding)
  * For EDITING profiles: name + avatar + interests
@@ -34,10 +34,8 @@ export function ProfileForm({
   const [step, setStep] = useState<'name' | 'avatar' | 'interests'>('name');
   const [error, setError] = useState('');
 
-  // For new profiles, skip interests step (they'll pick in onboarding's InterestPicker)
   const isEditing = !!editProfile;
 
-  // Reset form when opening/closing or when edit profile changes
   useEffect(() => {
     if (isOpen) {
       if (editProfile) {
@@ -48,7 +46,7 @@ export function ProfileForm({
       } else {
         setName('');
         setAvatarId(AVATARS[0].id);
-        setInterests([]); // Always start with empty interests for new profiles
+        setInterests([]);
         setStep('name');
       }
       setError('');
@@ -69,14 +67,11 @@ export function ProfileForm({
       setStep('avatar');
     } else if (step === 'avatar') {
       if (isEditing) {
-        // Editing: go to interests step
         setStep('interests');
       } else {
-        // New profile: skip interests (handled in Onboarding's InterestPicker)
         onSave(name.trim(), avatarId, []);
       }
     } else {
-      // Save with selected interests (only reached when editing)
       onSave(name.trim(), avatarId, interests);
     }
   };
@@ -90,7 +85,7 @@ export function ProfileForm({
   };
 
   const toggleInterest = (interestId: string) => {
-    setInterests(prev => 
+    setInterests(prev =>
       prev.includes(interestId)
         ? prev.filter(i => i !== interestId)
         : [...prev, interestId]
@@ -101,8 +96,14 @@ export function ProfileForm({
 
   if (!isOpen) return null;
 
+  const primaryLabel = step === 'interests'
+    ? (editProfile ? '💾 Save' : '🚀 Create')
+    : step === 'avatar' && !isEditing
+      ? '🚀 Create'
+      : 'Next →';
+
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 overflow-y-auto"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
@@ -111,15 +112,14 @@ export function ProfileForm({
           {editProfile ? 'Edit Player' : title}
         </h2>
 
-        {/* Step indicator */}
-        <div className="flex justify-center gap-2 mb-6">
+        <div className="flex justify-center gap-2 mb-8">
           {(isEditing ? ['name', 'avatar', 'interests'] : ['name', 'avatar']).map((s, i) => {
             const steps = isEditing ? ['name', 'avatar', 'interests'] : ['name', 'avatar'];
             return (
               <div
                 key={s}
                 className={`w-3 h-3 rounded-full ${
-                  s === step ? 'bg-star-gold' : 
+                  s === step ? 'bg-star-gold' :
                   steps.indexOf(step) > i ? 'bg-alien-green' : 'bg-white/20'
                 }`}
               />
@@ -127,12 +127,8 @@ export function ProfileForm({
           })}
         </div>
 
-        {/* Step: Name */}
         {step === 'name' && (
           <div className="space-y-4">
-            <p className="text-center text-slate-300">
-              What's the player's name?
-            </p>
             <input
               type="text"
               value={name}
@@ -140,25 +136,22 @@ export function ProfileForm({
                 setName(e.target.value);
                 setError('');
               }}
-              placeholder="Enter name..."
-              className="w-full bg-white/10 border-2 border-white/20 rounded-lg p-4 text-xl text-center
+              placeholder="Name"
+              className="w-full bg-white/10 border-2 border-white/20 rounded-lg p-5 text-2xl text-center
                 focus:border-star-gold focus:outline-none"
               autoFocus
               maxLength={20}
               onKeyDown={(e) => e.key === 'Enter' && handleNext()}
+              aria-label="Player name"
             />
             {error && (
-              <p className="text-red-400 text-center">{error}</p>
+              <p className="text-red-400 text-center text-lg">{error}</p>
             )}
           </div>
         )}
 
-        {/* Step: Avatar Selection */}
         {step === 'avatar' && (
-          <div className="space-y-4">
-            <p className="text-center text-slate-300">
-              Choose an avatar for {name}:
-            </p>
+          <div className="space-y-5">
             <div className="grid grid-cols-4 gap-3">
               {AVATARS.map((avatar) => (
                 <button
@@ -167,31 +160,25 @@ export function ProfileForm({
                   className={`
                     w-full aspect-square rounded-xl flex items-center justify-center text-3xl
                     transition-all duration-200
-                    ${avatar.id === avatarId 
-                      ? 'bg-star-gold/30 scale-110 glow-gold' 
+                    ${avatar.id === avatarId
+                      ? 'bg-star-gold/30 scale-110 glow-gold'
                       : 'bg-white/10 hover:bg-white/20'}
                   `}
                   style={{ borderColor: avatar.color, borderWidth: avatar.id === avatarId ? '3px' : '1px' }}
+                  aria-label={avatar.name}
                 >
                   {avatar.emoji}
                 </button>
               ))}
             </div>
-            <p className="text-center text-star-gold text-lg font-semibold">
-              {selectedAvatar.name}
+            <p className="text-center text-star-gold text-xl font-semibold">
+              {selectedAvatar.emoji} {selectedAvatar.name}
             </p>
           </div>
         )}
 
-        {/* Step: Interests */}
         {step === 'interests' && (
           <div className="space-y-4">
-            <p className="text-center text-slate-300">
-              What does {name} like? (Pick any!)
-            </p>
-            <p className="text-center text-sm text-slate-400">
-              We'll use these for personalized stories later
-            </p>
             <div className="grid grid-cols-2 gap-2">
               {INTEREST_OPTIONS.map((interest) => (
                 <button
@@ -200,21 +187,20 @@ export function ProfileForm({
                   className={`
                     p-3 rounded-lg text-left flex items-center gap-2
                     transition-all duration-200
-                    ${interests.includes(interest.id) 
-                      ? 'bg-alien-green/30 border-alien-green border-2' 
+                    ${interests.includes(interest.id)
+                      ? 'bg-alien-green/30 border-alien-green border-2'
                       : 'bg-white/10 border-transparent border-2 hover:bg-white/20'}
                   `}
                 >
                   <span className="text-2xl">{interest.emoji}</span>
-                  <span className="text-sm">{interest.label}</span>
+                  <span className="text-lg">{interest.label}</span>
                 </button>
               ))}
             </div>
           </div>
         )}
 
-        {/* Actions */}
-        <div className="flex gap-3 mt-6">
+        <div className="flex gap-3 mt-8">
           {step !== 'name' ? (
             <Button variant="ghost" onClick={handleBack} className="flex-1">
               Back
@@ -224,22 +210,21 @@ export function ProfileForm({
               Cancel
             </Button>
           )}
-          
-          <Button 
-            variant="primary" 
+
+          <Button
+            variant="primary"
             onClick={handleNext}
-            glow={step === 'interests'}
-            className="flex-1"
+            glow
+            className={`flex-1 pulse-action`}
           >
-            {step === 'interests' ? (editProfile ? 'Save' : 'Create!') : 'Next'}
+            {primaryLabel}
           </Button>
         </div>
 
-        {/* Delete option for editing */}
         {editProfile && onDelete && (
           <button
             onClick={onDelete}
-            className="w-full mt-4 text-red-400 hover:text-red-300 text-sm"
+            className="w-full mt-4 text-red-400 hover:text-red-300 text-lg"
           >
             Delete this player
           </button>

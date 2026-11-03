@@ -57,8 +57,9 @@ export function ProgressDashboard({
         };
       }
 
-      // Calculate most helped words
-      const wordEntries = Object.entries(progress.wordHelpCount);
+      // Calculate most helped words (filter out empty/whitespace words)
+      const wordEntries = Object.entries(progress.wordHelpCount)
+        .filter(([word]) => word && word.trim());
       const mostHelpedWords = wordEntries
         .sort((a, b) => b[1] - a[1])
         .slice(0, 10)
@@ -80,7 +81,7 @@ export function ProgressDashboard({
         totalReadingTimeMs,
         mostHelpedWords,
         recentSessions: progress.sessionHistory.slice(-5).reverse(),
-        alienWordsLearned: progress.alienLearnedWords.length
+        alienWordsLearned: progress.alienLearnedWords.filter(w => w && w.trim()).length
       };
     });
   }, [profiles, getProgress]);
@@ -114,14 +115,14 @@ export function ProgressDashboard({
         </Button>
       </div>
 
-      <div className="p-4 max-w-4xl mx-auto">
+      <div className="p-6 max-w-4xl mx-auto">
         {profiles.length === 0 ? (
           <Card className="text-center py-12">
             <p className="text-slate-400 text-lg">No players yet.</p>
             <p className="text-slate-500 mt-2">Create a player profile to start tracking progress.</p>
           </Card>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-8">
             {summaries.map(summary => {
               const profile = profiles.find(p => p.id === summary.profileId)!;
               const avatar = getAvatarById(profile.avatarId) || DEFAULT_AVATAR;
@@ -136,7 +137,7 @@ export function ProgressDashboard({
               return (
                 <Card key={summary.profileId} padding="lg">
                   {/* Profile header */}
-                  <div className="flex items-center gap-4 mb-6">
+                  <div className="flex items-center gap-4 mb-8">
                     <div 
                       className="w-16 h-16 rounded-full flex items-center justify-center text-3xl"
                       style={{ backgroundColor: `${avatar.color}30`, borderColor: avatar.color, borderWidth: '2px' }}

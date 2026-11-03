@@ -12,7 +12,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'robots.txt', 'rocket.svg'],
+      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'robots.txt', 'rocket.svg', 'pwa-192x192.png', 'pwa-512x512.png'],
       manifest: {
         name: 'Space Readers',
         short_name: 'SpaceReaders',

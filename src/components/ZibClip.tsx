@@ -21,6 +21,9 @@ import { resolveAssetUrl } from '../utils/assets';
 // Max time to wait for video before falling back to voice+poster
 const VIDEO_LOAD_TIMEOUT_MS = 4000;
 
+// Auto-dismiss voice-only clips after this duration
+const VOICE_AUTO_DISMISS_MS = 6000;
+
 // Zib poster image for avatar
 const ZIB_POSTER = resolveAssetUrl('zib-clips/poster/zib_interest_picker_intro.jpg');
 
@@ -36,29 +39,40 @@ export function ZibClip({ position = 'top-right' }: ZibClipProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const loadTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autoDismissRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const service = getZibClipService();
   const location = useLocation();
+
+  // Clear all timeouts helper
+  const clearAllTimeouts = useCallback(() => {
+    if (loadTimeoutRef.current) {
+      clearTimeout(loadTimeoutRef.current);
+      loadTimeoutRef.current = null;
+    }
+    if (autoDismissRef.current) {
+      clearTimeout(autoDismissRef.current);
+      autoDismissRef.current = null;
+    }
+  }, []);
 
   // Dismiss popup on route change
   useEffect(() => {
     if (pendingClip) {
+      clearAllTimeouts();
       service.skip();
     }
-  }, [location.pathname]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [location.pathname, clearAllTimeouts]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Subscribe to clip changes
   useEffect(() => {
     const unsubscribe = service.subscribe((clip) => {
+      // Clear timeouts when clip changes
+      clearAllTimeouts();
+      
       setPendingClip(clip);
       setIsVideoLoaded(false);
       setIsPlaying(false);
       setVideoFailed(false);
-      
-      // Clear any existing timeout
-      if (loadTimeoutRef.current) {
-        clearTimeout(loadTimeoutRef.current);
-        loadTimeoutRef.current = null;
-      }
     });
     
     // Check if there's already a clip showing
@@ -66,29 +80,45 @@ export function ZibClip({ position = 'top-right' }: ZibClipProps) {
     
     return () => {
       unsubscribe();
-      if (loadTimeoutRef.current) {
-        clearTimeout(loadTimeoutRef.current);
-      }
+      clearAllTimeouts();
     };
-  }, [service]);
+  }, [service, clearAllTimeouts]);
 
-  // Handle video loaded
+  // Handle video loaded — keep the video panel even if autoplay is blocked
   const handleVideoCanPlay = useCallback(() => {
-    // Clear load timeout since video loaded
-    if (loadTimeoutRef.current) {
-      clearTimeout(loadTimeoutRef.current);
-      loadTimeoutRef.current = null;
-    }
+    clearAllTimeouts();
     
+    if (isVideoLoaded) return;
     setIsVideoLoaded(true);
-    if (videoRef.current) {
-      videoRef.current.play().catch(() => {
-        // Autoplay blocked or failed - fall back to voice mode
-        setVideoFailed(true);
-      });
+    
+    const video = videoRef.current;
+    if (!video) return;
+
+    const playPromise = video.play();
+    if (playPromise === undefined) {
       setIsPlaying(true);
+      return;
     }
-  }, []);
+
+    playPromise
+      .then(() => {
+        setIsPlaying(true);
+      })
+      .catch((error) => {
+        console.warn('Zib clip autoplay blocked:', error);
+        if (error.name === 'NotAllowedError') {
+          video.muted = true;
+          video.play()
+            .then(() => setIsPlaying(true))
+            .catch(() => {
+              // Stay on video UI with a play button (do not collapse to a still)
+              setIsPlaying(false);
+            });
+        } else {
+          setIsPlaying(false);
+        }
+      });
+  }, [isVideoLoaded, clearAllTimeouts]);
 
   // Handle video error - fall back to voice mode
   const handleVideoError = useCallback(() => {
@@ -141,28 +171,33 @@ export function ZibClip({ position = 'top-right' }: ZibClipProps) {
         audioRef.current.play().catch(() => {});
         setIsPlaying(true);
       }
+      
+      autoDismissRef.current = setTimeout(() => {
+        service.skip();
+      }, VOICE_AUTO_DISMISS_MS);
     } else {
-      // Video mode - explicitly load the video and set timeout
+      // Video mode - start loading immediately
       if (videoRef.current) {
-        // Set sources and load - this is critical since we use preload="metadata"
         videoRef.current.load();
       }
       
-      // Set timeout to fall back to voice if video doesn't load
       loadTimeoutRef.current = setTimeout(() => {
         if (!isVideoLoaded) {
           console.warn('Zib clip video load timeout - falling back to voice');
           setVideoFailed(true);
         }
       }, VIDEO_LOAD_TIMEOUT_MS);
+
+      // Hard cap so clips cannot linger across story parts
+      autoDismissRef.current = setTimeout(() => {
+        service.skip();
+      }, Math.max(VOICE_AUTO_DISMISS_MS, pendingClip.clip.durationMs + 1000));
     }
     
     return () => {
-      if (loadTimeoutRef.current) {
-        clearTimeout(loadTimeoutRef.current);
-      }
+      clearAllTimeouts();
     };
-  }, [pendingClip, videoFailed, isVideoLoaded]);
+  }, [pendingClip, videoFailed, isVideoLoaded, service, clearAllTimeouts]);
 
   if (!pendingClip) return null;
 
@@ -198,14 +233,13 @@ export function ZibClip({ position = 'top-right' }: ZibClipProps) {
             </div>
             {/* Caption */}
             <div className="flex-1">
-              <p className="text-sm text-white font-medium leading-snug">
+              <p className="text-lg text-white font-medium leading-snug">
                 "{clip.caption}"
               </p>
             </div>
-            {/* Big dismiss button - at least 48px tall for touch targets */}
             <button
               onClick={handleDismiss}
-              className="shrink-0 px-5 py-3 min-w-[80px] min-h-[48px] bg-alien-green/20 hover:bg-alien-green/30 border-2 border-alien-green/60 rounded-lg text-alien-green font-bold text-lg transition-colors"
+              className="shrink-0 px-6 py-3 min-w-[120px] min-h-[56px] bg-alien-green/20 hover:bg-alien-green/30 border-2 border-alien-green/60 rounded-lg text-alien-green font-bold text-xl transition-colors"
             >
               Got it!
             </button>
@@ -230,7 +264,7 @@ export function ZibClip({ position = 'top-right' }: ZibClipProps) {
             </span>
           </div>
           <button 
-            className="px-4 py-2 min-w-[48px] min-h-[48px] text-white/80 hover:text-white hover:bg-white/10 rounded-lg font-medium transition-colors flex items-center gap-1"
+            className="px-4 py-2 min-w-[56px] min-h-[56px] text-white/80 hover:text-white hover:bg-white/10 rounded-lg font-medium transition-colors flex items-center gap-1"
             onClick={(e) => {
               e.stopPropagation();
               handleDismiss();
@@ -263,7 +297,7 @@ export function ZibClip({ position = 'top-right' }: ZibClipProps) {
             ref={videoRef}
             className={`w-full h-full object-cover ${isVideoLoaded ? 'opacity-100' : 'opacity-0'}`}
             poster={clip.posterUrl}
-            preload="metadata"
+            preload="auto"
             playsInline
             onLoadedMetadata={() => {
               // Metadata loaded - video is accessible, clear timeout
@@ -299,12 +333,12 @@ export function ZibClip({ position = 'top-right' }: ZibClipProps) {
 
         {/* Caption and dismiss button */}
         <div className="px-4 py-3 bg-space-deep/80 flex items-center gap-3">
-          <p className="flex-1 text-white font-medium leading-relaxed">
+          <p className="flex-1 text-lg text-white font-medium leading-relaxed">
             "{clip.caption}"
           </p>
           <button
             onClick={handleDismiss}
-            className="shrink-0 px-5 py-3 min-w-[80px] min-h-[48px] bg-alien-green/20 hover:bg-alien-green/30 border-2 border-alien-green/60 rounded-lg text-alien-green font-bold text-lg transition-colors"
+            className="shrink-0 px-6 py-3 min-w-[120px] min-h-[56px] bg-alien-green/20 hover:bg-alien-green/30 border-2 border-alien-green/60 rounded-lg text-alien-green font-bold text-xl transition-colors"
           >
             Got it!
           </button>
