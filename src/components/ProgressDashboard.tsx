@@ -14,12 +14,15 @@ import { RANK_THRESHOLDS } from '../types';
 import { Card } from './Card';
 import { Button } from './Button';
 import { InterestPicker } from './InterestPicker';
+import { ConfirmModal } from './ConfirmModal';
 
 interface ProgressDashboardProps {
   profiles: Profile[];
   getProgress: (profileId: string) => ProfileProgress | null;
   onClose: () => void;
   onEditProfile: (profile: Profile) => void;
+  onDeleteProfile: (profile: Profile) => void;
+  onResetAllData: () => void;
   onChangePin: () => void;
   onUpdateInterests?: (profile: Profile, interests: string[]) => void;
   zibClipsEnabled?: boolean;
@@ -31,12 +34,17 @@ export function ProgressDashboard({
   getProgress,
   onClose,
   onEditProfile,
+  onDeleteProfile,
+  onResetAllData,
   onChangePin,
   onUpdateInterests,
   zibClipsEnabled = true,
   onToggleZibClips
 }: ProgressDashboardProps) {
   const [editingInterestsProfile, setEditingInterestsProfile] = useState<Profile | null>(null);
+  const [manageProfile, setManageProfile] = useState<Profile | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Profile | null>(null);
+  const [resetStep, setResetStep] = useState<null | 'warn' | 'confirm'>(null);
 
   // Calculate summary for each profile
   const summaries: ProgressSummary[] = useMemo(() => {
@@ -155,10 +163,12 @@ export function ProgressDashboard({
                       </div>
                     </div>
                     <button
-                      onClick={() => onEditProfile(profile)}
-                      className="p-2 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white"
+                      type="button"
+                      onClick={() => setManageProfile(profile)}
+                      className="p-2 min-w-[44px] min-h-[44px] hover:bg-white/10 rounded-lg text-slate-300 hover:text-white"
+                      aria-label={`Manage ${profile.name}`}
                     >
-                      ⚙️ Edit
+                      Manage
                     </button>
                   </div>
 
@@ -342,9 +352,104 @@ export function ProgressDashboard({
               <span>Change Parent PIN</span>
               <span className="text-neon-cyan">→</span>
             </button>
+
+            {profiles.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setResetStep('warn')}
+                className="w-full flex items-center justify-between p-3 hover:bg-red-500/10 rounded-lg transition-colors text-red-400"
+              >
+                <div className="text-left">
+                  <span className="block">Delete all players</span>
+                  <span className="text-xs text-red-400/70">Reset this device's kid data</span>
+                </div>
+                <span>→</span>
+              </button>
+            )}
           </Card>
         </div>
       </div>
+
+      {/* Manage sheet — overlay, not a dropdown, because .space-card clips overflow. */}
+      {manageProfile && (
+        <div
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
+          onClick={(e) => e.target === e.currentTarget && setManageProfile(null)}
+        >
+          <div className="space-card p-6 max-w-sm w-full">
+            <h2 className="text-xl font-bold text-center mb-1">Manage {manageProfile.name}</h2>
+            <p className="text-center text-slate-400 text-sm mb-6">Edit this player or remove them from this device.</p>
+            <div className="space-y-3">
+              <button
+                type="button"
+                onClick={() => {
+                  const profile = manageProfile;
+                  setManageProfile(null);
+                  onEditProfile(profile);
+                }}
+                className="w-full min-h-[48px] rounded-lg px-4 py-3 font-semibold
+                  bg-white/10 border border-white/20 hover:bg-white/20 text-left"
+              >
+                ✏️ Edit name, avatar & interests
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setDeleteTarget(manageProfile);
+                  setManageProfile(null);
+                }}
+                className="w-full min-h-[48px] rounded-lg px-4 py-3 font-bold text-left
+                  bg-red-600/20 border-2 border-red-400 text-red-300 hover:bg-red-600/30"
+              >
+                🗑️ Delete player
+              </button>
+              <button
+                type="button"
+                onClick={() => setManageProfile(null)}
+                className="w-full min-h-[48px] rounded-lg px-4 py-3 font-semibold
+                  bg-transparent border border-white/20 text-white/70 hover:bg-white/10"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <ConfirmModal
+        isOpen={!!deleteTarget}
+        title={deleteTarget ? `Delete ${deleteTarget.name}?` : 'Delete player?'}
+        message="This removes all their progress and can't be undone."
+        confirmLabel="Delete"
+        onConfirm={() => {
+          if (deleteTarget) onDeleteProfile(deleteTarget);
+          setDeleteTarget(null);
+        }}
+        onCancel={() => setDeleteTarget(null)}
+      />
+
+      <ConfirmModal
+        isOpen={resetStep === 'warn'}
+        title="Delete all players?"
+        message="This removes every player and all their progress from this device."
+        confirmLabel="Continue"
+        cancelLabel="Cancel"
+        destructive={false}
+        onConfirm={() => setResetStep('confirm')}
+        onCancel={() => setResetStep(null)}
+      />
+
+      <ConfirmModal
+        isOpen={resetStep === 'confirm'}
+        title="This cannot be undone"
+        message="Delete everyone on this device? All progress, stories, and profiles will be erased."
+        confirmLabel="Delete all players"
+        onConfirm={() => {
+          setResetStep(null);
+          onResetAllData();
+        }}
+        onCancel={() => setResetStep(null)}
+      />
 
       {/* Interest Editing Modal */}
       {editingInterestsProfile && onUpdateInterests && (

@@ -5,7 +5,7 @@
  * Two recorded voices, plus phoneme MP3s on the decoder slider:
  *   zib     — edge-tts en-US-BrianNeural, pitch +18Hz, rate +6%, light echo
  *   control — edge-tts en-US-AndrewNeural, subtle radio EQ (UI / briefing)
- *   story   — edge-tts en-US-AndrewNeural, no EQ (sentences + Say Word)
+ *   story   — edge-tts en-US-AndrewNeural, no EQ (Say Word / Hear It only)
  *
  * Never send letter names to TTS. Spelled sequences like M-U-G stay silent;
  * the decoder slider uses isolated phoneme clips instead.

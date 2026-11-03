@@ -10,7 +10,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import type { DecodableWord } from '../types';
 import { getAudioService } from '../services/audio';
 import { Button } from './Button';
-import { SpeakButton, SpokenLine } from './SpeakButton';
+import { SpokenLine } from './SpeakButton';
 import { useZibOverlayLock } from '../hooks/useZibOverlayLock';
 import { UI } from '../data/voiceLines';
 
@@ -140,7 +140,6 @@ export function WordDecoder({ word, isOpen, onClose, onComplete, onKeepTrying }:
             <div className="text-5xl font-bold text-star-gold text-glow-gold reading-text">
               {word.word}
             </div>
-            <SpeakButton text={cleanWord} voice="story" />
           </div>
 
           <SpokenLine
@@ -153,8 +152,12 @@ export function WordDecoder({ word, isOpen, onClose, onComplete, onKeepTrying }:
           <Button
             variant="success"
             onClick={async () => {
-              await audioService.current.speakWord(cleanWord, { voice: 'story' });
+              if (isClosing) return;
+              setIsClosing(true);
+              // Count as taught/practiced immediately — don't wait for audio,
+              // or Hear It never lands in Zib's word list / practiced words.
               onComplete();
+              await audioService.current.speakWord(cleanWord, { voice: 'story' });
               onClose();
             }}
             glow

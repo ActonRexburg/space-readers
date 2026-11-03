@@ -3,7 +3,7 @@
   "voices": {
     "zib": "edge-tts en-US-BrianNeural, pitch +18Hz, rate +6%, light echo",
     "control": "edge-tts en-US-AndrewNeural, subtle radio EQ (UI/briefing)",
-    "story": "edge-tts en-US-AndrewNeural, no EQ (sentences + Say Word)"
+    "story": "edge-tts en-US-AndrewNeural, no EQ (Say Word / Hear It only)"
   },
   "clips": {
     "control|Tap your name.": {
@@ -1027,37 +1027,6 @@
           "text": "more",
           "offsetMs": 2252,
           "charIndex": 32
-        }
-      ]
-    },
-    "zib|Zib learned 0 new words!": {
-      "file": "84ec0ba59c003805.mp3",
-      "durationMs": 2304,
-      "words": [
-        {
-          "text": "Zib",
-          "offsetMs": 82,
-          "charIndex": 0
-        },
-        {
-          "text": "learned",
-          "offsetMs": 389,
-          "charIndex": 4
-        },
-        {
-          "text": "0",
-          "offsetMs": 719,
-          "charIndex": 12
-        },
-        {
-          "text": "new",
-          "offsetMs": 1096,
-          "charIndex": 14
-        },
-        {
-          "text": "words",
-          "offsetMs": 1332,
-          "charIndex": 18
         }
       ]
     },
@@ -6559,52 +6528,6 @@
         }
       ]
     },
-    "story|The red ship sat on a flat rock.": {
-      "file": "f88403f033cfc7fa.mp3",
-      "durationMs": 2304,
-      "words": [
-        {
-          "text": "The",
-          "offsetMs": 112,
-          "charIndex": 0
-        },
-        {
-          "text": "red",
-          "offsetMs": 175,
-          "charIndex": 4
-        },
-        {
-          "text": "ship",
-          "offsetMs": 387,
-          "charIndex": 8
-        },
-        {
-          "text": "sat",
-          "offsetMs": 787,
-          "charIndex": 13
-        },
-        {
-          "text": "on",
-          "offsetMs": 1037,
-          "charIndex": 17
-        },
-        {
-          "text": "a",
-          "offsetMs": 1137,
-          "charIndex": 20
-        },
-        {
-          "text": "flat",
-          "offsetMs": 1187,
-          "charIndex": 22
-        },
-        {
-          "text": "rock",
-          "offsetMs": 1500,
-          "charIndex": 27
-        }
-      ]
-    },
     "story|The": {
       "file": "a4bcf40904730d90.mp3",
       "durationMs": 744,
@@ -6690,78 +6613,6 @@
           "text": "rock",
           "offsetMs": 100,
           "charIndex": 0
-        }
-      ]
-    },
-    "story|Zib ran to the ship.": {
-      "file": "d0de3e20f8cf763b.mp3",
-      "durationMs": 1920,
-      "words": [
-        {
-          "text": "Zib",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "ran",
-          "offsetMs": 400,
-          "charIndex": 4
-        },
-        {
-          "text": "to",
-          "offsetMs": 650,
-          "charIndex": 8
-        },
-        {
-          "text": "the",
-          "offsetMs": 762,
-          "charIndex": 11
-        },
-        {
-          "text": "ship",
-          "offsetMs": 850,
-          "charIndex": 15
-        }
-      ]
-    },
-    "story|It was big and had a dent.": {
-      "file": "ad6c536fba54db9c.mp3",
-      "durationMs": 1944,
-      "words": [
-        {
-          "text": "It",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "was",
-          "offsetMs": 175,
-          "charIndex": 3
-        },
-        {
-          "text": "big",
-          "offsetMs": 337,
-          "charIndex": 7
-        },
-        {
-          "text": "and",
-          "offsetMs": 862,
-          "charIndex": 11
-        },
-        {
-          "text": "had",
-          "offsetMs": 950,
-          "charIndex": 15
-        },
-        {
-          "text": "a",
-          "offsetMs": 1100,
-          "charIndex": 19
-        },
-        {
-          "text": "dent",
-          "offsetMs": 1150,
-          "charIndex": 21
         }
       ]
     },
@@ -6875,63 +6726,6 @@
         }
       ]
     },
-    "story|'Can we fix it?' Zib said.": {
-      "file": "bb5fb0c70b4c65c9.mp3",
-      "durationMs": 2016,
-      "words": [
-        {
-          "text": "Can",
-          "offsetMs": 175,
-          "charIndex": 1
-        },
-        {
-          "text": "we",
-          "offsetMs": 212,
-          "charIndex": 5
-        },
-        {
-          "text": "fix",
-          "offsetMs": 300,
-          "charIndex": 8
-        },
-        {
-          "text": "it",
-          "offsetMs": 562,
-          "charIndex": 12
-        },
-        {
-          "text": "Zib",
-          "offsetMs": 1100,
-          "charIndex": 17
-        },
-        {
-          "text": "said",
-          "offsetMs": 1275,
-          "charIndex": 21
-        }
-      ]
-    },
-    "story|'Yes, we can!'": {
-      "file": "1b02e7601e923602.mp3",
-      "durationMs": 1920,
-      "words": [
-        {
-          "text": "Yes",
-          "offsetMs": 175,
-          "charIndex": 1
-        },
-        {
-          "text": "we",
-          "offsetMs": 350,
-          "charIndex": 6
-        },
-        {
-          "text": "can",
-          "offsetMs": 487,
-          "charIndex": 9
-        }
-      ]
-    },
     "story|Can": {
       "file": "a7d29e9594108c3b.mp3",
       "durationMs": 840,
@@ -7009,78 +6803,6 @@
         }
       ]
     },
-    "story|We got a kit.": {
-      "file": "21cd392937763502.mp3",
-      "durationMs": 1920,
-      "words": [
-        {
-          "text": "We",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "got",
-          "offsetMs": 175,
-          "charIndex": 3
-        },
-        {
-          "text": "a",
-          "offsetMs": 312,
-          "charIndex": 7
-        },
-        {
-          "text": "kit",
-          "offsetMs": 362,
-          "charIndex": 9
-        }
-      ]
-    },
-    "story|The kit had a pin and a rod.": {
-      "file": "32913903919f9bcf.mp3",
-      "durationMs": 2016,
-      "words": [
-        {
-          "text": "The",
-          "offsetMs": 112,
-          "charIndex": 0
-        },
-        {
-          "text": "kit",
-          "offsetMs": 187,
-          "charIndex": 4
-        },
-        {
-          "text": "had",
-          "offsetMs": 387,
-          "charIndex": 8
-        },
-        {
-          "text": "a",
-          "offsetMs": 550,
-          "charIndex": 12
-        },
-        {
-          "text": "pin",
-          "offsetMs": 612,
-          "charIndex": 14
-        },
-        {
-          "text": "and",
-          "offsetMs": 1087,
-          "charIndex": 18
-        },
-        {
-          "text": "a",
-          "offsetMs": 1187,
-          "charIndex": 22
-        },
-        {
-          "text": "rod",
-          "offsetMs": 1237,
-          "charIndex": 24
-        }
-      ]
-    },
     "story|We": {
       "file": "b0f97f9ba1217532.mp3",
       "durationMs": 792,
@@ -7136,85 +6858,6 @@
         }
       ]
     },
-    "story|Tap, tap, tap.": {
-      "file": "ff9ea0ad779ab61e.mp3",
-      "durationMs": 1872,
-      "words": [
-        {
-          "text": "Tap",
-          "offsetMs": 112,
-          "charIndex": 0
-        },
-        {
-          "text": "tap",
-          "offsetMs": 587,
-          "charIndex": 5
-        },
-        {
-          "text": "tap",
-          "offsetMs": 1112,
-          "charIndex": 10
-        }
-      ]
-    },
-    "story|We hit the dent.": {
-      "file": "14ab84137b506068.mp3",
-      "durationMs": 1176,
-      "words": [
-        {
-          "text": "We",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "hit",
-          "offsetMs": 187,
-          "charIndex": 3
-        },
-        {
-          "text": "the",
-          "offsetMs": 312,
-          "charIndex": 7
-        },
-        {
-          "text": "dent",
-          "offsetMs": 412,
-          "charIndex": 11
-        }
-      ]
-    },
-    "story|Pop!": {
-      "file": "170d64ef54d63dcf.mp3",
-      "durationMs": 816,
-      "words": [
-        {
-          "text": "Pop",
-          "offsetMs": 112,
-          "charIndex": 0
-        }
-      ]
-    },
-    "story|It was flat.": {
-      "file": "903a44ecc4902973.mp3",
-      "durationMs": 1920,
-      "words": [
-        {
-          "text": "It",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "was",
-          "offsetMs": 175,
-          "charIndex": 3
-        },
-        {
-          "text": "flat",
-          "offsetMs": 325,
-          "charIndex": 7
-        }
-      ]
-    },
     "story|Tap": {
       "file": "a140b4de3650ccf7.mp3",
       "durationMs": 816,
@@ -7256,89 +6899,6 @@
           "text": "Pop",
           "offsetMs": 112,
           "charIndex": 0
-        }
-      ]
-    },
-    "story|'The ship is fit!'": {
-      "file": "4137a87ee06e9e93.mp3",
-      "durationMs": 1440,
-      "words": [
-        {
-          "text": "The",
-          "offsetMs": 187,
-          "charIndex": 1
-        },
-        {
-          "text": "ship",
-          "offsetMs": 212,
-          "charIndex": 5
-        },
-        {
-          "text": "is",
-          "offsetMs": 475,
-          "charIndex": 10
-        },
-        {
-          "text": "fit",
-          "offsetMs": 612,
-          "charIndex": 13
-        }
-      ]
-    },
-    "story|Zib was glad.": {
-      "file": "7ee74c608066de2e.mp3",
-      "durationMs": 1920,
-      "words": [
-        {
-          "text": "Zib",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "was",
-          "offsetMs": 262,
-          "charIndex": 4
-        },
-        {
-          "text": "glad",
-          "offsetMs": 400,
-          "charIndex": 8
-        }
-      ]
-    },
-    "story|'Let us zip to the sun!'": {
-      "file": "e55ce8e274f1d106.mp3",
-      "durationMs": 1704,
-      "words": [
-        {
-          "text": "Let",
-          "offsetMs": 162,
-          "charIndex": 1
-        },
-        {
-          "text": "us",
-          "offsetMs": 237,
-          "charIndex": 5
-        },
-        {
-          "text": "zip",
-          "offsetMs": 412,
-          "charIndex": 8
-        },
-        {
-          "text": "to",
-          "offsetMs": 650,
-          "charIndex": 12
-        },
-        {
-          "text": "the",
-          "offsetMs": 750,
-          "charIndex": 15
-        },
-        {
-          "text": "sun",
-          "offsetMs": 850,
-          "charIndex": 19
         }
       ]
     },
@@ -7416,89 +6976,6 @@
           "text": "sun",
           "offsetMs": 112,
           "charIndex": 0
-        }
-      ]
-    },
-    "story|The ship lit up.": {
-      "file": "261cc8c2b4cd0ff2.mp3",
-      "durationMs": 1920,
-      "words": [
-        {
-          "text": "The",
-          "offsetMs": 112,
-          "charIndex": 0
-        },
-        {
-          "text": "ship",
-          "offsetMs": 175,
-          "charIndex": 4
-        },
-        {
-          "text": "lit",
-          "offsetMs": 462,
-          "charIndex": 9
-        },
-        {
-          "text": "up",
-          "offsetMs": 625,
-          "charIndex": 13
-        }
-      ]
-    },
-    "story|We shot into the sky.": {
-      "file": "ddc0b44deeffea25.mp3",
-      "durationMs": 1920,
-      "words": [
-        {
-          "text": "We",
-          "offsetMs": 112,
-          "charIndex": 0
-        },
-        {
-          "text": "shot",
-          "offsetMs": 200,
-          "charIndex": 3
-        },
-        {
-          "text": "into",
-          "offsetMs": 462,
-          "charIndex": 8
-        },
-        {
-          "text": "the",
-          "offsetMs": 612,
-          "charIndex": 13
-        },
-        {
-          "text": "sky",
-          "offsetMs": 712,
-          "charIndex": 17
-        }
-      ]
-    },
-    "story|What a fun trip!": {
-      "file": "cf4341e574c8d927.mp3",
-      "durationMs": 1920,
-      "words": [
-        {
-          "text": "What",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "a",
-          "offsetMs": 200,
-          "charIndex": 5
-        },
-        {
-          "text": "fun",
-          "offsetMs": 250,
-          "charIndex": 7
-        },
-        {
-          "text": "trip",
-          "offsetMs": 500,
-          "charIndex": 11
         }
       ]
     },
@@ -7809,52 +7286,6 @@
         }
       ]
     },
-    "story|Zib had a thin map of the stars.": {
-      "file": "baf38c23906f68f4.mp3",
-      "durationMs": 2400,
-      "words": [
-        {
-          "text": "Zib",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "had",
-          "offsetMs": 362,
-          "charIndex": 4
-        },
-        {
-          "text": "a",
-          "offsetMs": 512,
-          "charIndex": 8
-        },
-        {
-          "text": "thin",
-          "offsetMs": 575,
-          "charIndex": 10
-        },
-        {
-          "text": "map",
-          "offsetMs": 962,
-          "charIndex": 15
-        },
-        {
-          "text": "of",
-          "offsetMs": 1262,
-          "charIndex": 19
-        },
-        {
-          "text": "the",
-          "offsetMs": 1350,
-          "charIndex": 22
-        },
-        {
-          "text": "stars",
-          "offsetMs": 1425,
-          "charIndex": 26
-        }
-      ]
-    },
     "story|thin": {
       "file": "c0206d2b960c259e.mp3",
       "durationMs": 792,
@@ -7896,57 +7327,6 @@
           "text": "stars",
           "offsetMs": 100,
           "charIndex": 0
-        }
-      ]
-    },
-    "story|'This map will show us the path,' Zib said.": {
-      "file": "6205d0c86cecc0ed.mp3",
-      "durationMs": 2880,
-      "words": [
-        {
-          "text": "This",
-          "offsetMs": 175,
-          "charIndex": 1
-        },
-        {
-          "text": "map",
-          "offsetMs": 287,
-          "charIndex": 6
-        },
-        {
-          "text": "will",
-          "offsetMs": 562,
-          "charIndex": 10
-        },
-        {
-          "text": "show",
-          "offsetMs": 687,
-          "charIndex": 15
-        },
-        {
-          "text": "us",
-          "offsetMs": 975,
-          "charIndex": 20
-        },
-        {
-          "text": "the",
-          "offsetMs": 1100,
-          "charIndex": 23
-        },
-        {
-          "text": "path",
-          "offsetMs": 1200,
-          "charIndex": 27
-        },
-        {
-          "text": "Zib",
-          "offsetMs": 1912,
-          "charIndex": 34
-        },
-        {
-          "text": "said",
-          "offsetMs": 2125,
-          "charIndex": 38
         }
       ]
     },
@@ -7994,78 +7374,6 @@
         }
       ]
     },
-    "story|We sat in the ship.": {
-      "file": "32b75c88a1a5a80b.mp3",
-      "durationMs": 1920,
-      "words": [
-        {
-          "text": "We",
-          "offsetMs": 112,
-          "charIndex": 0
-        },
-        {
-          "text": "sat",
-          "offsetMs": 212,
-          "charIndex": 3
-        },
-        {
-          "text": "in",
-          "offsetMs": 475,
-          "charIndex": 7
-        },
-        {
-          "text": "the",
-          "offsetMs": 550,
-          "charIndex": 10
-        },
-        {
-          "text": "ship",
-          "offsetMs": 625,
-          "charIndex": 14
-        }
-      ]
-    },
-    "story|The map lit up with a flash.": {
-      "file": "1ea0626fdf0885d0.mp3",
-      "durationMs": 2016,
-      "words": [
-        {
-          "text": "The",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "map",
-          "offsetMs": 175,
-          "charIndex": 4
-        },
-        {
-          "text": "lit",
-          "offsetMs": 550,
-          "charIndex": 8
-        },
-        {
-          "text": "up",
-          "offsetMs": 700,
-          "charIndex": 12
-        },
-        {
-          "text": "with",
-          "offsetMs": 850,
-          "charIndex": 15
-        },
-        {
-          "text": "a",
-          "offsetMs": 975,
-          "charIndex": 20
-        },
-        {
-          "text": "flash",
-          "offsetMs": 1025,
-          "charIndex": 22
-        }
-      ]
-    },
     "story|in": {
       "file": "47d95bfa0dc60679.mp3",
       "durationMs": 792,
@@ -8096,82 +7404,6 @@
           "text": "flash",
           "offsetMs": 150,
           "charIndex": 0
-        }
-      ]
-    },
-    "story|'Go north to the big red star. Then go west to the small moon.'": {
-      "file": "6562b7d43afad1f6.mp3",
-      "durationMs": 4104,
-      "words": [
-        {
-          "text": "Go",
-          "offsetMs": 175,
-          "charIndex": 1
-        },
-        {
-          "text": "north",
-          "offsetMs": 262,
-          "charIndex": 4
-        },
-        {
-          "text": "to",
-          "offsetMs": 600,
-          "charIndex": 10
-        },
-        {
-          "text": "the",
-          "offsetMs": 712,
-          "charIndex": 13
-        },
-        {
-          "text": "big",
-          "offsetMs": 825,
-          "charIndex": 17
-        },
-        {
-          "text": "red",
-          "offsetMs": 1037,
-          "charIndex": 21
-        },
-        {
-          "text": "star",
-          "offsetMs": 1225,
-          "charIndex": 25
-        },
-        {
-          "text": "Then",
-          "offsetMs": 2025,
-          "charIndex": 31
-        },
-        {
-          "text": "go",
-          "offsetMs": 2200,
-          "charIndex": 36
-        },
-        {
-          "text": "west",
-          "offsetMs": 2400,
-          "charIndex": 39
-        },
-        {
-          "text": "to",
-          "offsetMs": 2750,
-          "charIndex": 44
-        },
-        {
-          "text": "the",
-          "offsetMs": 2825,
-          "charIndex": 47
-        },
-        {
-          "text": "small",
-          "offsetMs": 2925,
-          "charIndex": 51
-        },
-        {
-          "text": "moon",
-          "offsetMs": 3250,
-          "charIndex": 57
         }
       ]
     },
@@ -8263,68 +7495,6 @@
         }
       ]
     },
-    "story|The ship shot off with a whoosh.": {
-      "file": "7a64a97dec006c4c.mp3",
-      "durationMs": 2016,
-      "words": [
-        {
-          "text": "The",
-          "offsetMs": 112,
-          "charIndex": 0
-        },
-        {
-          "text": "ship",
-          "offsetMs": 175,
-          "charIndex": 4
-        },
-        {
-          "text": "shot",
-          "offsetMs": 425,
-          "charIndex": 9
-        },
-        {
-          "text": "off",
-          "offsetMs": 700,
-          "charIndex": 14
-        },
-        {
-          "text": "with",
-          "offsetMs": 912,
-          "charIndex": 18
-        },
-        {
-          "text": "a",
-          "offsetMs": 1037,
-          "charIndex": 23
-        },
-        {
-          "text": "whoosh",
-          "offsetMs": 1100,
-          "charIndex": 25
-        }
-      ]
-    },
-    "story|Stars rushed past.": {
-      "file": "dd5c66f061caf54c.mp3",
-      "durationMs": 1920,
-      "words": [
-        {
-          "text": "Stars",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "rushed",
-          "offsetMs": 462,
-          "charIndex": 6
-        },
-        {
-          "text": "past",
-          "offsetMs": 725,
-          "charIndex": 13
-        }
-      ]
-    },
     "story|off": {
       "file": "266f31cdbbaf345b.mp3",
       "durationMs": 816,
@@ -8377,78 +7547,6 @@
           "text": "past",
           "offsetMs": 112,
           "charIndex": 0
-        }
-      ]
-    },
-    "story|'There it is!' I said.": {
-      "file": "0ba8f8204adefd12.mp3",
-      "durationMs": 1896,
-      "words": [
-        {
-          "text": "There",
-          "offsetMs": 175,
-          "charIndex": 1
-        },
-        {
-          "text": "it",
-          "offsetMs": 262,
-          "charIndex": 7
-        },
-        {
-          "text": "is",
-          "offsetMs": 337,
-          "charIndex": 10
-        },
-        {
-          "text": "I",
-          "offsetMs": 1087,
-          "charIndex": 15
-        },
-        {
-          "text": "said",
-          "offsetMs": 1150,
-          "charIndex": 17
-        }
-      ]
-    },
-    "story|A blue planet sat in the mist.": {
-      "file": "ecc3939b4c65950c.mp3",
-      "durationMs": 2160,
-      "words": [
-        {
-          "text": "A",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "blue",
-          "offsetMs": 187,
-          "charIndex": 2
-        },
-        {
-          "text": "planet",
-          "offsetMs": 437,
-          "charIndex": 7
-        },
-        {
-          "text": "sat",
-          "offsetMs": 837,
-          "charIndex": 14
-        },
-        {
-          "text": "in",
-          "offsetMs": 1125,
-          "charIndex": 18
-        },
-        {
-          "text": "the",
-          "offsetMs": 1212,
-          "charIndex": 21
-        },
-        {
-          "text": "mist",
-          "offsetMs": 1287,
-          "charIndex": 25
         }
       ]
     },
@@ -8515,27 +7613,6 @@
           "text": "mist",
           "offsetMs": 100,
           "charIndex": 0
-        }
-      ]
-    },
-    "story|Zib was thrilled.": {
-      "file": "4003f999cb147609.mp3",
-      "durationMs": 1920,
-      "words": [
-        {
-          "text": "Zib",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "was",
-          "offsetMs": 312,
-          "charIndex": 4
-        },
-        {
-          "text": "thrilled",
-          "offsetMs": 500,
-          "charIndex": 8
         }
       ]
     },
@@ -8837,52 +7914,6 @@
         }
       ]
     },
-    "story|Zib did not know how to read yet.": {
-      "file": "56447c48e62d39bb.mp3",
-      "durationMs": 2040,
-      "words": [
-        {
-          "text": "Zib",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "did",
-          "offsetMs": 312,
-          "charIndex": 4
-        },
-        {
-          "text": "not",
-          "offsetMs": 450,
-          "charIndex": 8
-        },
-        {
-          "text": "know",
-          "offsetMs": 662,
-          "charIndex": 12
-        },
-        {
-          "text": "how",
-          "offsetMs": 812,
-          "charIndex": 17
-        },
-        {
-          "text": "to",
-          "offsetMs": 937,
-          "charIndex": 21
-        },
-        {
-          "text": "read",
-          "offsetMs": 1050,
-          "charIndex": 24
-        },
-        {
-          "text": "yet",
-          "offsetMs": 1337,
-          "charIndex": 29
-        }
-      ]
-    },
     "story|did": {
       "file": "acc893f3b9ba6187.mp3",
       "durationMs": 768,
@@ -8949,63 +7980,6 @@
         }
       ]
     },
-    "story|'What is this?'": {
-      "file": "82647a0eff31fb0f.mp3",
-      "durationMs": 1920,
-      "words": [
-        {
-          "text": "What",
-          "offsetMs": 175,
-          "charIndex": 1
-        },
-        {
-          "text": "is",
-          "offsetMs": 212,
-          "charIndex": 6
-        },
-        {
-          "text": "this",
-          "offsetMs": 337,
-          "charIndex": 9
-        }
-      ]
-    },
-    "story|Zib held up a red mug.": {
-      "file": "b7a92b7e422bb2fd.mp3",
-      "durationMs": 1680,
-      "words": [
-        {
-          "text": "Zib",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "held",
-          "offsetMs": 337,
-          "charIndex": 4
-        },
-        {
-          "text": "up",
-          "offsetMs": 525,
-          "charIndex": 9
-        },
-        {
-          "text": "a",
-          "offsetMs": 637,
-          "charIndex": 12
-        },
-        {
-          "text": "red",
-          "offsetMs": 687,
-          "charIndex": 14
-        },
-        {
-          "text": "mug",
-          "offsetMs": 937,
-          "charIndex": 18
-        }
-      ]
-    },
     "story|held": {
       "file": "4a35c8a95f9bb7f7.mp3",
       "durationMs": 792,
@@ -9025,53 +7999,6 @@
           "text": "mug",
           "offsetMs": 112,
           "charIndex": 0
-        }
-      ]
-    },
-    "story|'That is a mug,' I said.": {
-      "file": "f182e661c5dfcec1.mp3",
-      "durationMs": 1920,
-      "words": [
-        {
-          "text": "That",
-          "offsetMs": 187,
-          "charIndex": 1
-        },
-        {
-          "text": "is",
-          "offsetMs": 250,
-          "charIndex": 6
-        },
-        {
-          "text": "a",
-          "offsetMs": 350,
-          "charIndex": 9
-        },
-        {
-          "text": "mug",
-          "offsetMs": 400,
-          "charIndex": 11
-        },
-        {
-          "text": "I",
-          "offsetMs": 812,
-          "charIndex": 17
-        },
-        {
-          "text": "said",
-          "offsetMs": 875,
-          "charIndex": 19
-        }
-      ]
-    },
-    "story|'M-U-G. Mug.'": {
-      "file": "5e7a2cb6bebc9dd6.mp3",
-      "durationMs": 1056,
-      "words": [
-        {
-          "text": "Mug",
-          "offsetMs": 312,
-          "charIndex": 8
         }
       ]
     },
@@ -9105,62 +8032,6 @@
           "text": "Mug",
           "offsetMs": 112,
           "charIndex": 0
-        }
-      ]
-    },
-    "story|Zib shut one eye and said, 'Muh... uh... guh. MUG!'": {
-      "file": "52c902c8d802d84e.mp3",
-      "durationMs": 4488,
-      "words": [
-        {
-          "text": "Zib",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "shut",
-          "offsetMs": 300,
-          "charIndex": 4
-        },
-        {
-          "text": "one",
-          "offsetMs": 562,
-          "charIndex": 9
-        },
-        {
-          "text": "eye",
-          "offsetMs": 775,
-          "charIndex": 13
-        },
-        {
-          "text": "and",
-          "offsetMs": 1262,
-          "charIndex": 17
-        },
-        {
-          "text": "said",
-          "offsetMs": 1387,
-          "charIndex": 21
-        },
-        {
-          "text": "Muh",
-          "offsetMs": 1912,
-          "charIndex": 28
-        },
-        {
-          "text": "uh",
-          "offsetMs": 2437,
-          "charIndex": 35
-        },
-        {
-          "text": "guh",
-          "offsetMs": 2725,
-          "charIndex": 41
-        },
-        {
-          "text": "MUG",
-          "offsetMs": 3775,
-          "charIndex": 46
         }
       ]
     },
@@ -9224,68 +8095,6 @@
         }
       ]
     },
-    "story|'Yes! You did it!'": {
-      "file": "3069888d3b284c9f.mp3",
-      "durationMs": 1728,
-      "words": [
-        {
-          "text": "Yes",
-          "offsetMs": 175,
-          "charIndex": 1
-        },
-        {
-          "text": "You",
-          "offsetMs": 900,
-          "charIndex": 6
-        },
-        {
-          "text": "did",
-          "offsetMs": 975,
-          "charIndex": 10
-        },
-        {
-          "text": "it",
-          "offsetMs": 1150,
-          "charIndex": 14
-        }
-      ]
-    },
-    "story|I gave Zib a high five.": {
-      "file": "4865b554b2339338.mp3",
-      "durationMs": 1776,
-      "words": [
-        {
-          "text": "I",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "gave",
-          "offsetMs": 200,
-          "charIndex": 2
-        },
-        {
-          "text": "Zib",
-          "offsetMs": 425,
-          "charIndex": 7
-        },
-        {
-          "text": "a",
-          "offsetMs": 650,
-          "charIndex": 11
-        },
-        {
-          "text": "high",
-          "offsetMs": 700,
-          "charIndex": 13
-        },
-        {
-          "text": "five",
-          "offsetMs": 937,
-          "charIndex": 18
-        }
-      ]
-    },
     "story|gave": {
       "file": "80b38508955e7328.mp3",
       "durationMs": 816,
@@ -9316,58 +8125,6 @@
           "text": "five",
           "offsetMs": 150,
           "charIndex": 0
-        }
-      ]
-    },
-    "story|'What is that?'": {
-      "file": "79127723bc10c67c.mp3",
-      "durationMs": 1920,
-      "words": [
-        {
-          "text": "What",
-          "offsetMs": 175,
-          "charIndex": 1
-        },
-        {
-          "text": "is",
-          "offsetMs": 212,
-          "charIndex": 6
-        },
-        {
-          "text": "that",
-          "offsetMs": 325,
-          "charIndex": 9
-        }
-      ]
-    },
-    "story|Zib saw my pet fish.": {
-      "file": "e4f1e987372d3021.mp3",
-      "durationMs": 1632,
-      "words": [
-        {
-          "text": "Zib",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "saw",
-          "offsetMs": 275,
-          "charIndex": 4
-        },
-        {
-          "text": "my",
-          "offsetMs": 437,
-          "charIndex": 8
-        },
-        {
-          "text": "pet",
-          "offsetMs": 550,
-          "charIndex": 11
-        },
-        {
-          "text": "fish",
-          "offsetMs": 775,
-          "charIndex": 15
         }
       ]
     },
@@ -9426,58 +8183,6 @@
         }
       ]
     },
-    "story|'F-I-SH. Fish!' I said.": {
-      "file": "c72a4d87ae9a61ad.mp3",
-      "durationMs": 2640,
-      "words": [
-        {
-          "text": "SH",
-          "offsetMs": 187,
-          "charIndex": 5
-        },
-        {
-          "text": "Fish",
-          "offsetMs": 1050,
-          "charIndex": 9
-        },
-        {
-          "text": "I",
-          "offsetMs": 1825,
-          "charIndex": 16
-        },
-        {
-          "text": "said",
-          "offsetMs": 1887,
-          "charIndex": 18
-        }
-      ]
-    },
-    "story|Zib's eyes got big.": {
-      "file": "fdf24269b4e07050.mp3",
-      "durationMs": 1920,
-      "words": [
-        {
-          "text": "Zib's",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "eyes",
-          "offsetMs": 375,
-          "charIndex": 6
-        },
-        {
-          "text": "got",
-          "offsetMs": 550,
-          "charIndex": 11
-        },
-        {
-          "text": "big",
-          "offsetMs": 775,
-          "charIndex": 15
-        }
-      ]
-    },
     "story|FISH": {
       "file": "ddf1b49f302eabe8.mp3",
       "durationMs": 1920,
@@ -9522,57 +8227,6 @@
         }
       ]
     },
-    "story|'Fish! I can read! This is the best day!'": {
-      "file": "f636a9c2a791f308.mp3",
-      "durationMs": 3432,
-      "words": [
-        {
-          "text": "Fish",
-          "offsetMs": 225,
-          "charIndex": 1
-        },
-        {
-          "text": "I",
-          "offsetMs": 912,
-          "charIndex": 7
-        },
-        {
-          "text": "can",
-          "offsetMs": 1000,
-          "charIndex": 9
-        },
-        {
-          "text": "read",
-          "offsetMs": 1150,
-          "charIndex": 13
-        },
-        {
-          "text": "This",
-          "offsetMs": 1875,
-          "charIndex": 19
-        },
-        {
-          "text": "is",
-          "offsetMs": 2050,
-          "charIndex": 24
-        },
-        {
-          "text": "the",
-          "offsetMs": 2162,
-          "charIndex": 27
-        },
-        {
-          "text": "best",
-          "offsetMs": 2275,
-          "charIndex": 31
-        },
-        {
-          "text": "day",
-          "offsetMs": 2650,
-          "charIndex": 36
-        }
-      ]
-    },
     "story|day": {
       "file": "157c59f4446c24be.mp3",
       "durationMs": 744,
@@ -9581,68 +8235,6 @@
           "text": "day",
           "offsetMs": 100,
           "charIndex": 0
-        }
-      ]
-    },
-    "story|Zib ran to tell the ship.": {
-      "file": "1373e92534b1d933.mp3",
-      "durationMs": 1920,
-      "words": [
-        {
-          "text": "Zib",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "ran",
-          "offsetMs": 400,
-          "charIndex": 4
-        },
-        {
-          "text": "to",
-          "offsetMs": 637,
-          "charIndex": 8
-        },
-        {
-          "text": "tell",
-          "offsetMs": 712,
-          "charIndex": 11
-        },
-        {
-          "text": "the",
-          "offsetMs": 925,
-          "charIndex": 16
-        },
-        {
-          "text": "ship",
-          "offsetMs": 1000,
-          "charIndex": 20
-        }
-      ]
-    },
-    "story|'I know words now!'": {
-      "file": "0471ea8f4576d251.mp3",
-      "durationMs": 1920,
-      "words": [
-        {
-          "text": "I",
-          "offsetMs": 137,
-          "charIndex": 1
-        },
-        {
-          "text": "know",
-          "offsetMs": 162,
-          "charIndex": 3
-        },
-        {
-          "text": "words",
-          "offsetMs": 400,
-          "charIndex": 8
-        },
-        {
-          "text": "now",
-          "offsetMs": 712,
-          "charIndex": 14
         }
       ]
     },
@@ -9908,57 +8500,6 @@
         }
       ]
     },
-    "story|We had to land on a cold, dark planet.": {
-      "file": "2c81ce600397c36a.mp3",
-      "durationMs": 2832,
-      "words": [
-        {
-          "text": "We",
-          "offsetMs": 112,
-          "charIndex": 0
-        },
-        {
-          "text": "had",
-          "offsetMs": 212,
-          "charIndex": 3
-        },
-        {
-          "text": "to",
-          "offsetMs": 362,
-          "charIndex": 7
-        },
-        {
-          "text": "land",
-          "offsetMs": 437,
-          "charIndex": 10
-        },
-        {
-          "text": "on",
-          "offsetMs": 787,
-          "charIndex": 15
-        },
-        {
-          "text": "a",
-          "offsetMs": 887,
-          "charIndex": 18
-        },
-        {
-          "text": "cold",
-          "offsetMs": 950,
-          "charIndex": 20
-        },
-        {
-          "text": "dark",
-          "offsetMs": 1700,
-          "charIndex": 26
-        },
-        {
-          "text": "planet",
-          "offsetMs": 1950,
-          "charIndex": 31
-        }
-      ]
-    },
     "story|land": {
       "file": "c2fbfd111d359905.mp3",
       "durationMs": 864,
@@ -9989,78 +8530,6 @@
           "text": "dark",
           "offsetMs": 100,
           "charIndex": 0
-        }
-      ]
-    },
-    "story|'The fuel tank is low,' the ship said.": {
-      "file": "89dee3865d4c9237.mp3",
-      "durationMs": 2496,
-      "words": [
-        {
-          "text": "The",
-          "offsetMs": 200,
-          "charIndex": 1
-        },
-        {
-          "text": "fuel",
-          "offsetMs": 225,
-          "charIndex": 5
-        },
-        {
-          "text": "tank",
-          "offsetMs": 487,
-          "charIndex": 10
-        },
-        {
-          "text": "is",
-          "offsetMs": 750,
-          "charIndex": 15
-        },
-        {
-          "text": "low",
-          "offsetMs": 887,
-          "charIndex": 18
-        },
-        {
-          "text": "the",
-          "offsetMs": 1387,
-          "charIndex": 24
-        },
-        {
-          "text": "ship",
-          "offsetMs": 1462,
-          "charIndex": 28
-        },
-        {
-          "text": "said",
-          "offsetMs": 1725,
-          "charIndex": 33
-        }
-      ]
-    },
-    "story|'Find more fuel fast.'": {
-      "file": "e974a482daa13be0.mp3",
-      "durationMs": 1920,
-      "words": [
-        {
-          "text": "Find",
-          "offsetMs": 225,
-          "charIndex": 1
-        },
-        {
-          "text": "more",
-          "offsetMs": 362,
-          "charIndex": 6
-        },
-        {
-          "text": "fuel",
-          "offsetMs": 562,
-          "charIndex": 11
-        },
-        {
-          "text": "fast",
-          "offsetMs": 850,
-          "charIndex": 16
         }
       ]
     },
@@ -10130,68 +8599,6 @@
         }
       ]
     },
-    "story|Zib and I left the ship.": {
-      "file": "b1bbdfccc8f17cb0.mp3",
-      "durationMs": 1920,
-      "words": [
-        {
-          "text": "Zib",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "and",
-          "offsetMs": 612,
-          "charIndex": 4
-        },
-        {
-          "text": "I",
-          "offsetMs": 700,
-          "charIndex": 8
-        },
-        {
-          "text": "left",
-          "offsetMs": 762,
-          "charIndex": 10
-        },
-        {
-          "text": "the",
-          "offsetMs": 1037,
-          "charIndex": 15
-        },
-        {
-          "text": "ship",
-          "offsetMs": 1112,
-          "charIndex": 19
-        }
-      ]
-    },
-    "story|Wind blew past us.": {
-      "file": "343feba6728b65c8.mp3",
-      "durationMs": 1920,
-      "words": [
-        {
-          "text": "Wind",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "blew",
-          "offsetMs": 312,
-          "charIndex": 5
-        },
-        {
-          "text": "past",
-          "offsetMs": 500,
-          "charIndex": 10
-        },
-        {
-          "text": "us",
-          "offsetMs": 900,
-          "charIndex": 15
-        }
-      ]
-    },
     "story|left": {
       "file": "b61274897c0fc7ba.mp3",
       "durationMs": 888,
@@ -10222,78 +8629,6 @@
           "text": "blew",
           "offsetMs": 112,
           "charIndex": 0
-        }
-      ]
-    },
-    "story|We found a cave cut into the rock.": {
-      "file": "80ad974027e048aa.mp3",
-      "durationMs": 2256,
-      "words": [
-        {
-          "text": "We",
-          "offsetMs": 112,
-          "charIndex": 0
-        },
-        {
-          "text": "found",
-          "offsetMs": 212,
-          "charIndex": 3
-        },
-        {
-          "text": "a",
-          "offsetMs": 475,
-          "charIndex": 9
-        },
-        {
-          "text": "cave",
-          "offsetMs": 537,
-          "charIndex": 11
-        },
-        {
-          "text": "cut",
-          "offsetMs": 912,
-          "charIndex": 16
-        },
-        {
-          "text": "into",
-          "offsetMs": 1137,
-          "charIndex": 20
-        },
-        {
-          "text": "the",
-          "offsetMs": 1325,
-          "charIndex": 25
-        },
-        {
-          "text": "rock",
-          "offsetMs": 1412,
-          "charIndex": 29
-        }
-      ]
-    },
-    "story|It was very dark.": {
-      "file": "fcf0292faf5b9298.mp3",
-      "durationMs": 1920,
-      "words": [
-        {
-          "text": "It",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "was",
-          "offsetMs": 175,
-          "charIndex": 3
-        },
-        {
-          "text": "very",
-          "offsetMs": 312,
-          "charIndex": 7
-        },
-        {
-          "text": "dark",
-          "offsetMs": 550,
-          "charIndex": 12
         }
       ]
     },
@@ -10338,68 +8673,6 @@
           "text": "very",
           "offsetMs": 100,
           "charIndex": 0
-        }
-      ]
-    },
-    "story|'Do not be scared,' I said.": {
-      "file": "0bc558a523ba516b.mp3",
-      "durationMs": 2136,
-      "words": [
-        {
-          "text": "Do",
-          "offsetMs": 187,
-          "charIndex": 1
-        },
-        {
-          "text": "not",
-          "offsetMs": 225,
-          "charIndex": 4
-        },
-        {
-          "text": "be",
-          "offsetMs": 412,
-          "charIndex": 8
-        },
-        {
-          "text": "scared",
-          "offsetMs": 525,
-          "charIndex": 11
-        },
-        {
-          "text": "I",
-          "offsetMs": 1300,
-          "charIndex": 20
-        },
-        {
-          "text": "said",
-          "offsetMs": 1350,
-          "charIndex": 22
-        }
-      ]
-    },
-    "story|'I have a lamp.'": {
-      "file": "6072dafa8d2da04c.mp3",
-      "durationMs": 1920,
-      "words": [
-        {
-          "text": "I",
-          "offsetMs": 175,
-          "charIndex": 1
-        },
-        {
-          "text": "have",
-          "offsetMs": 200,
-          "charIndex": 3
-        },
-        {
-          "text": "a",
-          "offsetMs": 300,
-          "charIndex": 8
-        },
-        {
-          "text": "lamp",
-          "offsetMs": 350,
-          "charIndex": 10
         }
       ]
     },
@@ -10458,73 +8731,6 @@
         }
       ]
     },
-    "story|The lamp cast a soft glow.": {
-      "file": "bf21959a713ff8d5.mp3",
-      "durationMs": 1920,
-      "words": [
-        {
-          "text": "The",
-          "offsetMs": 112,
-          "charIndex": 0
-        },
-        {
-          "text": "lamp",
-          "offsetMs": 187,
-          "charIndex": 4
-        },
-        {
-          "text": "cast",
-          "offsetMs": 462,
-          "charIndex": 9
-        },
-        {
-          "text": "a",
-          "offsetMs": 775,
-          "charIndex": 14
-        },
-        {
-          "text": "soft",
-          "offsetMs": 825,
-          "charIndex": 16
-        },
-        {
-          "text": "glow",
-          "offsetMs": 1175,
-          "charIndex": 21
-        }
-      ]
-    },
-    "story|We crept into the cave.": {
-      "file": "7daafabe30aaa707.mp3",
-      "durationMs": 1920,
-      "words": [
-        {
-          "text": "We",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "crept",
-          "offsetMs": 212,
-          "charIndex": 3
-        },
-        {
-          "text": "into",
-          "offsetMs": 525,
-          "charIndex": 9
-        },
-        {
-          "text": "the",
-          "offsetMs": 675,
-          "charIndex": 14
-        },
-        {
-          "text": "cave",
-          "offsetMs": 762,
-          "charIndex": 18
-        }
-      ]
-    },
     "story|cast": {
       "file": "16f28da89e7efc1c.mp3",
       "durationMs": 1920,
@@ -10566,74 +8772,6 @@
           "text": "crept",
           "offsetMs": 100,
           "charIndex": 0
-        }
-      ]
-    },
-    "story|Drip, drip.": {
-      "file": "9b29b434853c9d95.mp3",
-      "durationMs": 1920,
-      "words": [
-        {
-          "text": "Drip",
-          "offsetMs": 112,
-          "charIndex": 0
-        },
-        {
-          "text": "drip",
-          "offsetMs": 550,
-          "charIndex": 6
-        }
-      ]
-    },
-    "story|We heard drops of liquid.": {
-      "file": "44f0b23faf016ce2.mp3",
-      "durationMs": 1680,
-      "words": [
-        {
-          "text": "We",
-          "offsetMs": 112,
-          "charIndex": 0
-        },
-        {
-          "text": "heard",
-          "offsetMs": 225,
-          "charIndex": 3
-        },
-        {
-          "text": "drops",
-          "offsetMs": 425,
-          "charIndex": 9
-        },
-        {
-          "text": "of",
-          "offsetMs": 762,
-          "charIndex": 15
-        },
-        {
-          "text": "liquid",
-          "offsetMs": 862,
-          "charIndex": 18
-        }
-      ]
-    },
-    "story|It was fuel!": {
-      "file": "1c49a59522fa00ae.mp3",
-      "durationMs": 1920,
-      "words": [
-        {
-          "text": "It",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "was",
-          "offsetMs": 187,
-          "charIndex": 3
-        },
-        {
-          "text": "fuel",
-          "offsetMs": 337,
-          "charIndex": 7
         }
       ]
     },
@@ -10692,62 +8830,6 @@
         }
       ]
     },
-    "story|We filled our tank and went back to the ship.": {
-      "file": "d0c8488cc1f96e00.mp3",
-      "durationMs": 2664,
-      "words": [
-        {
-          "text": "We",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "filled",
-          "offsetMs": 212,
-          "charIndex": 3
-        },
-        {
-          "text": "our",
-          "offsetMs": 450,
-          "charIndex": 10
-        },
-        {
-          "text": "tank",
-          "offsetMs": 562,
-          "charIndex": 14
-        },
-        {
-          "text": "and",
-          "offsetMs": 1175,
-          "charIndex": 19
-        },
-        {
-          "text": "went",
-          "offsetMs": 1287,
-          "charIndex": 23
-        },
-        {
-          "text": "back",
-          "offsetMs": 1475,
-          "charIndex": 28
-        },
-        {
-          "text": "to",
-          "offsetMs": 1700,
-          "charIndex": 33
-        },
-        {
-          "text": "the",
-          "offsetMs": 1800,
-          "charIndex": 36
-        },
-        {
-          "text": "ship",
-          "offsetMs": 1887,
-          "charIndex": 40
-        }
-      ]
-    },
     "story|filled": {
       "file": "4d413a3826a28a59.mp3",
       "durationMs": 840,
@@ -10789,63 +8871,6 @@
           "text": "back",
           "offsetMs": 112,
           "charIndex": 0
-        }
-      ]
-    },
-    "story|'Blast off!' Zib said.": {
-      "file": "87861cc5771deb8a.mp3",
-      "durationMs": 2064,
-      "words": [
-        {
-          "text": "Blast",
-          "offsetMs": 187,
-          "charIndex": 1
-        },
-        {
-          "text": "off",
-          "offsetMs": 450,
-          "charIndex": 7
-        },
-        {
-          "text": "Zib",
-          "offsetMs": 1150,
-          "charIndex": 13
-        },
-        {
-          "text": "said",
-          "offsetMs": 1325,
-          "charIndex": 17
-        }
-      ]
-    },
-    "story|We were safe at last.": {
-      "file": "61fc34b039382d75.mp3",
-      "durationMs": 1560,
-      "words": [
-        {
-          "text": "We",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "were",
-          "offsetMs": 187,
-          "charIndex": 3
-        },
-        {
-          "text": "safe",
-          "offsetMs": 300,
-          "charIndex": 8
-        },
-        {
-          "text": "at",
-          "offsetMs": 587,
-          "charIndex": 13
-        },
-        {
-          "text": "last",
-          "offsetMs": 700,
-          "charIndex": 16
         }
       ]
     },
@@ -11082,73 +9107,6 @@
         }
       ]
     },
-    "story|Zib wanted to race.": {
-      "file": "e883973727fe7566.mp3",
-      "durationMs": 1488,
-      "words": [
-        {
-          "text": "Zib",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "wanted",
-          "offsetMs": 325,
-          "charIndex": 4
-        },
-        {
-          "text": "to",
-          "offsetMs": 537,
-          "charIndex": 11
-        },
-        {
-          "text": "race",
-          "offsetMs": 612,
-          "charIndex": 14
-        }
-      ]
-    },
-    "story|'Please, can we race the green ship?'": {
-      "file": "1a2b402b279ce1ca.mp3",
-      "durationMs": 2376,
-      "words": [
-        {
-          "text": "Please",
-          "offsetMs": 187,
-          "charIndex": 1
-        },
-        {
-          "text": "can",
-          "offsetMs": 637,
-          "charIndex": 9
-        },
-        {
-          "text": "we",
-          "offsetMs": 787,
-          "charIndex": 13
-        },
-        {
-          "text": "race",
-          "offsetMs": 925,
-          "charIndex": 16
-        },
-        {
-          "text": "the",
-          "offsetMs": 1212,
-          "charIndex": 21
-        },
-        {
-          "text": "green",
-          "offsetMs": 1312,
-          "charIndex": 25
-        },
-        {
-          "text": "ship",
-          "offsetMs": 1575,
-          "charIndex": 31
-        }
-      ]
-    },
     "story|wanted": {
       "file": "bfffe0b1dbf62b2e.mp3",
       "durationMs": 840,
@@ -11190,63 +9148,6 @@
           "text": "green",
           "offsetMs": 100,
           "charIndex": 0
-        }
-      ]
-    },
-    "story|I said yes.": {
-      "file": "7d70df23632ec247.mp3",
-      "durationMs": 1920,
-      "words": [
-        {
-          "text": "I",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "said",
-          "offsetMs": 162,
-          "charIndex": 2
-        },
-        {
-          "text": "yes",
-          "offsetMs": 362,
-          "charIndex": 7
-        }
-      ]
-    },
-    "story|We needed speed to beat them.": {
-      "file": "40f735020852dfbd.mp3",
-      "durationMs": 1920,
-      "words": [
-        {
-          "text": "We",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "needed",
-          "offsetMs": 212,
-          "charIndex": 3
-        },
-        {
-          "text": "speed",
-          "offsetMs": 500,
-          "charIndex": 10
-        },
-        {
-          "text": "to",
-          "offsetMs": 887,
-          "charIndex": 16
-        },
-        {
-          "text": "beat",
-          "offsetMs": 962,
-          "charIndex": 19
-        },
-        {
-          "text": "them",
-          "offsetMs": 1212,
-          "charIndex": 24
         }
       ]
     },
@@ -11302,68 +9203,6 @@
           "text": "them",
           "offsetMs": 125,
           "charIndex": 0
-        }
-      ]
-    },
-    "story|'Ready, set, GO!'": {
-      "file": "91554192cbbc2bcf.mp3",
-      "durationMs": 1464,
-      "words": [
-        {
-          "text": "Ready",
-          "offsetMs": 175,
-          "charIndex": 1
-        },
-        {
-          "text": "set",
-          "offsetMs": 350,
-          "charIndex": 8
-        },
-        {
-          "text": "GO",
-          "offsetMs": 737,
-          "charIndex": 13
-        }
-      ]
-    },
-    "story|A beam of light started the race.": {
-      "file": "5961ee9959f2167e.mp3",
-      "durationMs": 2352,
-      "words": [
-        {
-          "text": "A",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "beam",
-          "offsetMs": 187,
-          "charIndex": 2
-        },
-        {
-          "text": "of",
-          "offsetMs": 450,
-          "charIndex": 7
-        },
-        {
-          "text": "light",
-          "offsetMs": 562,
-          "charIndex": 10
-        },
-        {
-          "text": "started",
-          "offsetMs": 1037,
-          "charIndex": 16
-        },
-        {
-          "text": "the",
-          "offsetMs": 1375,
-          "charIndex": 24
-        },
-        {
-          "text": "race",
-          "offsetMs": 1450,
-          "charIndex": 28
         }
       ]
     },
@@ -11433,68 +9272,6 @@
         }
       ]
     },
-    "story|We flew past three moons.": {
-      "file": "aed8e9f54880b94b.mp3",
-      "durationMs": 2016,
-      "words": [
-        {
-          "text": "We",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "flew",
-          "offsetMs": 225,
-          "charIndex": 3
-        },
-        {
-          "text": "past",
-          "offsetMs": 462,
-          "charIndex": 8
-        },
-        {
-          "text": "three",
-          "offsetMs": 862,
-          "charIndex": 13
-        },
-        {
-          "text": "moons",
-          "offsetMs": 1075,
-          "charIndex": 19
-        }
-      ]
-    },
-    "story|The green ship was near.": {
-      "file": "a932ae08cff759e2.mp3",
-      "durationMs": 1752,
-      "words": [
-        {
-          "text": "The",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "green",
-          "offsetMs": 162,
-          "charIndex": 4
-        },
-        {
-          "text": "ship",
-          "offsetMs": 475,
-          "charIndex": 10
-        },
-        {
-          "text": "was",
-          "offsetMs": 825,
-          "charIndex": 15
-        },
-        {
-          "text": "near",
-          "offsetMs": 975,
-          "charIndex": 19
-        }
-      ]
-    },
     "story|flew": {
       "file": "7652f20836172237.mp3",
       "durationMs": 792,
@@ -11536,63 +9313,6 @@
           "text": "near",
           "offsetMs": 100,
           "charIndex": 0
-        }
-      ]
-    },
-    "story|'We need more speed!'": {
-      "file": "ccc4291580524a6f.mp3",
-      "durationMs": 1920,
-      "words": [
-        {
-          "text": "We",
-          "offsetMs": 175,
-          "charIndex": 1
-        },
-        {
-          "text": "need",
-          "offsetMs": 237,
-          "charIndex": 4
-        },
-        {
-          "text": "more",
-          "offsetMs": 412,
-          "charIndex": 9
-        },
-        {
-          "text": "speed",
-          "offsetMs": 625,
-          "charIndex": 14
-        }
-      ]
-    },
-    "story|Zib reached for the boost.": {
-      "file": "abbb2fce3a57c101.mp3",
-      "durationMs": 1752,
-      "words": [
-        {
-          "text": "Zib",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "reached",
-          "offsetMs": 437,
-          "charIndex": 4
-        },
-        {
-          "text": "for",
-          "offsetMs": 687,
-          "charIndex": 12
-        },
-        {
-          "text": "the",
-          "offsetMs": 800,
-          "charIndex": 16
-        },
-        {
-          "text": "boost",
-          "offsetMs": 887,
-          "charIndex": 20
         }
       ]
     },
@@ -11640,58 +9360,6 @@
         }
       ]
     },
-    "story|ZOOM!": {
-      "file": "43f9c1c5a74522c9.mp3",
-      "durationMs": 840,
-      "words": [
-        {
-          "text": "ZOOM",
-          "offsetMs": 100,
-          "charIndex": 0
-        }
-      ]
-    },
-    "story|Our ship leaped past the green one.": {
-      "file": "f59b310226effa38.mp3",
-      "durationMs": 2160,
-      "words": [
-        {
-          "text": "Our",
-          "offsetMs": 87,
-          "charIndex": 0
-        },
-        {
-          "text": "ship",
-          "offsetMs": 212,
-          "charIndex": 4
-        },
-        {
-          "text": "leaped",
-          "offsetMs": 525,
-          "charIndex": 9
-        },
-        {
-          "text": "past",
-          "offsetMs": 812,
-          "charIndex": 16
-        },
-        {
-          "text": "the",
-          "offsetMs": 1150,
-          "charIndex": 21
-        },
-        {
-          "text": "green",
-          "offsetMs": 1225,
-          "charIndex": 25
-        },
-        {
-          "text": "one",
-          "offsetMs": 1500,
-          "charIndex": 31
-        }
-      ]
-    },
     "story|ZOOM": {
       "file": "3c6ca429c0b20c8c.mp3",
       "durationMs": 840,
@@ -11725,68 +9393,6 @@
         }
       ]
     },
-    "story|We crossed the finish beam.": {
-      "file": "597fbc9419ea8035.mp3",
-      "durationMs": 1752,
-      "words": [
-        {
-          "text": "We",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "crossed",
-          "offsetMs": 237,
-          "charIndex": 3
-        },
-        {
-          "text": "the",
-          "offsetMs": 587,
-          "charIndex": 11
-        },
-        {
-          "text": "finish",
-          "offsetMs": 675,
-          "charIndex": 15
-        },
-        {
-          "text": "beam",
-          "offsetMs": 1012,
-          "charIndex": 22
-        }
-      ]
-    },
-    "story|'We did it! We won!'": {
-      "file": "56161322ac2953df.mp3",
-      "durationMs": 1800,
-      "words": [
-        {
-          "text": "We",
-          "offsetMs": 175,
-          "charIndex": 1
-        },
-        {
-          "text": "did",
-          "offsetMs": 212,
-          "charIndex": 4
-        },
-        {
-          "text": "it",
-          "offsetMs": 375,
-          "charIndex": 8
-        },
-        {
-          "text": "We",
-          "offsetMs": 925,
-          "charIndex": 12
-        },
-        {
-          "text": "won",
-          "offsetMs": 1050,
-          "charIndex": 15
-        }
-      ]
-    },
     "story|crossed": {
       "file": "3aafb6e7084559ab.mp3",
       "durationMs": 1920,
@@ -11817,78 +9423,6 @@
           "text": "won",
           "offsetMs": 112,
           "charIndex": 0
-        }
-      ]
-    },
-    "story|The team gave us each a gold star.": {
-      "file": "261b093a68079fef.mp3",
-      "durationMs": 2352,
-      "words": [
-        {
-          "text": "The",
-          "offsetMs": 112,
-          "charIndex": 0
-        },
-        {
-          "text": "team",
-          "offsetMs": 175,
-          "charIndex": 4
-        },
-        {
-          "text": "gave",
-          "offsetMs": 437,
-          "charIndex": 9
-        },
-        {
-          "text": "us",
-          "offsetMs": 700,
-          "charIndex": 14
-        },
-        {
-          "text": "each",
-          "offsetMs": 1050,
-          "charIndex": 17
-        },
-        {
-          "text": "a",
-          "offsetMs": 1200,
-          "charIndex": 22
-        },
-        {
-          "text": "gold",
-          "offsetMs": 1262,
-          "charIndex": 24
-        },
-        {
-          "text": "star",
-          "offsetMs": 1525,
-          "charIndex": 29
-        }
-      ]
-    },
-    "story|What a great day!": {
-      "file": "992657d909f947bb.mp3",
-      "durationMs": 1920,
-      "words": [
-        {
-          "text": "What",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "a",
-          "offsetMs": 200,
-          "charIndex": 5
-        },
-        {
-          "text": "great",
-          "offsetMs": 250,
-          "charIndex": 7
-        },
-        {
-          "text": "day",
-          "offsetMs": 500,
-          "charIndex": 13
         }
       ]
     },
@@ -12155,129 +9689,6 @@
         }
       ]
     },
-    "story|Zib found a small pet on the ship.": {
-      "file": "4660dd9d0e45aab8.mp3",
-      "durationMs": 2280,
-      "words": [
-        {
-          "text": "Zib",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "found",
-          "offsetMs": 362,
-          "charIndex": 4
-        },
-        {
-          "text": "a",
-          "offsetMs": 612,
-          "charIndex": 10
-        },
-        {
-          "text": "small",
-          "offsetMs": 662,
-          "charIndex": 12
-        },
-        {
-          "text": "pet",
-          "offsetMs": 1012,
-          "charIndex": 18
-        },
-        {
-          "text": "on",
-          "offsetMs": 1287,
-          "charIndex": 22
-        },
-        {
-          "text": "the",
-          "offsetMs": 1400,
-          "charIndex": 25
-        },
-        {
-          "text": "ship",
-          "offsetMs": 1475,
-          "charIndex": 29
-        }
-      ]
-    },
-    "story|'What is that?' I asked.": {
-      "file": "20df4657a3a7722b.mp3",
-      "durationMs": 1992,
-      "words": [
-        {
-          "text": "What",
-          "offsetMs": 175,
-          "charIndex": 1
-        },
-        {
-          "text": "is",
-          "offsetMs": 212,
-          "charIndex": 6
-        },
-        {
-          "text": "that",
-          "offsetMs": 325,
-          "charIndex": 9
-        },
-        {
-          "text": "I",
-          "offsetMs": 1087,
-          "charIndex": 16
-        },
-        {
-          "text": "asked",
-          "offsetMs": 1187,
-          "charIndex": 18
-        }
-      ]
-    },
-    "story|The pet had six legs and a shell.": {
-      "file": "d226d318554bf2df.mp3",
-      "durationMs": 2256,
-      "words": [
-        {
-          "text": "The",
-          "offsetMs": 112,
-          "charIndex": 0
-        },
-        {
-          "text": "pet",
-          "offsetMs": 175,
-          "charIndex": 4
-        },
-        {
-          "text": "had",
-          "offsetMs": 387,
-          "charIndex": 8
-        },
-        {
-          "text": "six",
-          "offsetMs": 587,
-          "charIndex": 12
-        },
-        {
-          "text": "legs",
-          "offsetMs": 900,
-          "charIndex": 16
-        },
-        {
-          "text": "and",
-          "offsetMs": 1275,
-          "charIndex": 21
-        },
-        {
-          "text": "a",
-          "offsetMs": 1387,
-          "charIndex": 25
-        },
-        {
-          "text": "shell",
-          "offsetMs": 1425,
-          "charIndex": 27
-        }
-      ]
-    },
     "story|asked": {
       "file": "05fb04430b7e4454.mp3",
       "durationMs": 864,
@@ -12319,62 +9730,6 @@
           "text": "shell",
           "offsetMs": 100,
           "charIndex": 0
-        }
-      ]
-    },
-    "story|'I shall name it Chip,' Zib said with a grin.": {
-      "file": "26f6b900f08429aa.mp3",
-      "durationMs": 2736,
-      "words": [
-        {
-          "text": "I",
-          "offsetMs": 137,
-          "charIndex": 1
-        },
-        {
-          "text": "shall",
-          "offsetMs": 162,
-          "charIndex": 3
-        },
-        {
-          "text": "name",
-          "offsetMs": 375,
-          "charIndex": 9
-        },
-        {
-          "text": "it",
-          "offsetMs": 550,
-          "charIndex": 14
-        },
-        {
-          "text": "Chip",
-          "offsetMs": 650,
-          "charIndex": 17
-        },
-        {
-          "text": "Zib",
-          "offsetMs": 1275,
-          "charIndex": 24
-        },
-        {
-          "text": "said",
-          "offsetMs": 1575,
-          "charIndex": 28
-        },
-        {
-          "text": "with",
-          "offsetMs": 1800,
-          "charIndex": 33
-        },
-        {
-          "text": "a",
-          "offsetMs": 1937,
-          "charIndex": 38
-        },
-        {
-          "text": "grin",
-          "offsetMs": 1987,
-          "charIndex": 40
         }
       ]
     },
@@ -12422,63 +9777,6 @@
         }
       ]
     },
-    "story|Chip ran when we chased it.": {
-      "file": "ee723fa742ea0005.mp3",
-      "durationMs": 1920,
-      "words": [
-        {
-          "text": "Chip",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "ran",
-          "offsetMs": 412,
-          "charIndex": 5
-        },
-        {
-          "text": "when",
-          "offsetMs": 662,
-          "charIndex": 9
-        },
-        {
-          "text": "we",
-          "offsetMs": 787,
-          "charIndex": 14
-        },
-        {
-          "text": "chased",
-          "offsetMs": 887,
-          "charIndex": 17
-        },
-        {
-          "text": "it",
-          "offsetMs": 1262,
-          "charIndex": 24
-        }
-      ]
-    },
-    "story|'Come back, Chip!'": {
-      "file": "f36f951bbea0b759.mp3",
-      "durationMs": 1920,
-      "words": [
-        {
-          "text": "Come",
-          "offsetMs": 175,
-          "charIndex": 1
-        },
-        {
-          "text": "back",
-          "offsetMs": 237,
-          "charIndex": 6
-        },
-        {
-          "text": "Chip",
-          "offsetMs": 512,
-          "charIndex": 12
-        }
-      ]
-    },
     "story|when": {
       "file": "5475e24c808ec8cd.mp3",
       "durationMs": 768,
@@ -12509,73 +9807,6 @@
           "text": "Come",
           "offsetMs": 100,
           "charIndex": 0
-        }
-      ]
-    },
-    "story|The pet hid in a chest.": {
-      "file": "d4355572091adf79.mp3",
-      "durationMs": 1920,
-      "words": [
-        {
-          "text": "The",
-          "offsetMs": 112,
-          "charIndex": 0
-        },
-        {
-          "text": "pet",
-          "offsetMs": 175,
-          "charIndex": 4
-        },
-        {
-          "text": "hid",
-          "offsetMs": 362,
-          "charIndex": 8
-        },
-        {
-          "text": "in",
-          "offsetMs": 562,
-          "charIndex": 12
-        },
-        {
-          "text": "a",
-          "offsetMs": 662,
-          "charIndex": 15
-        },
-        {
-          "text": "chest",
-          "offsetMs": 712,
-          "charIndex": 17
-        }
-      ]
-    },
-    "story|We shut the lid fast.": {
-      "file": "2983e1a673ad3bd3.mp3",
-      "durationMs": 1632,
-      "words": [
-        {
-          "text": "We",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "shut",
-          "offsetMs": 187,
-          "charIndex": 3
-        },
-        {
-          "text": "the",
-          "offsetMs": 412,
-          "charIndex": 8
-        },
-        {
-          "text": "lid",
-          "offsetMs": 500,
-          "charIndex": 12
-        },
-        {
-          "text": "fast",
-          "offsetMs": 700,
-          "charIndex": 16
         }
       ]
     },
@@ -12612,64 +9843,6 @@
         }
       ]
     },
-    "story|'Got you!'": {
-      "file": "1f7919108304d107.mp3",
-      "durationMs": 864,
-      "words": [
-        {
-          "text": "Got",
-          "offsetMs": 162,
-          "charIndex": 1
-        },
-        {
-          "text": "you",
-          "offsetMs": 275,
-          "charIndex": 5
-        }
-      ]
-    },
-    "story|Zib held Chip up.": {
-      "file": "175fb04f583877b5.mp3",
-      "durationMs": 1920,
-      "words": [
-        {
-          "text": "Zib",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "held",
-          "offsetMs": 350,
-          "charIndex": 4
-        },
-        {
-          "text": "Chip",
-          "offsetMs": 525,
-          "charIndex": 9
-        },
-        {
-          "text": "up",
-          "offsetMs": 750,
-          "charIndex": 14
-        }
-      ]
-    },
-    "story|Chip chirped.": {
-      "file": "8dbafa4f6032b873.mp3",
-      "durationMs": 1920,
-      "words": [
-        {
-          "text": "Chip",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "chirped",
-          "offsetMs": 300,
-          "charIndex": 5
-        }
-      ]
-    },
     "story|Got": {
       "file": "be06000a6f774834.mp3",
       "durationMs": 816,
@@ -12689,73 +9862,6 @@
           "text": "chirped",
           "offsetMs": 100,
           "charIndex": 0
-        }
-      ]
-    },
-    "story|'Chip must be fed,' I said.": {
-      "file": "d2e0c16712b9a3ab.mp3",
-      "durationMs": 2352,
-      "words": [
-        {
-          "text": "Chip",
-          "offsetMs": 175,
-          "charIndex": 1
-        },
-        {
-          "text": "must",
-          "offsetMs": 325,
-          "charIndex": 6
-        },
-        {
-          "text": "be",
-          "offsetMs": 550,
-          "charIndex": 11
-        },
-        {
-          "text": "fed",
-          "offsetMs": 675,
-          "charIndex": 14
-        },
-        {
-          "text": "I",
-          "offsetMs": 1487,
-          "charIndex": 20
-        },
-        {
-          "text": "said",
-          "offsetMs": 1537,
-          "charIndex": 22
-        }
-      ]
-    },
-    "story|'What shall we give it?'": {
-      "file": "8dd467e866ee5f6b.mp3",
-      "durationMs": 1920,
-      "words": [
-        {
-          "text": "What",
-          "offsetMs": 175,
-          "charIndex": 1
-        },
-        {
-          "text": "shall",
-          "offsetMs": 212,
-          "charIndex": 6
-        },
-        {
-          "text": "we",
-          "offsetMs": 375,
-          "charIndex": 12
-        },
-        {
-          "text": "give",
-          "offsetMs": 500,
-          "charIndex": 15
-        },
-        {
-          "text": "it",
-          "offsetMs": 712,
-          "charIndex": 20
         }
       ]
     },
@@ -12789,68 +9895,6 @@
           "text": "give",
           "offsetMs": 100,
           "charIndex": 0
-        }
-      ]
-    },
-    "story|Chip chomped on a chunk of bread.": {
-      "file": "eec90fd19ffa0cd1.mp3",
-      "durationMs": 1968,
-      "words": [
-        {
-          "text": "Chip",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "chomped",
-          "offsetMs": 325,
-          "charIndex": 5
-        },
-        {
-          "text": "on",
-          "offsetMs": 687,
-          "charIndex": 13
-        },
-        {
-          "text": "a",
-          "offsetMs": 787,
-          "charIndex": 16
-        },
-        {
-          "text": "chunk",
-          "offsetMs": 837,
-          "charIndex": 18
-        },
-        {
-          "text": "of",
-          "offsetMs": 1125,
-          "charIndex": 24
-        },
-        {
-          "text": "bread",
-          "offsetMs": 1225,
-          "charIndex": 27
-        }
-      ]
-    },
-    "story|'Chip likes it!'": {
-      "file": "bc4e1285f0ae7baa.mp3",
-      "durationMs": 1920,
-      "words": [
-        {
-          "text": "Chip",
-          "offsetMs": 175,
-          "charIndex": 1
-        },
-        {
-          "text": "likes",
-          "offsetMs": 287,
-          "charIndex": 6
-        },
-        {
-          "text": "it",
-          "offsetMs": 537,
-          "charIndex": 12
         }
       ]
     },
@@ -12895,78 +9939,6 @@
           "text": "likes",
           "offsetMs": 100,
           "charIndex": 0
-        }
-      ]
-    },
-    "story|Now Chip is part of our ship crew.": {
-      "file": "158b202cf6960c1a.mp3",
-      "durationMs": 2112,
-      "words": [
-        {
-          "text": "Now",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "Chip",
-          "offsetMs": 287,
-          "charIndex": 4
-        },
-        {
-          "text": "is",
-          "offsetMs": 612,
-          "charIndex": 9
-        },
-        {
-          "text": "part",
-          "offsetMs": 737,
-          "charIndex": 12
-        },
-        {
-          "text": "of",
-          "offsetMs": 962,
-          "charIndex": 17
-        },
-        {
-          "text": "our",
-          "offsetMs": 1037,
-          "charIndex": 20
-        },
-        {
-          "text": "ship",
-          "offsetMs": 1150,
-          "charIndex": 24
-        },
-        {
-          "text": "crew",
-          "offsetMs": 1400,
-          "charIndex": 29
-        }
-      ]
-    },
-    "story|We are a team.": {
-      "file": "4e2f8326772f7314.mp3",
-      "durationMs": 1920,
-      "words": [
-        {
-          "text": "We",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "are",
-          "offsetMs": 250,
-          "charIndex": 3
-        },
-        {
-          "text": "a",
-          "offsetMs": 362,
-          "charIndex": 7
-        },
-        {
-          "text": "team",
-          "offsetMs": 412,
-          "charIndex": 9
         }
       ]
     },
@@ -13232,68 +10204,6 @@
         }
       ]
     },
-    "story|This is it.": {
-      "file": "62174afe2b44908b.mp3",
-      "durationMs": 1920,
-      "words": [
-        {
-          "text": "This",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "is",
-          "offsetMs": 237,
-          "charIndex": 5
-        },
-        {
-          "text": "it",
-          "offsetMs": 362,
-          "charIndex": 8
-        }
-      ]
-    },
-    "story|The big mission to the red planet.": {
-      "file": "d2e0b50ff674ae78.mp3",
-      "durationMs": 2064,
-      "words": [
-        {
-          "text": "The",
-          "offsetMs": 112,
-          "charIndex": 0
-        },
-        {
-          "text": "big",
-          "offsetMs": 187,
-          "charIndex": 4
-        },
-        {
-          "text": "mission",
-          "offsetMs": 375,
-          "charIndex": 8
-        },
-        {
-          "text": "to",
-          "offsetMs": 775,
-          "charIndex": 16
-        },
-        {
-          "text": "the",
-          "offsetMs": 875,
-          "charIndex": 19
-        },
-        {
-          "text": "red",
-          "offsetMs": 975,
-          "charIndex": 23
-        },
-        {
-          "text": "planet",
-          "offsetMs": 1187,
-          "charIndex": 27
-        }
-      ]
-    },
     "story|mission": {
       "file": "0f51431a8daa6ddb.mp3",
       "durationMs": 888,
@@ -13302,84 +10212,6 @@
           "text": "mission",
           "offsetMs": 100,
           "charIndex": 0
-        }
-      ]
-    },
-    "story|Zib and I checked the ship.": {
-      "file": "81da79ff5109edfe.mp3",
-      "durationMs": 1848,
-      "words": [
-        {
-          "text": "Zib",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "and",
-          "offsetMs": 587,
-          "charIndex": 4
-        },
-        {
-          "text": "I",
-          "offsetMs": 675,
-          "charIndex": 8
-        },
-        {
-          "text": "checked",
-          "offsetMs": 737,
-          "charIndex": 10
-        },
-        {
-          "text": "the",
-          "offsetMs": 1025,
-          "charIndex": 18
-        },
-        {
-          "text": "ship",
-          "offsetMs": 1100,
-          "charIndex": 22
-        }
-      ]
-    },
-    "story|Fuel was full.": {
-      "file": "a984da0aeb5e677c.mp3",
-      "durationMs": 1920,
-      "words": [
-        {
-          "text": "Fuel",
-          "offsetMs": 125,
-          "charIndex": 0
-        },
-        {
-          "text": "was",
-          "offsetMs": 287,
-          "charIndex": 5
-        },
-        {
-          "text": "full",
-          "offsetMs": 450,
-          "charIndex": 9
-        }
-      ]
-    },
-    "story|Maps were set.": {
-      "file": "b920f50882c49b54.mp3",
-      "durationMs": 1920,
-      "words": [
-        {
-          "text": "Maps",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "were",
-          "offsetMs": 337,
-          "charIndex": 5
-        },
-        {
-          "text": "set",
-          "offsetMs": 462,
-          "charIndex": 10
         }
       ]
     },
@@ -13427,73 +10259,6 @@
         }
       ]
     },
-    "story|'Blast off in three, two, one!'": {
-      "file": "282e581a32e21aa7.mp3",
-      "durationMs": 2184,
-      "words": [
-        {
-          "text": "Blast",
-          "offsetMs": 187,
-          "charIndex": 1
-        },
-        {
-          "text": "off",
-          "offsetMs": 450,
-          "charIndex": 7
-        },
-        {
-          "text": "in",
-          "offsetMs": 625,
-          "charIndex": 11
-        },
-        {
-          "text": "three",
-          "offsetMs": 750,
-          "charIndex": 14
-        },
-        {
-          "text": "two",
-          "offsetMs": 1137,
-          "charIndex": 21
-        },
-        {
-          "text": "one",
-          "offsetMs": 1412,
-          "charIndex": 26
-        }
-      ]
-    },
-    "story|The ship shook and rose.": {
-      "file": "1303c9724de1b60c.mp3",
-      "durationMs": 1872,
-      "words": [
-        {
-          "text": "The",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "ship",
-          "offsetMs": 150,
-          "charIndex": 4
-        },
-        {
-          "text": "shook",
-          "offsetMs": 387,
-          "charIndex": 9
-        },
-        {
-          "text": "and",
-          "offsetMs": 862,
-          "charIndex": 15
-        },
-        {
-          "text": "rose",
-          "offsetMs": 987,
-          "charIndex": 19
-        }
-      ]
-    },
     "story|two": {
       "file": "3ffe4b5f1c7d03e0.mp3",
       "durationMs": 744,
@@ -13527,57 +10292,6 @@
         }
       ]
     },
-    "story|We flew past the moon and into deep space.": {
-      "file": "8aabae52626e9aa2.mp3",
-      "durationMs": 3096,
-      "words": [
-        {
-          "text": "We",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "flew",
-          "offsetMs": 237,
-          "charIndex": 3
-        },
-        {
-          "text": "past",
-          "offsetMs": 525,
-          "charIndex": 8
-        },
-        {
-          "text": "the",
-          "offsetMs": 887,
-          "charIndex": 13
-        },
-        {
-          "text": "moon",
-          "offsetMs": 962,
-          "charIndex": 17
-        },
-        {
-          "text": "and",
-          "offsetMs": 1500,
-          "charIndex": 22
-        },
-        {
-          "text": "into",
-          "offsetMs": 1612,
-          "charIndex": 26
-        },
-        {
-          "text": "deep",
-          "offsetMs": 1825,
-          "charIndex": 31
-        },
-        {
-          "text": "space",
-          "offsetMs": 2062,
-          "charIndex": 36
-        }
-      ]
-    },
     "story|deep": {
       "file": "263e21ab6a90b1c4.mp3",
       "durationMs": 768,
@@ -13597,73 +10311,6 @@
           "text": "space",
           "offsetMs": 100,
           "charIndex": 0
-        }
-      ]
-    },
-    "story|Stars rushed by.": {
-      "file": "0fcde91ab17b0140.mp3",
-      "durationMs": 1920,
-      "words": [
-        {
-          "text": "Stars",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "rushed",
-          "offsetMs": 437,
-          "charIndex": 6
-        },
-        {
-          "text": "by",
-          "offsetMs": 700,
-          "charIndex": 13
-        }
-      ]
-    },
-    "story|Zib read a book to pass the time.": {
-      "file": "bebb285a88d45d64.mp3",
-      "durationMs": 2184,
-      "words": [
-        {
-          "text": "Zib",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "read",
-          "offsetMs": 387,
-          "charIndex": 4
-        },
-        {
-          "text": "a",
-          "offsetMs": 537,
-          "charIndex": 9
-        },
-        {
-          "text": "book",
-          "offsetMs": 600,
-          "charIndex": 11
-        },
-        {
-          "text": "to",
-          "offsetMs": 900,
-          "charIndex": 16
-        },
-        {
-          "text": "pass",
-          "offsetMs": 1000,
-          "charIndex": 19
-        },
-        {
-          "text": "the",
-          "offsetMs": 1325,
-          "charIndex": 24
-        },
-        {
-          "text": "time",
-          "offsetMs": 1412,
-          "charIndex": 28
         }
       ]
     },
@@ -13711,73 +10358,6 @@
         }
       ]
     },
-    "story|'Look! The red planet!'": {
-      "file": "907f35c07c7ee5a9.mp3",
-      "durationMs": 1944,
-      "words": [
-        {
-          "text": "Look",
-          "offsetMs": 175,
-          "charIndex": 1
-        },
-        {
-          "text": "The",
-          "offsetMs": 762,
-          "charIndex": 7
-        },
-        {
-          "text": "red",
-          "offsetMs": 837,
-          "charIndex": 11
-        },
-        {
-          "text": "planet",
-          "offsetMs": 1050,
-          "charIndex": 15
-        }
-      ]
-    },
-    "story|It was huge and had big storms.": {
-      "file": "d94d5cf2c2dd03b5.mp3",
-      "durationMs": 2400,
-      "words": [
-        {
-          "text": "It",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "was",
-          "offsetMs": 175,
-          "charIndex": 3
-        },
-        {
-          "text": "huge",
-          "offsetMs": 337,
-          "charIndex": 7
-        },
-        {
-          "text": "and",
-          "offsetMs": 937,
-          "charIndex": 12
-        },
-        {
-          "text": "had",
-          "offsetMs": 1025,
-          "charIndex": 16
-        },
-        {
-          "text": "big",
-          "offsetMs": 1187,
-          "charIndex": 20
-        },
-        {
-          "text": "storms",
-          "offsetMs": 1362,
-          "charIndex": 24
-        }
-      ]
-    },
     "story|Look": {
       "file": "8fa0c3aae775278c.mp3",
       "durationMs": 768,
@@ -13808,68 +10388,6 @@
           "text": "storms",
           "offsetMs": 100,
           "charIndex": 0
-        }
-      ]
-    },
-    "story|We landed with a soft thud.": {
-      "file": "8d581a8582268d35.mp3",
-      "durationMs": 1944,
-      "words": [
-        {
-          "text": "We",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "landed",
-          "offsetMs": 212,
-          "charIndex": 3
-        },
-        {
-          "text": "with",
-          "offsetMs": 525,
-          "charIndex": 10
-        },
-        {
-          "text": "a",
-          "offsetMs": 662,
-          "charIndex": 15
-        },
-        {
-          "text": "soft",
-          "offsetMs": 712,
-          "charIndex": 17
-        },
-        {
-          "text": "thud",
-          "offsetMs": 1112,
-          "charIndex": 22
-        }
-      ]
-    },
-    "story|Red dust flew up.": {
-      "file": "f1126673680ee1a0.mp3",
-      "durationMs": 1920,
-      "words": [
-        {
-          "text": "Red",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "dust",
-          "offsetMs": 400,
-          "charIndex": 4
-        },
-        {
-          "text": "flew",
-          "offsetMs": 687,
-          "charIndex": 9
-        },
-        {
-          "text": "up",
-          "offsetMs": 962,
-          "charIndex": 14
         }
       ]
     },
@@ -13917,78 +10435,6 @@
         }
       ]
     },
-    "story|'We made it,' I said.": {
-      "file": "8f22dc774b024464.mp3",
-      "durationMs": 1752,
-      "words": [
-        {
-          "text": "We",
-          "offsetMs": 175,
-          "charIndex": 1
-        },
-        {
-          "text": "made",
-          "offsetMs": 212,
-          "charIndex": 4
-        },
-        {
-          "text": "it",
-          "offsetMs": 450,
-          "charIndex": 9
-        },
-        {
-          "text": "I",
-          "offsetMs": 900,
-          "charIndex": 14
-        },
-        {
-          "text": "said",
-          "offsetMs": 950,
-          "charIndex": 16
-        }
-      ]
-    },
-    "story|'We are the first to be here.'": {
-      "file": "f6cd1c514091d268.mp3",
-      "durationMs": 1944,
-      "words": [
-        {
-          "text": "We",
-          "offsetMs": 175,
-          "charIndex": 1
-        },
-        {
-          "text": "are",
-          "offsetMs": 250,
-          "charIndex": 4
-        },
-        {
-          "text": "the",
-          "offsetMs": 337,
-          "charIndex": 8
-        },
-        {
-          "text": "first",
-          "offsetMs": 437,
-          "charIndex": 12
-        },
-        {
-          "text": "to",
-          "offsetMs": 787,
-          "charIndex": 18
-        },
-        {
-          "text": "be",
-          "offsetMs": 875,
-          "charIndex": 21
-        },
-        {
-          "text": "here",
-          "offsetMs": 1050,
-          "charIndex": 24
-        }
-      ]
-    },
     "story|made": {
       "file": "e5b18b45491abafe.mp3",
       "durationMs": 816,
@@ -14019,78 +10465,6 @@
           "text": "here",
           "offsetMs": 125,
           "charIndex": 0
-        }
-      ]
-    },
-    "story|Zib planted a flag.": {
-      "file": "49e8f6a553e5bf25.mp3",
-      "durationMs": 1920,
-      "words": [
-        {
-          "text": "Zib",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "planted",
-          "offsetMs": 350,
-          "charIndex": 4
-        },
-        {
-          "text": "a",
-          "offsetMs": 662,
-          "charIndex": 12
-        },
-        {
-          "text": "flag",
-          "offsetMs": 700,
-          "charIndex": 14
-        }
-      ]
-    },
-    "story|'This is for all of us back home.'": {
-      "file": "c8502b29249a3c57.mp3",
-      "durationMs": 2016,
-      "words": [
-        {
-          "text": "This",
-          "offsetMs": 175,
-          "charIndex": 1
-        },
-        {
-          "text": "is",
-          "offsetMs": 275,
-          "charIndex": 6
-        },
-        {
-          "text": "for",
-          "offsetMs": 387,
-          "charIndex": 9
-        },
-        {
-          "text": "all",
-          "offsetMs": 625,
-          "charIndex": 13
-        },
-        {
-          "text": "of",
-          "offsetMs": 812,
-          "charIndex": 17
-        },
-        {
-          "text": "us",
-          "offsetMs": 912,
-          "charIndex": 20
-        },
-        {
-          "text": "back",
-          "offsetMs": 1050,
-          "charIndex": 23
-        },
-        {
-          "text": "home",
-          "offsetMs": 1325,
-          "charIndex": 28
         }
       ]
     },
@@ -14135,68 +10509,6 @@
           "text": "home",
           "offsetMs": 112,
           "charIndex": 0
-        }
-      ]
-    },
-    "story|What will we find next?": {
-      "file": "4258edc204513bc2.mp3",
-      "durationMs": 1920,
-      "words": [
-        {
-          "text": "What",
-          "offsetMs": 100,
-          "charIndex": 0
-        },
-        {
-          "text": "will",
-          "offsetMs": 175,
-          "charIndex": 5
-        },
-        {
-          "text": "we",
-          "offsetMs": 262,
-          "charIndex": 10
-        },
-        {
-          "text": "find",
-          "offsetMs": 362,
-          "charIndex": 13
-        },
-        {
-          "text": "next",
-          "offsetMs": 637,
-          "charIndex": 18
-        }
-      ]
-    },
-    "story|The quest has just begun!": {
-      "file": "528c6517b0d2cd19.mp3",
-      "durationMs": 1776,
-      "words": [
-        {
-          "text": "The",
-          "offsetMs": 112,
-          "charIndex": 0
-        },
-        {
-          "text": "quest",
-          "offsetMs": 175,
-          "charIndex": 4
-        },
-        {
-          "text": "has",
-          "offsetMs": 550,
-          "charIndex": 10
-        },
-        {
-          "text": "just",
-          "offsetMs": 687,
-          "charIndex": 14
-        },
-        {
-          "text": "begun",
-          "offsetMs": 937,
-          "charIndex": 19
         }
       ]
     },
@@ -14818,57 +11130,6 @@
           "text": "Mysteries",
           "offsetMs": 100,
           "charIndex": 0
-        }
-      ]
-    },
-    "story|'You are the best at this! Thank you, friend.'": {
-      "file": "b47e9d23637269dc.mp3",
-      "durationMs": 2904,
-      "words": [
-        {
-          "text": "You",
-          "offsetMs": 175,
-          "charIndex": 1
-        },
-        {
-          "text": "are",
-          "offsetMs": 212,
-          "charIndex": 5
-        },
-        {
-          "text": "the",
-          "offsetMs": 300,
-          "charIndex": 9
-        },
-        {
-          "text": "best",
-          "offsetMs": 400,
-          "charIndex": 13
-        },
-        {
-          "text": "at",
-          "offsetMs": 712,
-          "charIndex": 18
-        },
-        {
-          "text": "this",
-          "offsetMs": 825,
-          "charIndex": 21
-        },
-        {
-          "text": "Thank",
-          "offsetMs": 1625,
-          "charIndex": 27
-        },
-        {
-          "text": "you",
-          "offsetMs": 1800,
-          "charIndex": 33
-        },
-        {
-          "text": "friend",
-          "offsetMs": 1987,
-          "charIndex": 38
         }
       ]
     },

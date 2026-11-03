@@ -389,16 +389,18 @@ export function Mission() {
 
             <Card glow="gold" className="text-center space-y-3">
               {/* Breakdown starts from pre-mission fuel so it matches the Bridge before and after. */}
-              <div className="flex items-start justify-center gap-2">
-                <SpeakButton text={fuelSpeak} voice="control" />
-                <div className="text-fuel-orange space-y-1 text-xl font-bold text-left">
-                  <div>Before {fuelAtStart} 🔥</div>
-                  <div>Story fuel +{storyFuelEarned}</div>
-                  <div>Mission bonus +{mission.fuelReward}</div>
-                  <div className="text-2xl">Total {fuelTotal} 🔥</div>
+              <div className="flex justify-center">
+                <div className="inline-flex items-center gap-2">
+                  <SpeakButton text={fuelSpeak} voice="control" className="shrink-0" />
+                  <div className="text-fuel-orange space-y-1 text-xl font-bold text-center">
+                    <div>Before {fuelAtStart} 🔥</div>
+                    <div>Story fuel +{storyFuelEarned}</div>
+                    <div>Mission bonus +{mission.fuelReward}</div>
+                    <div className="text-2xl">Total {fuelTotal} 🔥</div>
+                  </div>
                 </div>
               </div>
-              <div className="text-star-gold space-y-1 text-xl font-bold pt-2">
+              <div className="text-star-gold space-y-1 text-xl font-bold pt-2 text-center">
                 <div>Before {starsAtStart} ⭐</div>
                 <div>Mission bonus +{mission.starReward}</div>
                 <div className="text-2xl">Total {starTotal} ⭐</div>

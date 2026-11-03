@@ -1,8 +1,12 @@
 /**
  * Story Reader Component
  *
- * Displays a decodable story with tappable words and per-sentence read-aloud.
- * Tapping a word still opens the sound-out decoder.
+ * Kids read the book themselves. Story sentences have NO 🔊 and are never
+ * auto-played — tapping a speaker instead of reading was the live-QA failure.
+ * The only audio help on story text is tapping a single word:
+ *   - decodable words open the slider decoder
+ *   - heart/sight words open Hear It
+ * Title, Story Complete, and other UI labels still have speakers.
  */
 
 import { useState, useCallback, useRef, useEffect } from 'react';
@@ -15,7 +19,7 @@ import { useZibClips } from './ZibClip';
 import { useZibOverlayLock } from '../hooks/useZibOverlayLock';
 import { storyCompleteLine } from '../data/voiceLines';
 import { getZibClipService } from '../services/zibClips';
-import { joinWords, sentenceRanges, wordIndexFromChar } from '../utils/readAloud';
+import { sentenceRanges } from '../utils/readAloud';
 
 interface StoryReaderProps {
   story: Story;
@@ -28,7 +32,6 @@ export function StoryReader({ story, onComplete, onExit }: StoryReaderProps) {
   const [decodedWords, setDecodedWords] = useState<Set<string>>(new Set());
   const [currentParagraph, setCurrentParagraph] = useState(0);
   const [isFinished, setIsFinished] = useState(false);
-  const [spokenWordIndex, setSpokenWordIndex] = useState<number | null>(null);
   const startTimeRef = useRef<number | null>(null);
   const { triggerWordCracked, triggerKeepTrying } = useZibClips();
   const wordsDecodedThisSession = useRef<string[]>([]);
@@ -41,29 +44,27 @@ export function StoryReader({ story, onComplete, onExit }: StoryReaderProps) {
   const handleWordTap = useCallback((word: DecodableWord) => {
     getAudioService().stop();
     getZibClipService().skip();
-    setSpokenWordIndex(null);
     setSelectedWord(word);
   }, []);
 
-  const handleWordDecoded = useCallback(() => {
-    if (selectedWord) {
-      const wordText = selectedWord.word.toLowerCase().replace(/[^a-z]/g, '').trim();
-      if (!wordText) {
-        setSelectedWord(null);
-        return;
-      }
+  const markWordDecoded = useCallback((source: DecodableWord | null) => {
+    if (!source) return;
+    const wordText = source.word.toLowerCase().replace(/[^a-z]/g, '').trim();
+    if (!wordText) return;
 
-      const isNewWord = !decodedWords.has(wordText);
-      setDecodedWords(prev => new Set([...prev, wordText]));
-
-      if (isNewWord) {
-        wordsDecodedThisSession.current.push(wordText);
-      }
-
+    const alreadyCounted = wordsDecodedThisSession.current.includes(wordText)
+      || decodedWords.has(wordText);
+    setDecodedWords(prev => new Set([...prev, wordText]));
+    if (!alreadyCounted) {
+      wordsDecodedThisSession.current.push(wordText);
       triggerWordCracked(story.id);
     }
+  }, [decodedWords, story.id, triggerWordCracked]);
+
+  const handleWordDecoded = useCallback(() => {
+    markWordDecoded(selectedWord);
     setSelectedWord(null);
-  }, [selectedWord, story.id, triggerWordCracked, decodedWords]);
+  }, [markWordDecoded, selectedWord]);
 
   const handleKeepTrying = useCallback(() => {
     triggerKeepTrying();
@@ -71,7 +72,6 @@ export function StoryReader({ story, onComplete, onExit }: StoryReaderProps) {
 
   const handleNextParagraph = useCallback(() => {
     getAudioService().stop();
-    setSpokenWordIndex(null);
     if (currentParagraph < story.paragraphs.length - 1) {
       setCurrentParagraph(prev => prev + 1);
     } else {
@@ -81,7 +81,6 @@ export function StoryReader({ story, onComplete, onExit }: StoryReaderProps) {
 
   const handlePrevParagraph = useCallback(() => {
     getAudioService().stop();
-    setSpokenWordIndex(null);
     if (currentParagraph > 0) {
       setCurrentParagraph(prev => prev - 1);
     }
@@ -93,7 +92,7 @@ export function StoryReader({ story, onComplete, onExit }: StoryReaderProps) {
     onComplete(wordsDecodedThisSession.current, duration);
   }, [onComplete]);
 
-  const renderWord = (word: DecodableWord, index: number, isSpeaking: boolean) => {
+  const renderWord = (word: DecodableWord, index: number) => {
     const wordKey = word.word.toLowerCase().replace(/[^a-z]/g, '');
     const wasDecoded = decodedWords.has(wordKey);
 
@@ -103,7 +102,7 @@ export function StoryReader({ story, onComplete, onExit }: StoryReaderProps) {
         onClick={() => handleWordTap(word)}
         className={`
           word-highlight inline-block mx-1 cursor-pointer transition-colors
-          ${isSpeaking ? 'word-speaking' : wasDecoded ? 'text-alien-green' : 'text-white'}
+          ${wasDecoded ? 'text-alien-green' : 'text-white'}
           ${word.isSightWord ? 'sight-word' : ''}
         `}
       >
@@ -180,29 +179,13 @@ export function StoryReader({ story, onComplete, onExit }: StoryReaderProps) {
 
       <div className="flex-1 overflow-y-auto p-4 sm:p-8">
         <div className="max-w-3xl mx-auto space-y-8">
-          {ranges.map((range, si) => {
-            const sentenceText = joinWords(paragraph.words, range.start, range.end);
-            return (
-              <div key={`${paragraph.id}-${si}`} className="flex items-start gap-3">
-                <SpeakButton
-                  text={sentenceText}
-                  voice="story"
-                  className="mt-2"
-                  onStart={() => setSpokenWordIndex(null)}
-                  onWord={(charIndex) => {
-                    const local = wordIndexFromChar(sentenceText, charIndex);
-                    setSpokenWordIndex(range.start + local);
-                  }}
-                  onEnd={() => setSpokenWordIndex(null)}
-                />
-                <p className="story-text-large leading-loose flex-1 min-w-0">
-                  {paragraph.words.slice(range.start, range.end).map((word, i) =>
-                    renderWord(word, range.start + i, spokenWordIndex === range.start + i)
-                  )}
-                </p>
-              </div>
-            );
-          })}
+          {ranges.map((range, si) => (
+            <p key={`${paragraph.id}-${si}`} className="story-text-large leading-loose">
+              {paragraph.words.slice(range.start, range.end).map((word, i) =>
+                renderWord(word, range.start + i)
+              )}
+            </p>
+          ))}
         </div>
       </div>
 

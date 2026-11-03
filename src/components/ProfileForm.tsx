@@ -11,6 +11,7 @@ import type { Profile } from '../types';
 import { AVATARS, getAvatarById, INTEREST_OPTIONS } from '../data/avatars';
 import { Button } from './Button';
 import { SpokenLine } from './SpeakButton';
+import { ConfirmModal } from './ConfirmModal';
 import { UI } from '../data/voiceLines';
 
 interface ProfileFormProps {
@@ -35,6 +36,7 @@ export function ProfileForm({
   const [interests, setInterests] = useState<string[]>([]);
   const [step, setStep] = useState<'name' | 'avatar' | 'interests'>('name');
   const [error, setError] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const isEditing = !!editProfile;
 
@@ -52,6 +54,7 @@ export function ProfileForm({
         setStep('name');
       }
       setError('');
+      setConfirmDelete(false);
     }
   }, [isOpen, editProfile]);
 
@@ -106,7 +109,7 @@ export function ProfileForm({
 
   return (
     <div
-      className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 overflow-y-auto"
+      className="fixed inset-0 bg-black/80 flex items-center justify-center z-[70] p-4 overflow-y-auto"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div className="space-card p-6 max-w-md w-full my-4">
@@ -239,13 +242,26 @@ export function ProfileForm({
 
         {editProfile && onDelete && (
           <button
-            onClick={onDelete}
-            className="w-full mt-4 text-red-400 hover:text-red-300 text-lg"
+            type="button"
+            onClick={() => setConfirmDelete(true)}
+            className="w-full mt-4 text-red-400 hover:text-red-300 text-lg min-h-[44px]"
           >
             Delete this player
           </button>
         )}
       </div>
+
+      <ConfirmModal
+        isOpen={confirmDelete}
+        title={editProfile ? `Delete ${editProfile.name}?` : 'Delete player?'}
+        message="This removes all their progress and can't be undone."
+        confirmLabel="Delete"
+        onConfirm={() => {
+          setConfirmDelete(false);
+          onDelete?.();
+        }}
+        onCancel={() => setConfirmDelete(false)}
+      />
     </div>
   );
 }
