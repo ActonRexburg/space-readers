@@ -25,6 +25,7 @@ export function WordDecoder({ word, isOpen, onClose, onComplete, onKeepTrying }:
   const [hasStarted, setHasStarted] = useState(false);
   const [missCount, setMissCount] = useState(0);
   const [hasTriggeredKeepTrying, setHasTriggeredKeepTrying] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
   const audioService = useRef(getAudioService());
   const lastSpokenIndex = useRef(-1);
 
@@ -36,6 +37,7 @@ export function WordDecoder({ word, isOpen, onClose, onComplete, onKeepTrying }:
       setHasStarted(false);
       setMissCount(0);
       setHasTriggeredKeepTrying(false);
+      setIsClosing(false);
       lastSpokenIndex.current = -1;
     }
   }, [isOpen, word.word]);
@@ -100,6 +102,10 @@ export function WordDecoder({ word, isOpen, onClose, onComplete, onKeepTrying }:
 
   // Handle completion (checkmark press)
   const handleComplete = useCallback(async () => {
+    // Prevent double execution
+    if (isClosing) return;
+    setIsClosing(true);
+    
     // Stop any current speech
     audioService.current.stop();
     
@@ -109,7 +115,7 @@ export function WordDecoder({ word, isOpen, onClose, onComplete, onKeepTrying }:
     // Notify parent
     onComplete();
     onClose();
-  }, [word.word, onComplete, onClose]);
+  }, [word.word, onComplete, onClose, isClosing]);
 
   // Get grapheme style based on position relative to slider
   const getGraphemeStyle = (index: number): string => {
@@ -257,8 +263,8 @@ export function WordDecoder({ word, isOpen, onClose, onComplete, onKeepTrying }:
         )}
         
         {isComplete && (
-          <p className="text-center text-alien-green mb-4 text-lg font-semibold">
-            ✨ Great job! Now tap the green button!
+          <p className="text-center text-star-gold mb-4 text-lg font-semibold">
+            ✨ Great job! Now tap the gold button!
           </p>
         )}
 

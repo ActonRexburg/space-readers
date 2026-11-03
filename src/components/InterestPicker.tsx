@@ -131,8 +131,8 @@ export function InterestPicker({
         </div>
       </div>
 
-      {/* Main content */}
-      <main className="flex-1 relative z-10 overflow-y-auto p-4">
+      {/* Main content - add bottom padding for fixed footer */}
+      <main className="flex-1 relative z-10 overflow-y-auto p-4 pb-40">
         <div className="max-w-4xl mx-auto">
           {/* Interest grid */}
           <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-2 sm:gap-3">
@@ -211,8 +211,8 @@ export function InterestPicker({
         </div>
       )}
 
-      {/* Bottom bar with fuel gauge and launch button - sticky so never cut off */}
-      <footer className="sticky bottom-0 z-20 p-4 bg-space-deep/95 backdrop-blur-sm border-t border-cyan-500/20 safe-area-bottom">
+      {/* Bottom bar with fuel gauge and launch button - fixed to always be visible */}
+      <footer className="fixed bottom-0 left-0 right-0 z-20 p-4 bg-space-deep/95 backdrop-blur-sm border-t border-cyan-500/20 safe-area-bottom">
         <div className="max-w-4xl mx-auto space-y-3">
           {/* Fuel gauge */}
           <div className="flex items-center gap-3">

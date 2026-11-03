@@ -77,54 +77,57 @@ export function IntroVideo({ onComplete, onSkip, showSkip = true }: IntroVideoPr
   }, [loadingState]);
 
   // Monitor loading and detect stalls/unsupported codecs
+  // Key insight: Don't rely on buffered events - they may not fire with Service Worker
+  // Use loadedmetadata + readyState instead
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
-    const handleProgress = () => {
-      // Calculate buffer progress
-      if (video.buffered.length > 0 && video.duration) {
-        const bufferedEnd = video.buffered.end(video.buffered.length - 1);
-        const progress = (bufferedEnd / video.duration) * 100;
-        setBufferProgress(progress);
-        
-        // Clear stall timeout on progress
-        if (stallTimeoutRef.current) {
-          clearTimeout(stallTimeoutRef.current);
-          stallTimeoutRef.current = null;
-        }
-        
-        // Clear loading timeout - we're making progress
-        if (loadingTimeoutRef.current) {
-          clearTimeout(loadingTimeoutRef.current);
-          loadingTimeoutRef.current = null;
-        }
-      }
-    };
-
-    const handleCanPlay = () => {
-      // Video can play - mark as ready
-      if (loadingState === 'loading') {
-        setLoadingState('ready');
-        setCanPlayVideo(true);
-      }
+    const clearAllTimeouts = () => {
       if (stallTimeoutRef.current) {
         clearTimeout(stallTimeoutRef.current);
+        stallTimeoutRef.current = null;
       }
       if (loadingTimeoutRef.current) {
         clearTimeout(loadingTimeoutRef.current);
+        loadingTimeoutRef.current = null;
       }
+    };
+
+    const handleLoadedMetadata = () => {
+      // Metadata loaded - video is at least partially available
+      // Set progress to 50% as an indicator that loading is working
+      setBufferProgress(50);
+      clearAllTimeouts();
+    };
+
+    const handleLoadedData = () => {
+      // First frame loaded - good progress
+      setBufferProgress(75);
+      clearAllTimeouts();
+    };
+
+    const handleCanPlay = () => {
+      // Video can play - mark as ready (don't gate on buffered percentage)
+      setLoadingState('ready');
+      setBufferProgress(100);
+      setCanPlayVideo(true);
+      clearAllTimeouts();
     };
 
     const handleCanPlayThrough = () => {
       setLoadingState('ready');
       setBufferProgress(100);
       setCanPlayVideo(true);
-      if (stallTimeoutRef.current) {
-        clearTimeout(stallTimeoutRef.current);
-      }
-      if (loadingTimeoutRef.current) {
-        clearTimeout(loadingTimeoutRef.current);
+      clearAllTimeouts();
+    };
+
+    const handleProgress = () => {
+      // Use progress events as a secondary indicator, but don't require them
+      if (video.buffered.length > 0 && video.duration) {
+        const bufferedEnd = video.buffered.end(video.buffered.length - 1);
+        const progress = Math.min(100, (bufferedEnd / video.duration) * 100);
+        setBufferProgress(prev => Math.max(prev, progress));
       }
     };
 
@@ -140,9 +143,7 @@ export function IntroVideo({ onComplete, onSkip, showSkip = true }: IntroVideoPr
     const handlePlaying = () => {
       setLoadingState('playing');
       setCanPlayVideo(true);
-      if (stallTimeoutRef.current) {
-        clearTimeout(stallTimeoutRef.current);
-      }
+      clearAllTimeouts();
     };
 
     const handleEnded = () => {
@@ -166,8 +167,11 @@ export function IntroVideo({ onComplete, onSkip, showSkip = true }: IntroVideoPr
       console.warn('Video error - codec may not be supported');
       setCanPlayVideo(false);
       setLoadingState('unsupported');
+      clearAllTimeouts();
     };
 
+    video.addEventListener('loadedmetadata', handleLoadedMetadata);
+    video.addEventListener('loadeddata', handleLoadedData);
     video.addEventListener('progress', handleProgress);
     video.addEventListener('canplay', handleCanPlay);
     video.addEventListener('canplaythrough', handleCanPlayThrough);
@@ -177,18 +181,21 @@ export function IntroVideo({ onComplete, onSkip, showSkip = true }: IntroVideoPr
     video.addEventListener('timeupdate', handleTimeUpdate);
     video.addEventListener('error', handleError);
 
-    // Start loading
+    // Start loading - call load() to ensure sources are processed
     video.load();
 
-    // Quick loading timeout - offer skip after MAX_LOADING_TIME_MS
+    // Loading timeout - offer skip after MAX_LOADING_TIME_MS
+    // But check readyState, not just bufferProgress
     loadingTimeoutRef.current = setTimeout(() => {
-      if (loadingState === 'loading' && bufferProgress < 20) {
-        // Still loading with minimal progress - show stalled state with skip option
+      // HAVE_NOTHING (0) or HAVE_METADATA (1) means not enough data to play
+      if (loadingState === 'loading' && video.readyState < 2) {
         setLoadingState('stalled');
       }
     }, MAX_LOADING_TIME_MS);
 
     return () => {
+      video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      video.removeEventListener('loadeddata', handleLoadedData);
       video.removeEventListener('progress', handleProgress);
       video.removeEventListener('canplay', handleCanPlay);
       video.removeEventListener('canplaythrough', handleCanPlayThrough);
@@ -198,14 +205,9 @@ export function IntroVideo({ onComplete, onSkip, showSkip = true }: IntroVideoPr
       video.removeEventListener('timeupdate', handleTimeUpdate);
       video.removeEventListener('error', handleError);
       
-      if (stallTimeoutRef.current) {
-        clearTimeout(stallTimeoutRef.current);
-      }
-      if (loadingTimeoutRef.current) {
-        clearTimeout(loadingTimeoutRef.current);
-      }
+      clearAllTimeouts();
     };
-  }, [onComplete, loadingState, bufferProgress]);
+  }, [onComplete, loadingState]);
 
   // Auto-hide controls during playback
   useEffect(() => {

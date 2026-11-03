@@ -69,21 +69,13 @@ export default defineConfig({
               }
             }
           },
-          // Cache video files with NetworkFirst strategy (show latest, fallback to cache)
+          // Video files: Use NetworkOnly to avoid SW breaking Range requests
+          // The SW was intercepting requests but not properly handling Range headers,
+          // which caused videos to buffer at 0%. Bypassing SW for video is simpler
+          // and more reliable than trying to make Range requests work through SW.
           {
             urlPattern: /\.(mp4|webm)$/i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'video-cache',
-              expiration: {
-                maxEntries: 40,
-                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
-              },
-              rangeRequests: true
-            }
+            handler: 'NetworkOnly'
           },
           // Cache audio files similarly
           {

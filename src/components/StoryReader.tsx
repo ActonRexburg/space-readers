@@ -40,14 +40,21 @@ export function StoryReader({ story, onComplete, onExit }: StoryReaderProps) {
   const handleWordDecoded = useCallback(() => {
     if (selectedWord) {
       const wordText = selectedWord.word.toLowerCase().replace(/[^a-z]/g, '');
+      
+      // Only count as new if not already decoded in this session
+      const isNewWord = !decodedWords.has(wordText);
       setDecodedWords(prev => new Set([...prev, wordText]));
-      wordsDecodedThisSession.current.push(wordText);
+      
+      // Only add to session list if it's a new word (for consistent counts)
+      if (isNewWord) {
+        wordsDecodedThisSession.current.push(wordText);
+      }
       
       // Trigger word_cracked clip (throttled by service)
       triggerWordCracked(story.id);
     }
     setSelectedWord(null);
-  }, [selectedWord, story.id, triggerWordCracked]);
+  }, [selectedWord, story.id, triggerWordCracked, decodedWords]);
 
   // Handle keep_trying trigger from WordDecoder
   const handleKeepTrying = useCallback(() => {

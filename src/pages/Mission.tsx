@@ -17,7 +17,18 @@ import { StoryReader } from '../components/StoryReader';
 import { useZibClips } from '../components/ZibClip';
 import { getMissionById } from '../data/missions';
 import { getStoryById } from '../data/stories';
-import type { Story } from '../types';
+import type { Story, Rank } from '../types';
+import { RANK_ORDER, RANK_THRESHOLDS } from '../types';
+
+function calculateRank(fuelCredits: number): Rank {
+  let rank: Rank = 'Recruit';
+  for (const r of RANK_ORDER) {
+    if (fuelCredits >= RANK_THRESHOLDS[r]) {
+      rank = r;
+    }
+  }
+  return rank;
+}
 
 function capitalize(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1);
@@ -53,6 +64,8 @@ export function Mission() {
   const [fuelBefore, setFuelBefore] = useState(0);
   const [starsBefore, setStarsBefore] = useState(0);
   const [planetsBefore, setPlanetsBefore] = useState(0);
+  const [rankBefore, setRankBefore] = useState<string | null>(null);
+  const [newRank, setNewRank] = useState<string | null>(null);
 
   // Get mission data
   const mission = useMemo(() => {
@@ -104,8 +117,9 @@ export function Mission() {
       await recordWordHelp(word);
     }
 
-    // Update local state
-    setCompletedStories(prev => new Set([...prev, currentStory.id]));
+    // Update local state - compute new set first
+    const newCompletedStories = new Set([...completedStories, currentStory.id]);
+    setCompletedStories(newCompletedStories);
     setTotalWordsThisMission(prev => prev + wordsDecoded.length);
     setCurrentStory(null);
     triggeredStoryStartFor.current = null;
@@ -113,19 +127,30 @@ export function Mission() {
     // Trigger story_complete clip
     triggerStoryComplete();
 
-    // Check if mission is complete
-    if (completedStories.size + 1 === stories.length) {
+    // Check if mission is complete - use the computed new set size
+    if (newCompletedStories.size === stories.length) {
       // Capture current values before rewards for visible math
-      if (activeProgress) {
-        setFuelBefore(activeProgress.fuelCredits);
+      if (activeProgress && mission) {
+        const currentFuel = activeProgress.fuelCredits;
+        const currentRank = activeProgress.currentRank;
+        const fuelAfterMission = currentFuel + mission.fuelReward;
+        const rankAfterMission = calculateRank(fuelAfterMission);
+        
+        setFuelBefore(currentFuel);
         setStarsBefore(activeProgress.starCredits);
         setPlanetsBefore(activeProgress.planetsUnlocked.length);
+        setRankBefore(currentRank);
+        
+        // Check if rank will change (regardless of mission.unlocksRank)
+        if (rankAfterMission !== currentRank) {
+          setNewRank(rankAfterMission);
+        }
       }
       setPhase('debrief');
     } else {
       setPhase('stories');
     }
-  }, [currentStory, stories.length, completedStories.size, completeStory, addAlienWord, recordWordHelp, triggerStoryComplete, activeProgress]);
+  }, [currentStory, stories.length, completedStories.size, completeStory, addAlienWord, recordWordHelp, triggerStoryComplete, activeProgress, mission]);
 
   // Handle mission completion
   const handleMissionComplete = useCallback(async () => {
@@ -134,14 +159,15 @@ export function Mission() {
     await completeMission(mission.id, mission.fuelReward, mission.starReward, mission.unlocksPlanet);
     
     // Trigger special clips for unlocks
-    if (mission.unlocksRank) {
+    // Check for rank change (either from mission.unlocksRank or natural fuel progression)
+    if (newRank && newRank !== rankBefore) {
       setTimeout(() => triggerRankUp(), 300);
     } else if (mission.unlocksPlanet) {
       setTimeout(() => triggerPlanetUnlocked(), 300);
     }
     
     setPhase('complete');
-  }, [mission, completeMission, triggerRankUp, triggerPlanetUnlocked]);
+  }, [mission, completeMission, triggerRankUp, triggerPlanetUnlocked, newRank, rankBefore]);
 
   // Navigate back
   const handleBack = () => {
@@ -383,14 +409,19 @@ export function Mission() {
                 <div className="text-sm text-slate-400 mt-1">⭐ Star Credits</div>
               </div>
               
-              {/* Rank up celebration */}
-              {mission.unlocksRank && (
-                <div className="mt-4 p-3 bg-alien-green/10 border border-alien-green/30 rounded-lg">
-                  <div className="text-2xl mb-1">🎖️</div>
-                  <div className="text-alien-green font-bold text-lg">
-                    Rank Up: {mission.unlocksRank}!
+              {/* Rank up celebration - show if rank changed for any reason */}
+              {newRank && newRank !== rankBefore && (
+                <div className="mt-4 p-4 bg-alien-green/10 border-2 border-alien-green/50 rounded-lg animate-pulse">
+                  <div className="text-4xl mb-2">🎖️</div>
+                  <div className="text-alien-green font-bold text-xl">
+                    RANK UP!
                   </div>
-                  <p className="text-sm text-slate-300 mt-1">
+                  <div className="flex items-center justify-center gap-3 mt-2 text-lg">
+                    <span className="text-slate-400">{rankBefore}</span>
+                    <span className="text-alien-green">→</span>
+                    <span className="text-alien-green font-bold text-glow-cyan">{newRank}</span>
+                  </div>
+                  <p className="text-sm text-slate-300 mt-2">
                     You've proven yourself, Commander!
                   </p>
                 </div>
