@@ -141,10 +141,14 @@ export function SpokenLine({
 }: SpokenLineProps) {
   if (!text.trim()) return null;
 
+  // Speaker + text stay one centered inline group so the 🔊 never floats
+  // off to the side of a stretched heading.
   return (
-    <div className={`flex items-start gap-2 ${className}`}>
-      <SpeakButton text={text} autoPlay={autoPlay} voice={voice} className="shrink-0" />
-      <p className={`flex-1 min-w-0 ${textClassName}`}>{text}</p>
+    <div className={`flex justify-center ${className}`}>
+      <div className="inline-flex items-center gap-2 max-w-full">
+        <SpeakButton text={text} autoPlay={autoPlay} voice={voice} className="shrink-0" />
+        <p className={`min-w-0 ${textClassName}`}>{text}</p>
+      </div>
     </div>
   );
 }

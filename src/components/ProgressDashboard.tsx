@@ -9,6 +9,7 @@ import { useMemo, useState } from 'react';
 import type { Profile, ProfileProgress, ProgressSummary } from '../types';
 import { getAvatarById, DEFAULT_AVATAR } from '../data/avatars';
 import { getInterestsByIds } from '../data/interests';
+import { getStoryById } from '../data/stories';
 import { RANK_THRESHOLDS } from '../types';
 import { Card } from './Card';
 import { Button } from './Button';
@@ -80,7 +81,7 @@ export function ProgressDashboard({
         fuelCredits: progress.fuelCredits,
         totalReadingTimeMs,
         mostHelpedWords,
-        recentSessions: progress.sessionHistory.slice(-5).reverse(),
+        recentSessions: progress.sessionHistory.slice(-12).reverse(),
         alienWordsLearned: progress.alienLearnedWords.filter(w => w && w.trim()).length
       };
     });
@@ -90,10 +91,11 @@ export function ProgressDashboard({
   const formatTime = (ms: number): string => {
     const minutes = Math.floor(ms / 60000);
     const hours = Math.floor(minutes / 60);
-    
+
     if (hours > 0) {
       return `${hours}h ${minutes % 60}m`;
     }
+    if (minutes < 1) return '<1m';
     return `${minutes}m`;
   };
 
@@ -230,27 +232,31 @@ export function ProgressDashboard({
                     </div>
                   )}
 
-                  {/* Recent sessions — hide empty 0-word / 0m rows */}
-                  {summary.recentSessions.filter(s => s.wordsDecoded.length > 0 || s.durationMs >= 60000).length > 0 && (
+                  {/* One row per completed story. Hide only empty accidental taps. */}
+                  {summary.recentSessions.filter(s => s.completed || s.durationMs >= 5000 || s.wordsDecoded.length > 0).length > 0 && (
                     <div>
                       <h3 className="text-sm font-semibold text-slate-300 mb-2">
                         📅 Recent Reading Sessions
                       </h3>
                       <div className="space-y-1">
                         {summary.recentSessions
-                          .filter(s => s.wordsDecoded.length > 0 || s.durationMs >= 60000)
-                          .map((session, i) => (
+                          .filter(s => s.completed || s.durationMs >= 5000 || s.wordsDecoded.length > 0)
+                          .map((session, i) => {
+                          const storyTitle = getStoryById(session.storyId)?.title ?? 'Story';
+                          return (
                           <div 
                             key={i}
-                            className="flex items-center justify-between text-sm py-1 px-2 bg-white/5 rounded"
+                            className="flex items-center justify-between gap-2 text-sm py-1 px-2 bg-white/5 rounded"
                           >
-                            <span className="text-slate-400">{formatDate(session.date)}</span>
-                            <span>{formatTime(session.durationMs)}</span>
-                            <span className="text-alien-green">
+                            <span className="text-slate-300 truncate">{storyTitle}</span>
+                            <span className="text-slate-400 shrink-0">{formatDate(session.date)}</span>
+                            <span className="shrink-0">{formatTime(session.durationMs)}</span>
+                            <span className="text-alien-green shrink-0">
                               {session.wordsDecoded.length} {session.wordsDecoded.length === 1 ? 'word' : 'words'}
                             </span>
                           </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   )}

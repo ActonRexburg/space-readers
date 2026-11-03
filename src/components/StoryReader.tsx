@@ -29,9 +29,14 @@ export function StoryReader({ story, onComplete, onExit }: StoryReaderProps) {
   const [currentParagraph, setCurrentParagraph] = useState(0);
   const [isFinished, setIsFinished] = useState(false);
   const [spokenWordIndex, setSpokenWordIndex] = useState<number | null>(null);
-  const startTimeRef = useRef(Date.now());
+  const startTimeRef = useRef<number | null>(null);
   const { triggerWordCracked, triggerKeepTrying } = useZibClips();
   const wordsDecodedThisSession = useRef<string[]>([]);
+
+  // Reset when a new story opens so duration is reader-entry → complete/leave.
+  useEffect(() => {
+    startTimeRef.current = Date.now();
+  }, [story.id]);
 
   const handleWordTap = useCallback((word: DecodableWord) => {
     getAudioService().stop();
@@ -83,7 +88,8 @@ export function StoryReader({ story, onComplete, onExit }: StoryReaderProps) {
   }, [currentParagraph]);
 
   const handleFinish = useCallback(() => {
-    const duration = Date.now() - startTimeRef.current;
+    const start = startTimeRef.current ?? Date.now();
+    const duration = Math.max(0, Date.now() - start);
     onComplete(wordsDecodedThisSession.current, duration);
   }, [onComplete]);
 
@@ -102,6 +108,9 @@ export function StoryReader({ story, onComplete, onExit }: StoryReaderProps) {
         `}
       >
         {word.word}
+        {word.isSightWord && (
+          <span className="ml-0.5 text-[0.55em] align-super" aria-hidden="true">❤️</span>
+        )}
       </span>
     );
   };

@@ -82,14 +82,36 @@ class WebSpeechAudioService implements AudioService {
     if (this.manifestPromise) return this.manifestPromise;
 
     this.manifestPromise = (async () => {
+      const url = resolveAssetUrl('audio/voice/manifest.json');
       try {
-        const url = resolveAssetUrl('audio/voice/manifest.json');
-        const res = await fetch(url);
-        if (!res.ok) return null;
+        const res = await fetch(url, {
+          cache: 'no-cache',
+          headers: { Accept: 'application/json' }
+        });
+        const type = res.headers.get('content-type') || '';
+        if (!res.ok) {
+          console.debug('[speak] manifest fetch failed', res.status, url);
+          this.manifestPromise = null;
+          return null;
+        }
+        // SW navigateFallback used to serve index.html here — reject HTML.
+        if (type.includes('text/html')) {
+          console.debug('[speak] manifest was HTML (SW fallback?), skipping clips', url);
+          this.manifestPromise = null;
+          return null;
+        }
         const data = (await res.json()) as VoiceManifest;
+        if (!data?.clips || typeof data.clips !== 'object') {
+          console.debug('[speak] manifest missing clips map', url);
+          this.manifestPromise = null;
+          return null;
+        }
         this.manifest = data;
+        console.debug('[speak] manifest loaded', Object.keys(data.clips).length, 'clips');
         return data;
-      } catch {
+      } catch (err) {
+        console.debug('[speak] manifest error', err);
+        this.manifestPromise = null;
         return null;
       }
     })();
@@ -274,10 +296,17 @@ class WebSpeechAudioService implements AudioService {
 
     const clip = this.lookupClip(kind, trimmed) ?? this.lookupClip(kind, spoken);
     if (clip) {
+      console.debug('[speak] clip', kind, clip.file, trimmed.slice(0, 60));
       await this.playClip(clip, gen, options?.onWord);
       return;
     }
 
+    console.debug(
+      '[speak] fallback-tts',
+      kind,
+      this.manifest ? 'no-clip' : 'no-manifest',
+      trimmed.slice(0, 60)
+    );
     if (!this.synth) return;
     this.stopPhoneme();
     const utterance = this.createUtterance(spoken, kind);

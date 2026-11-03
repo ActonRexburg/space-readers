@@ -50,9 +50,17 @@ export default defineConfig({
         // Force new service worker to take control immediately
         skipWaiting: true,
         clientsClaim: true,
-        // Navigation fallback for SPA routing
+        // Navigation fallback for SPA routing. Never serve index.html for
+        // media/JSON — a browser GET of /audio/voice/manifest.json was
+        // returning the app shell (Workbox navigateFallback).
         navigateFallback: 'index.html',
         navigateFallbackAllowlist: [/^(?!\/__).*/],
+        navigateFallbackDenylist: [
+          /\/audio\//,
+          /\/videos?\//,
+          /\/zib-clips\//,
+          /\.(?:json|mp3|opus|webm|mp4|png|jpe?g|gif|svg|ico|woff2?)$/i
+        ],
         runtimeCaching: [
           // Cache Google Fonts
           {
@@ -76,6 +84,21 @@ export default defineConfig({
           {
             urlPattern: /\.(mp4|webm)$/i,
             handler: 'NetworkOnly'
+          },
+          // Voice manifest must stay JSON (never the HTML app shell).
+          {
+            urlPattern: /\/audio\/.*\.json$/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'voice-manifest-cache',
+              expiration: {
+                maxEntries: 4,
+                maxAgeSeconds: 60 * 60 * 24 * 7
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
           },
           // Cache audio files similarly
           {
@@ -116,7 +139,9 @@ export default defineConfig({
     minify: 'terser',
     terserOptions: {
       compress: {
-        drop_console: true
+        // Keep console.debug so we can confirm clip vs TTS fallback on a live SW.
+        drop_console: false,
+        pure_funcs: ['console.log']
       }
     },
     rollupOptions: {

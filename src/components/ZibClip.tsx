@@ -9,7 +9,7 @@
  * - Large tap target to dismiss (48px+ "Got it" button)
  * - Auto-dismisses after clip ends
  * - Falls back to voice+poster if video won't load in 4s
- * - Position avoids story's Next button (top-right instead of bottom-right)
+ * - Bottom-left stacked card (~320–340px) so caption text can wrap normally
  * - Lazy-loads video (no preloading)
  */
 
@@ -209,7 +209,7 @@ export function ZibClip({ position = 'bottom-left' }: ZibClipProps) {
     'bottom-left': 'bottom-28 left-3'
   };
 
-  // Voice-only mode OR video failed: show poster with voice
+  // Voice-only mode OR video failed: stacked card (avatar, text, Got it)
   if (mode === 'voice' || videoFailed) {
     return (
       <>
@@ -221,24 +221,20 @@ export function ZibClip({ position = 'bottom-left' }: ZibClipProps) {
         <div 
           className={`fixed ${positionClasses[position]} z-30`}
         >
-          <div className="zib-comm-link-mini p-3 flex items-center gap-3 max-w-sm">
-            {/* Zib poster image */}
-            <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-alien-green shrink-0 glow-green">
+          <div className="zib-comm-link-mini p-4 flex flex-col items-center gap-3">
+            <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-alien-green shrink-0 glow-green">
               <img 
                 src={clip.posterUrl || ZIB_POSTER} 
                 alt="Zib"
                 className="w-full h-full object-cover"
               />
             </div>
-            {/* Caption */}
-            <div className="flex-1">
-              <p className="text-lg text-white font-medium leading-snug">
-                "{clip.caption}"
-              </p>
-            </div>
+            <p className="text-lg text-white font-medium leading-snug text-center w-full">
+              "{clip.caption}"
+            </p>
             <button
               onClick={handleDismiss}
-              className="shrink-0 px-6 py-3 min-w-[120px] min-h-[56px] bg-alien-green/20 hover:bg-alien-green/30 border-2 border-alien-green/60 rounded-lg text-alien-green font-bold text-xl transition-colors"
+              className="w-full px-6 py-3 min-h-[56px] bg-alien-green/20 hover:bg-alien-green/30 border-2 border-alien-green/60 rounded-lg text-alien-green font-bold text-xl transition-colors"
             >
               Got it!
             </button>
@@ -330,14 +326,14 @@ export function ZibClip({ position = 'bottom-left' }: ZibClipProps) {
           )}
         </div>
 
-        {/* Caption and dismiss button */}
-        <div className="px-4 py-3 bg-space-deep/80 flex items-center gap-3">
-          <p className="flex-1 text-lg text-white font-medium leading-relaxed">
+        {/* Caption then Got it underneath so the card stays readable */}
+        <div className="px-4 py-3 bg-space-deep/80 flex flex-col gap-3">
+          <p className="text-lg text-white font-medium leading-snug">
             "{clip.caption}"
           </p>
           <button
             onClick={handleDismiss}
-            className="shrink-0 px-6 py-3 min-w-[120px] min-h-[56px] bg-alien-green/20 hover:bg-alien-green/30 border-2 border-alien-green/60 rounded-lg text-alien-green font-bold text-xl transition-colors"
+            className="w-full px-6 py-3 min-h-[56px] bg-alien-green/20 hover:bg-alien-green/30 border-2 border-alien-green/60 rounded-lg text-alien-green font-bold text-xl transition-colors"
           >
             Got it!
           </button>
