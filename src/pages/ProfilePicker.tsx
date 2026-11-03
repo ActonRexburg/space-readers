@@ -60,6 +60,9 @@ export function ProfilePicker() {
     <div className="min-h-screen flex flex-col relative bg-space-dark">
       <Starfield />
 
+      {/* z-10 here used to trap Parent Zone overlays under the player grid.
+          Overlays now portal to document.body (OverlayPortal). Keep z-10 only
+          so the header/grid sit above the starfield. */}
       <header className="relative z-10 p-5 flex justify-between items-center border-b border-neon-cyan/20">
         <div className="flex items-center gap-3">
           <span className="text-4xl float">🚀</span>

@@ -12,6 +12,7 @@ import { AVATARS, getAvatarById, INTEREST_OPTIONS } from '../data/avatars';
 import { Button } from './Button';
 import { SpokenLine } from './SpeakButton';
 import { ConfirmModal } from './ConfirmModal';
+import { OverlayPortal, OVERLAY_Z } from './OverlayPortal';
 import { UI } from '../data/voiceLines';
 
 interface ProfileFormProps {
@@ -99,8 +100,6 @@ export function ProfileForm({
 
   const selectedAvatar = getAvatarById(avatarId) || AVATARS[0];
 
-  if (!isOpen) return null;
-
   const primaryLabel = step === 'interests'
     ? (editProfile ? '💾 Save' : '🚀 Create')
     : step === 'avatar' && !isEditing
@@ -108,10 +107,17 @@ export function ProfileForm({
       : 'Next →';
 
   return (
-    <div
-      className="fixed inset-0 bg-black/80 flex items-center justify-center z-[70] p-4 overflow-y-auto"
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-    >
+    <OverlayPortal open={isOpen}>
+      <div
+        className={`fixed inset-0 ${OVERLAY_Z.nestedBackdrop} bg-black/80`}
+        data-overlay-backdrop="profile-form"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      <div
+        className={`fixed inset-0 ${OVERLAY_Z.nestedDialog} flex items-center justify-center p-4 overflow-y-auto`}
+        data-testid="profile-form"
+      >
       <div className="space-card p-6 max-w-md w-full my-4">
         <h2 className="text-2xl font-bold text-center mb-6">
           {editProfile ? 'Edit Player' : title}
@@ -262,6 +268,7 @@ export function ProfileForm({
         }}
         onCancel={() => setConfirmDelete(false)}
       />
-    </div>
+      </div>
+    </OverlayPortal>
   );
 }

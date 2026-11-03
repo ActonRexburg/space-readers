@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from './Button';
+import { OverlayPortal, OVERLAY_Z } from './OverlayPortal';
 
 interface AdultGateProps {
   isOpen: boolean;
@@ -89,15 +90,24 @@ export function AdultGate({
     setError('');
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div 
-      className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
-      onClick={(e) => e.target === e.currentTarget && onCancel()}
-    >
+    <OverlayPortal open={isOpen}>
+      <div
+        className={`fixed inset-0 ${OVERLAY_Z.baseBackdrop} bg-black/80`}
+        data-overlay-backdrop="parent-gate"
+        onClick={onCancel}
+        aria-hidden="true"
+      />
+      <div
+        className={`fixed inset-0 ${OVERLAY_Z.baseDialog} flex items-center justify-center p-4`}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="parent-gate-title"
+        data-testid="parent-gate"
+        onClick={(e) => e.target === e.currentTarget && onCancel()}
+      >
       <div className="space-card p-6 max-w-sm w-full">
-        <h2 className="text-2xl font-bold text-center mb-2">
+        <h2 id="parent-gate-title" className="text-2xl font-bold text-center mb-2">
           🔒 Parent Zone
         </h2>
         
@@ -129,11 +139,14 @@ export function AdultGate({
         {/* Number pad */}
         <div 
           className="grid grid-cols-3 gap-2 mb-4"
+          data-testid="parent-gate-keypad"
           onKeyDown={handleKeyDown}
         >
           {['1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0', '✓'].map((key) => (
             <button
               key={key}
+              type="button"
+              data-testid={`parent-gate-key-${key}`}
               className={`
                 h-14 rounded-lg font-bold text-xl
                 ${key === 'C' 
@@ -158,6 +171,7 @@ export function AdultGate({
           Cancel
         </Button>
       </div>
-    </div>
+      </div>
+    </OverlayPortal>
   );
 }

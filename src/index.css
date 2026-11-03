@@ -56,6 +56,15 @@ body {
   user-select: none;
 }
 
+/* Parent Zone / ConfirmModal lock the page while portaled overlays are open. */
+body[data-overlay-lock='true'] {
+  overflow: hidden;
+}
+
+#root[inert] {
+  pointer-events: none;
+}
+
 /* ============================================
    ANIMATED STARFIELD (Performance optimized)
    ============================================ */
