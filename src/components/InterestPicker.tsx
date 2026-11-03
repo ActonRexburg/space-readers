@@ -31,8 +31,9 @@ export function InterestPicker({
     new Set(initialInterests)
   );
   const audioService = getAudioService();
-  const { triggerInterestPickerIntro, triggerInterestsDone } = useZibClips();
+  const { triggerInterestPickerIntro } = useZibClips();
   const hasTriggeredIntro = useRef(false);
+  const hasCuedLaunch = useRef(false);
 
   useEffect(() => {
     if (!isEditing && !hasTriggeredIntro.current) {
@@ -58,25 +59,20 @@ export function InterestPicker({
   }, [audioService]);
 
   const handleComplete = useCallback(() => {
-    const interests = Array.from(selectedInterests);
-
-    const success = triggerInterestsDone({
-      onComplete: () => {
-        onComplete(interests);
-      },
-      onSkip: () => {
-        onComplete(interests);
-      }
-    });
-
-    if (!success) {
-      onComplete(interests);
-    }
-  }, [selectedInterests, onComplete, triggerInterestsDone]);
+    onComplete(Array.from(selectedInterests));
+  }, [selectedInterests, onComplete]);
 
   const selectionCount = selectedInterests.size;
   const isReady = selectionCount >= MIN_INTERESTS;
   const gaugePercent = Math.min(100, (selectionCount / MIN_INTERESTS) * 100);
+
+  // 10th pick: glow Launch and have Mission Control say the cue — no second Zib popup.
+  useEffect(() => {
+    if (!isReady || isEditing || hasCuedLaunch.current) return;
+    hasCuedLaunch.current = true;
+    audioService.stop();
+    void audioService.speakText(UI.tapLaunchCue, { voice: 'control' });
+  }, [isReady, isEditing, audioService]);
 
   const statusLine = selectionCount === 0
     ? ZIB.tapPictures

@@ -136,11 +136,19 @@ export function WordDecoder({ word, isOpen, onClose, onComplete, onKeepTrying }:
       >
         <div className="decoder-popup p-8 max-w-md w-full text-center space-y-6">
           <div className="flex items-center justify-center gap-3">
+            <span className="text-3xl" aria-hidden="true">❤️</span>
             <div className="text-5xl font-bold text-star-gold text-glow-gold reading-text">
               {word.word}
             </div>
             <SpeakButton text={cleanWord} voice="story" />
           </div>
+
+          <SpokenLine
+            text={UI.heartWord}
+            voice="control"
+            className="justify-center"
+            textClassName="text-xl text-white leading-snug"
+          />
 
           <Button
             variant="success"

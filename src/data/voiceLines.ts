@@ -32,8 +32,10 @@ export const UI = {
   rankUp: 'Rank up!',
   allDone: 'All done!',
   tapLaunch: 'Fuel tank full. Tap Launch!',
+  tapLaunchCue: 'Tap Launch!',
   hearIt: 'Hear it.',
   sayWord: 'Say word.',
+  heartWord: 'This is a heart word. We just know it!',
 } as const;
 
 export const ZIB = {
@@ -72,6 +74,11 @@ export function storyCompleteLine(title: string): string {
   return `Story complete! ${title}`;
 }
 
+export function planetUnlockedLine(planet: string): string {
+  const name = planet.charAt(0).toUpperCase() + planet.slice(1);
+  return `Planet unlocked: ${name}`;
+}
+
 /** Lines the generator should bake that are not pulled from missions/stories. */
 export function staticCatalog(): Array<{ kind: VoiceKind; text: string }> {
   const lines: Array<{ kind: VoiceKind; text: string }> = [];
@@ -93,6 +100,9 @@ export function staticCatalog(): Array<{ kind: VoiceKind; text: string }> {
   for (const rank of RANK_ORDER) {
     lines.push({ kind: 'zib', text: zibRankUpLine(rank) });
     lines.push({ kind: 'control', text: `Rank up! You are now ${rank}!` });
+  }
+  for (const planet of ['Earth', 'Moon', 'Mars', 'Jupiter']) {
+    lines.push({ kind: 'control', text: planetUnlockedLine(planet) });
   }
 
   return lines;

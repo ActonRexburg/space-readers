@@ -14871,6 +14871,157 @@
           "charIndex": 38
         }
       ]
+    },
+    "control|Tap Launch!": {
+      "file": "88c48b97386ae7ce.mp3",
+      "durationMs": 1920,
+      "words": [
+        {
+          "text": "Tap",
+          "offsetMs": 112,
+          "charIndex": 0
+        },
+        {
+          "text": "Launch",
+          "offsetMs": 300,
+          "charIndex": 4
+        }
+      ]
+    },
+    "control|This is a heart word. We just know it!": {
+      "file": "6fc9db4344dc2b64.mp3",
+      "durationMs": 2376,
+      "words": [
+        {
+          "text": "This",
+          "offsetMs": 112,
+          "charIndex": 0
+        },
+        {
+          "text": "is",
+          "offsetMs": 237,
+          "charIndex": 5
+        },
+        {
+          "text": "a",
+          "offsetMs": 325,
+          "charIndex": 8
+        },
+        {
+          "text": "heart",
+          "offsetMs": 375,
+          "charIndex": 10
+        },
+        {
+          "text": "word",
+          "offsetMs": 650,
+          "charIndex": 16
+        },
+        {
+          "text": "We",
+          "offsetMs": 1337,
+          "charIndex": 22
+        },
+        {
+          "text": "just",
+          "offsetMs": 1412,
+          "charIndex": 25
+        },
+        {
+          "text": "know",
+          "offsetMs": 1600,
+          "charIndex": 30
+        },
+        {
+          "text": "it",
+          "offsetMs": 1800,
+          "charIndex": 35
+        }
+      ]
+    },
+    "control|Planet unlocked: Earth": {
+      "file": "41ffbb536d84b938.mp3",
+      "durationMs": 2160,
+      "words": [
+        {
+          "text": "Planet",
+          "offsetMs": 112,
+          "charIndex": 0
+        },
+        {
+          "text": "unlocked",
+          "offsetMs": 512,
+          "charIndex": 7
+        },
+        {
+          "text": "Earth",
+          "offsetMs": 1400,
+          "charIndex": 17
+        }
+      ]
+    },
+    "control|Planet unlocked: Moon": {
+      "file": "d8cf1537b2bbec9c.mp3",
+      "durationMs": 1944,
+      "words": [
+        {
+          "text": "Planet",
+          "offsetMs": 137,
+          "charIndex": 0
+        },
+        {
+          "text": "unlocked",
+          "offsetMs": 462,
+          "charIndex": 7
+        },
+        {
+          "text": "Moon",
+          "offsetMs": 1187,
+          "charIndex": 17
+        }
+      ]
+    },
+    "control|Planet unlocked: Mars": {
+      "file": "5c2d05e68821ea09.mp3",
+      "durationMs": 2304,
+      "words": [
+        {
+          "text": "Planet",
+          "offsetMs": 137,
+          "charIndex": 0
+        },
+        {
+          "text": "unlocked",
+          "offsetMs": 487,
+          "charIndex": 7
+        },
+        {
+          "text": "Mars",
+          "offsetMs": 1387,
+          "charIndex": 17
+        }
+      ]
+    },
+    "control|Planet unlocked: Jupiter": {
+      "file": "1cc3d85cd43772d7.mp3",
+      "durationMs": 2184,
+      "words": [
+        {
+          "text": "Planet",
+          "offsetMs": 112,
+          "charIndex": 0
+        },
+        {
+          "text": "unlocked",
+          "offsetMs": 500,
+          "charIndex": 7
+        },
+        {
+          "text": "Jupiter",
+          "offsetMs": 1287,
+          "charIndex": 17
+        }
+      ]
     }
   }
 }

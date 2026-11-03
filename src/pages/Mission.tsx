@@ -19,7 +19,7 @@ import { useZibOverlayLock } from '../hooks/useZibOverlayLock';
 import { SpeakButton, SpokenLine } from '../components/SpeakButton';
 import { getMissionById } from '../data/missions';
 import { getStoryById } from '../data/stories';
-import { zibLearnedLine, zibRankUpLine, UI } from '../data/voiceLines';
+import { zibLearnedLine, zibRankUpLine, planetUnlockedLine, UI } from '../data/voiceLines';
 import { splitSentences } from '../utils/readAloud';
 import type { Story, Rank } from '../types';
 import { RANK_ORDER, RANK_THRESHOLDS } from '../types';
@@ -32,10 +32,6 @@ function calculateRank(fuelCredits: number): Rank {
     }
   }
   return rank;
-}
-
-function capitalize(str: string): string {
-  return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
 type MissionPhase = 'briefing' | 'stories' | 'reading' | 'debrief' | 'rankup';
@@ -411,11 +407,14 @@ export function Mission() {
               {mission.unlocksPlanet && (
                 <div className="p-4 bg-neon-cyan/10 border border-neon-cyan/30 rounded-lg">
                   <div className="text-3xl mb-1">🌍</div>
-                  <div className="text-neon-cyan font-bold text-xl">
-                    {capitalize(mission.unlocksPlanet)}!
-                  </div>
+                  <SpokenLine
+                    text={planetUnlockedLine(mission.unlocksPlanet)}
+                    voice="control"
+                    className="justify-center"
+                    textClassName="text-xl text-neon-cyan font-bold"
+                  />
                   <div className="text-lg text-white mt-1">
-                    {planetsBefore} → {planetsBefore + 1}
+                    Planets: {planetsBefore} → {planetsBefore + 1}
                   </div>
                 </div>
               )}
