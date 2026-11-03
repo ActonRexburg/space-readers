@@ -1,7 +1,8 @@
 /**
  * Animated Starfield Background
  * 
- * Multi-layer parallax starfield with gentle twinkle animation.
+ * Multi-layer parallax starfield with a slow twinkle.
+ * Durations live in --motion-starfield-* / --motion-twinkle (index.css).
  * Performance optimized for old Chromebooks using CSS transforms.
  * Respects prefers-reduced-motion.
  */

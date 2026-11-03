@@ -15,7 +15,6 @@ interface ProfileCardProps {
 
 export function ProfileCard({ profile, onClick, isSelected }: ProfileCardProps) {
   const avatar = getAvatarById(profile.avatarId) || DEFAULT_AVATAR;
-  const isNew = !profile.hasCompletedInterests;
 
   return (
     <button
@@ -24,7 +23,6 @@ export function ProfileCard({ profile, onClick, isSelected }: ProfileCardProps) 
       className={`
         profile-card flex flex-col items-center py-6
         ${isSelected ? 'profile-card-selected' : ''}
-        ${isNew ? 'pulse-idle' : ''}
       `}
     >
       <div

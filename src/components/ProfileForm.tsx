@@ -14,6 +14,7 @@ import { SpokenLine } from './SpeakButton';
 import { ConfirmModal } from './ConfirmModal';
 import { OverlayPortal, OVERLAY_Z } from './OverlayPortal';
 import { UI } from '../data/voiceLines';
+import { useIdleGlow } from '../hooks/useIdleGlow';
 
 interface ProfileFormProps {
   isOpen: boolean;
@@ -40,6 +41,7 @@ export function ProfileForm({
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const isEditing = !!editProfile;
+  const idleGlow = useIdleGlow(isOpen);
 
   useEffect(() => {
     if (isOpen) {
@@ -240,7 +242,7 @@ export function ProfileForm({
             variant="primary"
             onClick={handleNext}
             glow
-            className="flex-1 pulse-idle"
+            className={`flex-1 ${idleGlow}`}
           >
             {primaryLabel}
           </Button>

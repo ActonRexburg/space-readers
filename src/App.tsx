@@ -21,7 +21,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-space-dark">
-        <div className="text-2xl animate-pulse text-neon-cyan">Loading...</div>
+        <div className="text-2xl text-neon-cyan">Loading...</div>
       </div>
     );
   }
@@ -46,7 +46,7 @@ function OnboardingRoute() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-space-dark">
-        <div className="text-2xl animate-pulse text-neon-cyan">Loading...</div>
+        <div className="text-2xl text-neon-cyan">Loading...</div>
       </div>
     );
   }

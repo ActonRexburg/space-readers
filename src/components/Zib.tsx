@@ -21,10 +21,11 @@ interface ZibProps {
 
 export function Zib({
   dialogue,
-  animate = true,
   size = 'md',
   autoSpeak = false
 }: ZibProps) {
+  // `animate` remains on ZibProps for callers; looping float was removed
+  // so only the screen's primary CTA uses idle-glow.
   const sizeClasses = {
     sm: 'w-16 h-16',
     md: 'w-24 h-24',
@@ -37,7 +38,6 @@ export function Zib({
         className={`
           ${sizeClasses[size]} rounded-full
           overflow-hidden relative
-          ${animate ? 'float' : ''}
           border-3 border-alien-green
           glow-green
         `}

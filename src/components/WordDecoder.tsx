@@ -13,6 +13,7 @@ import { Button } from './Button';
 import { SpokenLine } from './SpeakButton';
 import { useZibOverlayLock } from '../hooks/useZibOverlayLock';
 import { UI } from '../data/voiceLines';
+import { useIdleGlow } from '../hooks/useIdleGlow';
 
 interface WordDecoderProps {
   word: DecodableWord;
@@ -34,6 +35,8 @@ export function WordDecoder({ word, isOpen, onClose, onComplete, onKeepTrying }:
 
   // Decoder is a full-screen overlay — never let a Zib popup sit on top of it.
   useZibOverlayLock(isOpen);
+  // Heart-word: Hear It. Slider: Say Word only once the slider is complete.
+  const idleGlow = useIdleGlow(isOpen && (word.isSightWord || isComplete));
 
   useEffect(() => {
     if (isOpen) {
@@ -161,7 +164,7 @@ export function WordDecoder({ word, isOpen, onClose, onComplete, onKeepTrying }:
               onClose();
             }}
             glow
-            className="w-full pulse-action text-xl"
+            className={`w-full text-xl ${idleGlow}`}
           >
             🔊 Hear It
           </Button>
@@ -245,7 +248,7 @@ export function WordDecoder({ word, isOpen, onClose, onComplete, onKeepTrying }:
             onClick={handleComplete}
             disabled={!isComplete}
             glow={isComplete}
-            className={`flex-1 py-4 text-xl ${isComplete ? 'pulse-action' : ''}`}
+            className={`flex-1 py-4 text-xl ${isComplete ? idleGlow : ''}`}
           >
             🔊 Say Word
           </Button>
