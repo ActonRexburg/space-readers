@@ -43,6 +43,8 @@ export default defineConfig({
         ]
       },
       workbox: {
+        // Bump so Chromebooks stuck on an old SW drop stale caches on activate.
+        cacheId: 'sr-2026-11-audio',
         // Include core app assets in precache (not videos - too large)
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,jpg}'],
         // Exclude large video files from precache
@@ -50,6 +52,7 @@ export default defineConfig({
         // Force new service worker to take control immediately
         skipWaiting: true,
         clientsClaim: true,
+        cleanupOutdatedCaches: true,
         // Navigation fallback for SPA routing. Never serve index.html for
         // media/JSON — a browser GET of /audio/voice/manifest.json was
         // returning the app shell (Workbox navigateFallback).
@@ -67,7 +70,7 @@ export default defineConfig({
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
             handler: 'CacheFirst',
             options: {
-              cacheName: 'google-fonts-cache',
+              cacheName: 'google-fonts-cache-v2',
               expiration: {
                 maxEntries: 10,
                 maxAgeSeconds: 60 * 60 * 24 * 365
@@ -77,10 +80,12 @@ export default defineConfig({
               }
             }
           },
-          // Video files: Use NetworkOnly to avoid SW breaking Range requests
-          // The SW was intercepting requests but not properly handling Range headers,
-          // which caused videos to buffer at 0%. Bypassing SW for video is simpler
-          // and more reliable than trying to make Range requests work through SW.
+          // Intro + Zib clips: NetworkOnly. CacheFirst without rangeRequests
+          // broke Range GETs (same class of bug as the intro video buffering at 0%).
+          {
+            urlPattern: /\/zib-clips\//i,
+            handler: 'NetworkOnly'
+          },
           {
             urlPattern: /\.(mp4|webm)$/i,
             handler: 'NetworkOnly'
@@ -90,7 +95,7 @@ export default defineConfig({
             urlPattern: /\/audio\/.*\.json$/i,
             handler: 'NetworkFirst',
             options: {
-              cacheName: 'voice-manifest-cache',
+              cacheName: 'voice-manifest-cache-v2',
               expiration: {
                 maxEntries: 4,
                 maxAgeSeconds: 60 * 60 * 24 * 7
@@ -100,29 +105,16 @@ export default defineConfig({
               }
             }
           },
-          // Cache audio files similarly
+          // Voice MP3s: CacheFirst WITH rangeRequests so Chrome's Range:
+          // bytes=0- playback isn't broken by a stored 200 response.
           {
-            urlPattern: /\.mp3$/i,
+            urlPattern: /\/audio\/.*\.mp3$/i,
             handler: 'CacheFirst',
             options: {
-              cacheName: 'audio-cache',
+              cacheName: 'audio-cache-v2',
+              rangeRequests: true,
               expiration: {
                 maxEntries: 500,
-                maxAgeSeconds: 60 * 60 * 24 * 30
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          },
-          // Cache poster images
-          {
-            urlPattern: /zib-clips\/poster\/.*\.jpg$/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'poster-cache',
-              expiration: {
-                maxEntries: 20,
                 maxAgeSeconds: 60 * 60 * 24 * 30
               },
               cacheableResponse: {

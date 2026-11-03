@@ -16,6 +16,7 @@ import { Button } from './Button';
 import { InterestPicker } from './InterestPicker';
 import { ConfirmModal } from './ConfirmModal';
 import { OverlayPortal, OVERLAY_Z } from './OverlayPortal';
+import { getAudioService } from '../services/audio';
 
 interface ProgressDashboardProps {
   profiles: Profile[];
@@ -46,6 +47,8 @@ export function ProgressDashboard({
   const [manageProfile, setManageProfile] = useState<Profile | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Profile | null>(null);
   const [resetStep, setResetStep] = useState<null | 'warn' | 'confirm'>(null);
+  const [audioTestBusy, setAudioTestBusy] = useState(false);
+  const [audioTestResult, setAudioTestResult] = useState<string | null>(null);
 
   // Calculate summary for each profile
   const summaries: ProgressSummary[] = useMemo(() => {
@@ -358,6 +361,40 @@ export function ProgressDashboard({
               </button>
             )}
             
+            <div className="p-3">
+              <button
+                type="button"
+                data-testid="audio-test"
+                disabled={audioTestBusy}
+                onClick={async () => {
+                  setAudioTestBusy(true);
+                  setAudioTestResult('Playing…');
+                  try {
+                    const audio = getAudioService();
+                    audio.unlock();
+                    const result = await audio.runAudioTest();
+                    setAudioTestResult(`Zib: ${result.zib}\nMission Control: ${result.control}`);
+                  } catch (err) {
+                    setAudioTestResult(`error: ${err instanceof Error ? err.message : String(err)}`);
+                  } finally {
+                    setAudioTestBusy(false);
+                  }
+                }}
+                className="w-full min-h-[48px] rounded-lg px-4 py-3 font-semibold text-left
+                  bg-white/10 border border-white/20 hover:bg-white/20 disabled:opacity-50"
+              >
+                🔊 Audio test
+              </button>
+              {audioTestResult && (
+                <pre
+                  data-testid="audio-test-result"
+                  className="mt-2 text-sm whitespace-pre-wrap text-neon-cyan/80"
+                >
+                  {audioTestResult}
+                </pre>
+              )}
+            </div>
+
             {/* Change PIN */}
             <button
               onClick={onChangePin}

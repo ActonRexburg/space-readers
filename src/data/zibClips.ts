@@ -23,6 +23,7 @@ export type ZibClipId =
 export interface ZibClip {
   id: ZibClipId;
   videoUrl: string;
+  videoWebmUrl: string;
   posterUrl: string;
   voiceUrl: string;
   durationMs: number;
@@ -47,6 +48,7 @@ export const ZIB_CLIPS: Record<ZibClipId, ZibClip> = {
   interest_picker_intro: {
     id: 'interest_picker_intro',
     videoUrl: clipUrl('video/zib_interest_picker_intro.mp4'),
+    videoWebmUrl: clipUrl('video/zib_interest_picker_intro.webm'),
     posterUrl: clipUrl('poster/zib_interest_picker_intro.jpg'),
     voiceUrl: clipUrl('voice/zib_interest_picker_intro.mp3'),
     durationMs: 6340,
@@ -58,6 +60,7 @@ export const ZIB_CLIPS: Record<ZibClipId, ZibClip> = {
   interests_done: {
     id: 'interests_done',
     videoUrl: clipUrl('video/zib_interests_done.mp4'),
+    videoWebmUrl: clipUrl('video/zib_interests_done.webm'),
     posterUrl: clipUrl('poster/zib_interests_done.jpg'),
     voiceUrl: clipUrl('voice/zib_interests_done.mp3'),
     durationMs: 4930,
@@ -69,6 +72,7 @@ export const ZIB_CLIPS: Record<ZibClipId, ZibClip> = {
   welcome_back: {
     id: 'welcome_back',
     videoUrl: clipUrl('video/zib_welcome_back.mp4'),
+    videoWebmUrl: clipUrl('video/zib_welcome_back.webm'),
     posterUrl: clipUrl('poster/zib_welcome_back.jpg'),
     voiceUrl: clipUrl('voice/zib_welcome_back.mp3'),
     durationMs: 4530,
@@ -80,6 +84,7 @@ export const ZIB_CLIPS: Record<ZibClipId, ZibClip> = {
   story_start: {
     id: 'story_start',
     videoUrl: clipUrl('video/zib_story_start.mp4'),
+    videoWebmUrl: clipUrl('video/zib_story_start.webm'),
     posterUrl: clipUrl('poster/zib_story_start.jpg'),
     voiceUrl: clipUrl('voice/zib_story_start.mp3'),
     durationMs: 4500,
@@ -91,6 +96,7 @@ export const ZIB_CLIPS: Record<ZibClipId, ZibClip> = {
   word_cracked: {
     id: 'word_cracked',
     videoUrl: clipUrl('video/zib_word_cracked.mp4'),
+    videoWebmUrl: clipUrl('video/zib_word_cracked.webm'),
     posterUrl: clipUrl('poster/zib_word_cracked.jpg'),
     voiceUrl: clipUrl('voice/zib_word_cracked.mp3'),
     durationMs: 4040,
@@ -102,6 +108,7 @@ export const ZIB_CLIPS: Record<ZibClipId, ZibClip> = {
   keep_trying: {
     id: 'keep_trying',
     videoUrl: clipUrl('video/zib_keep_trying.mp4'),
+    videoWebmUrl: clipUrl('video/zib_keep_trying.webm'),
     posterUrl: clipUrl('poster/zib_keep_trying.jpg'),
     voiceUrl: clipUrl('voice/zib_keep_trying.mp3'),
     durationMs: 4500,
@@ -113,6 +120,7 @@ export const ZIB_CLIPS: Record<ZibClipId, ZibClip> = {
   story_complete: {
     id: 'story_complete',
     videoUrl: clipUrl('video/zib_story_complete.mp4'),
+    videoWebmUrl: clipUrl('video/zib_story_complete.webm'),
     posterUrl: clipUrl('poster/zib_story_complete.jpg'),
     voiceUrl: clipUrl('voice/zib_story_complete.mp3'),
     durationMs: 4500,
@@ -124,6 +132,7 @@ export const ZIB_CLIPS: Record<ZibClipId, ZibClip> = {
   planet_unlocked: {
     id: 'planet_unlocked',
     videoUrl: clipUrl('video/zib_planet_unlocked.mp4'),
+    videoWebmUrl: clipUrl('video/zib_planet_unlocked.webm'),
     posterUrl: clipUrl('poster/zib_planet_unlocked.jpg'),
     voiceUrl: clipUrl('voice/zib_planet_unlocked.mp3'),
     durationMs: 4500,
@@ -135,6 +144,7 @@ export const ZIB_CLIPS: Record<ZibClipId, ZibClip> = {
   rank_up: {
     id: 'rank_up',
     videoUrl: clipUrl('video/zib_rank_up.mp4'),
+    videoWebmUrl: clipUrl('video/zib_rank_up.webm'),
     posterUrl: clipUrl('poster/zib_rank_up.jpg'),
     voiceUrl: clipUrl('voice/zib_rank_up.mp3'),
     durationMs: 4500,

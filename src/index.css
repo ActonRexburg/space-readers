@@ -370,22 +370,24 @@ body[data-overlay-lock='true'] {
   }
 }
 
-/* Sight word styling - subtle underline instead of italics */
+/* Sight word: tiny soft-pink dot under the word. No emoji, no extra
+   inline spacing — the marker is absolute so text flow stays the same. */
 .sight-word {
   position: relative;
-  text-decoration: underline;
-  text-decoration-color: rgba(255, 215, 0, 0.4);
-  text-decoration-thickness: 2px;
-  text-underline-offset: 4px;
+  text-decoration: none;
 }
 
-/* Dot indicator for sight words */
-.sight-word-dot {
-  color: var(--color-star-gold);
-  font-size: 0.6em;
-  vertical-align: super;
-  margin-left: 1px;
-  text-shadow: none;
+.sight-word::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0.05em;
+  width: 6px;
+  height: 6px;
+  margin-left: -3px;
+  border-radius: 50%;
+  background: rgba(244, 114, 182, 0.5);
+  pointer-events: none;
 }
 
 .reading-container {

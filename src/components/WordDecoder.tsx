@@ -2,8 +2,8 @@
  * Word Decoder Popup
  *
  * Shows a word broken into graphemes with a slider that highlights
- * each sound. Instruction copy is visual (hand hint + glowing button).
- * Phonemes play from clips — never letter names.
+ * each sound. The slider is silent — no phoneme clips, no letter names.
+ * "Say Word" / "Hear It" play the whole-word story clip.
  */
 
 import { useState, useCallback, useRef, useEffect } from 'react';
@@ -31,7 +31,6 @@ export function WordDecoder({ word, isOpen, onClose, onComplete, onKeepTrying }:
   const [hasTriggeredKeepTrying, setHasTriggeredKeepTrying] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const audioService = useRef(getAudioService());
-  const lastSpokenIndex = useRef(-1);
 
   // Decoder is a full-screen overlay — never let a Zib popup sit on top of it.
   useZibOverlayLock(isOpen);
@@ -46,7 +45,6 @@ export function WordDecoder({ word, isOpen, onClose, onComplete, onKeepTrying }:
       setMissCount(0);
       setHasTriggeredKeepTrying(false);
       setIsClosing(false);
-      lastSpokenIndex.current = -1;
       audioService.current.stop();
     }
   }, [isOpen, word.word]);
@@ -86,18 +84,13 @@ export function WordDecoder({ word, isOpen, onClose, onComplete, onKeepTrying }:
     const value = parseInt(e.target.value, 10);
     setSliderValue(value);
     setHasStarted(true);
-
-    const newActiveIndex = getActiveGraphemeIndex(value);
-
-    if (newActiveIndex !== lastSpokenIndex.current && newActiveIndex >= 0 && newActiveIndex < word.graphemes.length) {
-      lastSpokenIndex.current = newActiveIndex;
-      audioService.current.speakPhoneme(word.graphemes[newActiveIndex]);
-    }
+    // Visual highlight only — Brian found phoneme clips unhelpful / wrong,
+    // and we never speak letter names. Say Word at the end plays the whole word.
 
     if (value >= COMPLETE_AT && !isComplete) {
       setIsComplete(true);
     }
-  }, [getActiveGraphemeIndex, word.graphemes, isComplete]);
+  }, [isComplete]);
 
   const handleSliderInput = useCallback((e: React.FormEvent<HTMLInputElement>) => {
     const value = parseInt((e.target as HTMLInputElement).value, 10);

@@ -8,6 +8,7 @@ import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAppStore } from './stores/appStore';
 import { getZibClipService } from './services/zibClips';
+import { getAudioService } from './services/audio';
 import { ProfilePicker } from './pages/ProfilePicker';
 import { Bridge } from './pages/Bridge';
 import { Mission } from './pages/Mission';
@@ -78,6 +79,20 @@ export function App() {
     const service = getZibClipService();
     service.setEnabled(settings.zibClipsEnabled);
   }, [settings.zibClipsEnabled]);
+
+  // Preload voice clips before the first 🔊 tap. Awaiting this fetch inside
+  // the click handler was dropping Chrome's user-gesture and silencing play().
+  useEffect(() => {
+    const audio = getAudioService();
+    void audio.preloadManifest();
+    const unlock = () => audio.unlock();
+    window.addEventListener('pointerdown', unlock, { capture: true, once: true });
+    window.addEventListener('keydown', unlock, { capture: true, once: true });
+    return () => {
+      window.removeEventListener('pointerdown', unlock, { capture: true });
+      window.removeEventListener('keydown', unlock, { capture: true });
+    };
+  }, []);
 
   // Get basename from Vite's BASE_URL (e.g., "/space-readers/")
   // Remove trailing slash for react-router compatibility

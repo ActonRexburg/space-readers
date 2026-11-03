@@ -5,22 +5,24 @@
  *   1. Pre-generated clip in public/audio/voice (hash lookup via manifest)
  *   2. speechSynthesis with the best male en-US voice (Andrew/Guy/Davis)
  *
- * Phonemes on the decoder slider are ALWAYS isolated MP3s. Never TTS a letter
- * name ("bee"/"ay"/"tee"). Spelled sequences like M-U-G are stripped before
- * any speak() call.
+ * Decoder slider is silent — never phoneme clips, never letter names.
+ * "Say Word" / "Hear It" still play the whole-word story clip.
+ *
+ * Chromebook/ChromeOS: never await a fetch between a tap and audio.play().
+ * Awaiting ensureManifest() inside the click handler drops user-gesture
+ * activation and play() throws NotAllowedError. Preload the manifest on
+ * app start; on tap, play() (or speechSynthesis.speak) runs in the same turn.
  *
  * Voice kinds (see src/utils/voice.ts):
  *   zib     — Zib speech bubbles
  *   control — instructions, briefing, UI labels
  *   story   — Say Word / Hear It only (never whole story sentences)
  *
- * Speak diagnostics use console.info (not debug) so Chromebook/production
- * consoles actually show clip vs fallback-tts. debug is hidden by default.
+ * Speak diagnostics use console.info so Chromebook/production consoles show them.
  */
 
-import type { Grapheme, TTSConfig } from '../types';
+import type { TTSConfig } from '../types';
 import { resolveAssetUrl } from '../utils/assets';
-import { phonemeClipKey } from '../data/phonemes';
 import {
   pickMaleFallbackVoice,
   stripLetterNames,
@@ -30,10 +32,16 @@ import {
   type VoiceClipMeta,
   type VoiceWordTiming
 } from '../utils/voice';
+import { UI, ZIB } from '../data/voiceLines';
 
 export interface SpeakTextOptions {
   onWord?: (charIndex: number) => void;
   voice?: VoiceKind;
+}
+
+export interface AudioTestResult {
+  zib: string;
+  control: string;
 }
 
 const DEFAULT_TTS_CONFIG: TTSConfig = {
@@ -42,14 +50,23 @@ const DEFAULT_TTS_CONFIG: TTSConfig = {
   pitch: 1.0
 };
 
+/** Tiny silent WAV so the first tap can unlock Chrome's autoplay gate. */
+const SILENT_WAV =
+  'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+
 export interface AudioService {
   speakWord(word: string, options?: SpeakTextOptions): Promise<void>;
-  speakPhoneme(grapheme: Grapheme): Promise<void>;
   speakText(text: string, options?: SpeakTextOptions): Promise<void>;
   stop(): void;
   isSpeaking(): boolean;
   setConfig(config: Partial<TTSConfig>): void;
   getVoices(): SpeechSynthesisVoice[];
+  /** Fetch voice manifest on app start — do not wait for the first 🔊 tap. */
+  preloadManifest(): Promise<VoiceManifest | null>;
+  /** Play a silent buffer; call from the first pointerdown. */
+  unlock(): void;
+  /** Parent Settings: play one Zib clip and one Mission Control clip. */
+  runAudioTest(): Promise<AudioTestResult>;
 }
 
 class WebSpeechAudioService implements AudioService {
@@ -57,13 +74,12 @@ class WebSpeechAudioService implements AudioService {
   private config: TTSConfig;
   private speaking = false;
   private selectedVoice: SpeechSynthesisVoice | null = null;
-  private phonemeAudio: HTMLAudioElement | null = null;
-  private phonemeCache = new Map<string, HTMLAudioElement>();
   private clipAudio: HTMLAudioElement | null = null;
   private clipTimer: ReturnType<typeof setInterval> | null = null;
   private manifest: VoiceManifest | null = null;
   private manifestPromise: Promise<VoiceManifest | null> | null = null;
   private generation = 0;
+  private unlocked = false;
 
   constructor(config: TTSConfig = DEFAULT_TTS_CONFIG) {
     this.synth = typeof window !== 'undefined' ? window.speechSynthesis : (null as unknown as SpeechSynthesis);
@@ -78,6 +94,38 @@ class WebSpeechAudioService implements AudioService {
   private loadVoices(): void {
     if (!this.synth) return;
     this.selectedVoice = pickMaleFallbackVoice(this.synth.getVoices());
+  }
+
+  unlock(): void {
+    if (this.unlocked) return;
+    this.unlocked = true;
+
+    try {
+      const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      if (Ctx) {
+        const ctx = new Ctx();
+        const buf = ctx.createBuffer(1, 1, 22050);
+        const src = ctx.createBufferSource();
+        src.buffer = buf;
+        src.connect(ctx.destination);
+        src.start(0);
+        void ctx.resume();
+      }
+    } catch (err) {
+      console.info('[speak] AudioContext unlock failed', err);
+    }
+
+    const silent = new Audio(SILENT_WAV);
+    silent.volume = 0.01;
+    silent.play()
+      .then(() => console.info('[speak] audio unlocked'))
+      .catch((err: DOMException) => {
+        console.info('[speak] silent unlock play() failed', err?.name, err?.message);
+      });
+  }
+
+  async preloadManifest(): Promise<VoiceManifest | null> {
+    return this.ensureManifest();
   }
 
   private async ensureManifest(): Promise<VoiceManifest | null> {
@@ -143,6 +191,11 @@ class WebSpeechAudioService implements AudioService {
     onWord?: (charIndex: number) => void
   ): Promise<void> {
     return new Promise((resolve, reject) => {
+      if (!this.synth) {
+        console.info('[speak] speechSynthesis unavailable');
+        resolve();
+        return;
+      }
       this.speaking = true;
 
       if (onWord) {
@@ -160,7 +213,8 @@ class WebSpeechAudioService implements AudioService {
 
       utterance.onerror = (event) => {
         if (gen === this.generation) this.speaking = false;
-        if (event.error === 'interrupted') {
+        console.info('[speak] tts error', event.error);
+        if (event.error === 'interrupted' || event.error === 'canceled') {
           resolve();
         } else {
           reject(new Error(`Speech error: ${event.error}`));
@@ -197,85 +251,84 @@ class WebSpeechAudioService implements AudioService {
     };
   }
 
+  /**
+   * Start clip playback in the current turn (no await before audio.play()).
+   * Rejects on play() / element error so the caller can fall back to TTS.
+   */
   private playClip(
     clip: VoiceClipMeta,
     gen: number,
     onWord?: (charIndex: number) => void
   ): Promise<void> {
-    return new Promise((resolve) => {
-      const audio = new Audio(resolveAssetUrl(`audio/voice/${clip.file}`));
+    return new Promise((resolve, reject) => {
+      const url = resolveAssetUrl(`audio/voice/${clip.file}`);
+      const audio = new Audio(url);
       audio.preload = 'auto';
       this.clipAudio = audio;
       this.speaking = true;
+      exposeAudioDebug({ file: clip.file, error: null });
 
       let clearWords: (() => void) | null = null;
       if (onWord && clip.words.length > 0) {
         clearWords = this.fireWordTimings(audio, clip.words, gen, onWord);
       }
 
-      const finish = () => {
+      let settled = false;
+      const succeed = () => {
+        if (settled) return;
+        settled = true;
         clearWords?.();
         if (this.clipAudio === audio) this.clipAudio = null;
         if (gen === this.generation) this.speaking = false;
+        exposeAudioDebug({ currentTime: audio.currentTime, error: null });
         resolve();
       };
 
-      audio.onended = finish;
-      audio.onerror = finish;
+      const fail = (reason: string) => {
+        if (settled) return;
+        settled = true;
+        clearWords?.();
+        if (this.clipAudio === audio) this.clipAudio = null;
+        if (gen === this.generation) this.speaking = false;
+        exposeAudioDebug({ currentTime: audio.currentTime, error: reason });
+        reject(new Error(reason));
+      };
 
-      audio.play().catch(() => {
-        finish();
-      });
+      audio.onended = succeed;
+      audio.onerror = () => {
+        const mediaErr = audio.error;
+        const reason = `audio element error ${mediaErr?.code ?? ''} ${mediaErr?.message ?? ''}`.trim();
+        console.info('[speak] audio error', reason, clip.file);
+        fail(reason);
+      };
+
+      // play() is called here, synchronously, before any await in the caller.
+      const playPromise = audio.play();
+      if (playPromise === undefined) return;
+      playPromise
+        .then(() => {
+          exposeAudioDebug({ currentTime: audio.currentTime, error: null, playing: true });
+        })
+        .catch((err: DOMException) => {
+          const reason = `${err?.name || 'PlayError'}: ${err?.message || 'audio.play() rejected'}`;
+          console.info('[speak] play() failed', reason, clip.file);
+          fail(reason);
+        });
     });
   }
 
-  async speakPhoneme(grapheme: Grapheme): Promise<void> {
-    // Isolated clips only. NEVER speechSynthesis of the letter (that says "bee"/"ay"/"tee").
-    this.synth?.cancel();
-    this.stopPhoneme();
-    this.stopClip();
-
-    const key = grapheme.audioKey || phonemeClipKey(grapheme.phoneme, grapheme.text);
-    if (!key) {
+  private async fallbackTts(
+    spoken: string,
+    kind: VoiceKind,
+    gen: number,
+    onWord?: (charIndex: number) => void
+  ): Promise<void> {
+    if (!this.synth) {
+      console.info('[speak] tts unavailable, giving up');
       return;
     }
-
-    const url = resolveAssetUrl(`audio/phonemes/${key}.mp3`);
-    let audio = this.phonemeCache.get(key);
-    if (!audio) {
-      audio = new Audio(url);
-      audio.preload = 'auto';
-      this.phonemeCache.set(key, audio);
-    }
-
-    audio.currentTime = 0;
-    this.phonemeAudio = audio;
-
-    try {
-      await audio.play();
-    } catch {
-      // Missing file, decode error, or autoplay block — stay silent.
-    }
-  }
-
-  private stopPhoneme(): void {
-    if (this.phonemeAudio) {
-      this.phonemeAudio.pause();
-      this.phonemeAudio.currentTime = 0;
-      this.phonemeAudio = null;
-    }
-  }
-
-  private stopClip(): void {
-    if (this.clipTimer) {
-      window.clearInterval(this.clipTimer);
-      this.clipTimer = null;
-    }
-    if (this.clipAudio) {
-      this.clipAudio.pause();
-      this.clipAudio.src = '';
-      this.clipAudio = null;
-    }
+    const utterance = this.createUtterance(spoken, kind);
+    await this.speakUtterance(utterance, gen, onWord);
   }
 
   async speakWord(word: string, options?: SpeakTextOptions): Promise<void> {
@@ -294,34 +347,85 @@ class WebSpeechAudioService implements AudioService {
     this.stop();
     const gen = this.generation;
 
-    await this.ensureManifest();
-    if (gen !== this.generation) return;
+    // Kick off the fetch if needed, but do NOT await it. Awaiting a network
+    // round-trip here is what made Chromebook taps silent (NotAllowedError).
+    if (!this.manifest) {
+      void this.ensureManifest();
+    }
 
     const clip = this.lookupClip(kind, trimmed) ?? this.lookupClip(kind, spoken);
     if (clip) {
       console.info('[speak] clip', kind, clip.file, trimmed.slice(0, 60));
-      await this.playClip(clip, gen, options?.onWord);
-      return;
+      try {
+        await this.playClip(clip, gen, options?.onWord);
+        return;
+      } catch (err) {
+        console.info(
+          '[speak] falling back to tts after clip failure',
+          kind,
+          err instanceof Error ? err.message : err
+        );
+      }
+    } else {
+      console.info(
+        '[speak] fallback-tts',
+        kind,
+        this.manifest ? 'no-clip' : 'no-manifest',
+        trimmed.slice(0, 60)
+      );
     }
 
-    console.info(
-      '[speak] fallback-tts',
-      kind,
-      this.manifest ? 'no-clip' : 'no-manifest',
-      trimmed.slice(0, 60)
-    );
-    if (!this.synth) return;
-    this.stopPhoneme();
-    const utterance = this.createUtterance(spoken, kind);
-    await this.speakUtterance(utterance, gen, options?.onWord);
+    if (gen !== this.generation) return;
+    await this.fallbackTts(spoken, kind, gen, options?.onWord);
+  }
+
+  async runAudioTest(): Promise<AudioTestResult> {
+    this.unlock();
+    await this.ensureManifest();
+
+    const result: AudioTestResult = { zib: 'not run', control: 'not run' };
+
+    const runOne = async (kind: VoiceKind, text: string, label: 'zib' | 'control') => {
+      const clip = this.lookupClip(kind, text);
+      try {
+        this.stop();
+        const gen = this.generation;
+        if (clip) {
+          await this.playClip(clip, gen);
+          result[label] = `OK clip ${clip.file}`;
+        } else {
+          await this.fallbackTts(text, kind, gen);
+          result[label] = this.manifest ? 'OK tts (no clip)' : 'OK tts (no manifest)';
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        result[label] = `error: ${msg}`;
+        console.info('[speak] audio test failed', label, msg);
+      }
+    };
+
+    await runOne('zib', ZIB.helloTeach, 'zib');
+    await runOne('control', UI.whoIsPlaying, 'control');
+    return result;
   }
 
   stop(): void {
     this.generation += 1;
     this.synth?.cancel();
-    this.stopPhoneme();
     this.stopClip();
     this.speaking = false;
+  }
+
+  private stopClip(): void {
+    if (this.clipTimer) {
+      window.clearInterval(this.clipTimer);
+      this.clipTimer = null;
+    }
+    if (this.clipAudio) {
+      this.clipAudio.pause();
+      this.clipAudio.src = '';
+      this.clipAudio = null;
+    }
   }
 
   isSpeaking(): boolean {
@@ -345,6 +449,19 @@ class WebSpeechAudioService implements AudioService {
   }
 }
 
+interface AudioDebugState {
+  file?: string;
+  currentTime?: number;
+  error?: string | null;
+  playing?: boolean;
+}
+
+function exposeAudioDebug(partial: AudioDebugState): void {
+  if (typeof window === 'undefined') return;
+  const w = window as unknown as { __srAudio?: AudioDebugState };
+  w.__srAudio = { ...(w.__srAudio || {}), ...partial };
+}
+
 export function createAudioService(config?: TTSConfig): AudioService {
   if (typeof window !== 'undefined') {
     return new WebSpeechAudioService(config);
@@ -355,12 +472,14 @@ export function createAudioService(config?: TTSConfig): AudioService {
 function createNoOpAudioService(): AudioService {
   return {
     speakWord: async () => {},
-    speakPhoneme: async () => {},
     speakText: async () => {},
     stop: () => {},
     isSpeaking: () => false,
     setConfig: () => {},
-    getVoices: () => []
+    getVoices: () => [],
+    preloadManifest: async () => null,
+    unlock: () => {},
+    runAudioTest: async () => ({ zib: 'noop', control: 'noop' })
   };
 }
 
