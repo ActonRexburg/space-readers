@@ -51,6 +51,7 @@ interface AppState {
   createProfile: (name: string, avatarId: string, interests: string[]) => Promise<Profile>;
   updateProfile: (profile: Profile) => Promise<void>;
   deleteProfile: (profileId: string) => Promise<void>;
+  resetAllData: () => Promise<void>;
   logoutProfile: () => void;
   
   // Settings
@@ -206,23 +207,46 @@ export const useAppStore = create<AppState>((set, get) => ({
   deleteProfile: async (profileId: string) => {
     await storageService.deleteProfile(profileId);
     
-    const { activeProfile, settings } = get();
+    const { activeProfile, settings, allProgress } = get();
     const newProfiles = get().profiles.filter(p => p.id !== profileId);
+    const restProgress = { ...allProgress };
+    delete restProgress[profileId];
     
-    // If we deleted the active profile, clear it
+    // If we deleted the active profile, clear it so ProtectedRoute
+    // sends the user back to the profile picker.
     if (activeProfile?.id === profileId) {
       const newSettings = { ...settings, activeProfileId: undefined };
       await storageService.saveSettings(newSettings);
       
       set({
         profiles: newProfiles,
+        allProgress: restProgress,
         activeProfile: null,
         activeProgress: null,
         settings: newSettings
       });
     } else {
-      set({ profiles: newProfiles });
+      set({
+        profiles: newProfiles,
+        allProgress: restProgress
+      });
     }
+  },
+
+  resetAllData: async () => {
+    await storageService.resetAllData();
+
+    const { settings } = get();
+    const newSettings = { ...settings, activeProfileId: undefined };
+    await storageService.saveSettings(newSettings);
+
+    set({
+      profiles: [],
+      allProgress: {},
+      activeProfile: null,
+      activeProgress: null,
+      settings: newSettings
+    });
   },
 
   logoutProfile: () => {

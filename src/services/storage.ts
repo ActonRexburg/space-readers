@@ -52,6 +52,9 @@ export interface StorageService {
   // Custom stories (AI-generated in Phase 2)
   getCustomStories(profileId: ProfileId): Promise<Story[]>;
   saveCustomStory(profileId: ProfileId, story: Story): Promise<void>;
+
+  // Wipe every profile and related local data on this device
+  resetAllData(): Promise<void>;
 }
 
 // localStorage implementation of StorageService
@@ -102,13 +105,21 @@ class LocalStorageService implements StorageService {
     const filtered = profiles.filter(p => p.id !== id);
     this.setItem(STORAGE_KEYS.PROFILES, filtered);
     
-    // Also delete associated progress
+    // Also delete associated progress (sessions live inside progress)
     const allProgress = this.getItem<Record<string, ProfileProgress>>(
       STORAGE_KEYS.PROGRESS, 
       {}
     );
     delete allProgress[id];
     this.setItem(STORAGE_KEYS.PROGRESS, allProgress);
+
+    // And any custom stories generated for this player
+    const allStories = this.getItem<Record<string, Story[]>>(
+      STORAGE_KEYS.CUSTOM_STORIES,
+      {}
+    );
+    delete allStories[id];
+    this.setItem(STORAGE_KEYS.CUSTOM_STORIES, allStories);
   }
 
   // Progress operations
@@ -159,6 +170,13 @@ class LocalStorageService implements StorageService {
     
     allStories[profileId].push(story);
     this.setItem(STORAGE_KEYS.CUSTOM_STORIES, allStories);
+  }
+
+  // Parent Settings "Delete all players" — keeps PIN / audio prefs, wipes kids
+  async resetAllData(): Promise<void> {
+    this.setItem(STORAGE_KEYS.PROFILES, []);
+    this.setItem(STORAGE_KEYS.PROGRESS, {});
+    this.setItem(STORAGE_KEYS.CUSTOM_STORIES, {});
   }
 }
 

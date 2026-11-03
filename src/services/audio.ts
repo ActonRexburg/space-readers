@@ -1,7 +1,7 @@
 /**
  * Audio Service
  *
- * Playback order for words and sentences:
+ * Playback order for words (Say Word / Hear It / UI lines):
  *   1. Pre-generated clip in public/audio/voice (hash lookup via manifest)
  *   2. speechSynthesis with the best male en-US voice (Andrew/Guy/Davis)
  *
@@ -12,7 +12,10 @@
  * Voice kinds (see src/utils/voice.ts):
  *   zib     — Zib speech bubbles
  *   control — instructions, briefing, UI labels
- *   story   — story read-aloud and Say Word (crystal clear)
+ *   story   — Say Word / Hear It only (never whole story sentences)
+ *
+ * Speak diagnostics use console.info (not debug) so Chromebook/production
+ * consoles actually show clip vs fallback-tts. debug is hidden by default.
  */
 
 import type { Grapheme, TTSConfig } from '../types';
@@ -90,27 +93,27 @@ class WebSpeechAudioService implements AudioService {
         });
         const type = res.headers.get('content-type') || '';
         if (!res.ok) {
-          console.debug('[speak] manifest fetch failed', res.status, url);
+          console.info('[speak] manifest fetch failed', res.status, url);
           this.manifestPromise = null;
           return null;
         }
         // SW navigateFallback used to serve index.html here — reject HTML.
         if (type.includes('text/html')) {
-          console.debug('[speak] manifest was HTML (SW fallback?), skipping clips', url);
+          console.info('[speak] manifest was HTML (SW fallback?), skipping clips', url);
           this.manifestPromise = null;
           return null;
         }
         const data = (await res.json()) as VoiceManifest;
         if (!data?.clips || typeof data.clips !== 'object') {
-          console.debug('[speak] manifest missing clips map', url);
+          console.info('[speak] manifest missing clips map', url);
           this.manifestPromise = null;
           return null;
         }
         this.manifest = data;
-        console.debug('[speak] manifest loaded', Object.keys(data.clips).length, 'clips');
+        console.info('[speak] manifest loaded', Object.keys(data.clips).length, 'clips');
         return data;
       } catch (err) {
-        console.debug('[speak] manifest error', err);
+        console.info('[speak] manifest error', err);
         this.manifestPromise = null;
         return null;
       }
@@ -296,12 +299,12 @@ class WebSpeechAudioService implements AudioService {
 
     const clip = this.lookupClip(kind, trimmed) ?? this.lookupClip(kind, spoken);
     if (clip) {
-      console.debug('[speak] clip', kind, clip.file, trimmed.slice(0, 60));
+      console.info('[speak] clip', kind, clip.file, trimmed.slice(0, 60));
       await this.playClip(clip, gen, options?.onWord);
       return;
     }
 
-    console.debug(
+    console.info(
       '[speak] fallback-tts',
       kind,
       this.manifest ? 'no-clip' : 'no-manifest',

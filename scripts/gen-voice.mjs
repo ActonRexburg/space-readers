@@ -4,7 +4,7 @@
  *
  *   zib     en-US-BrianNeural  pitch +18Hz  rate +6%  light echo
  *   control en-US-AndrewNeural subtle radio/comm EQ (UI + briefing only)
- *   story   en-US-AndrewNeural no EQ (story sentences + Say Word)
+ *   story   en-US-AndrewNeural no EQ (Say Word / Hear It only — not sentences)
  *
  * Run: npm run gen:voice
  * Files land in public/audio/voice/{hash}.mp3 keyed by voice|normalized-text
@@ -13,7 +13,7 @@
 
 import { createHash } from 'node:crypto';
 import { spawn } from 'node:child_process';
-import { mkdir, readFile, writeFile, access, unlink } from 'node:fs/promises';
+import { mkdir, readFile, writeFile, access, unlink, readdir } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
@@ -22,7 +22,6 @@ import { STORIES } from '../src/data/stories.ts';
 import { MISSIONS } from '../src/data/missions.ts';
 import { INTEREST_OPTIONS } from '../src/data/interests.ts';
 import { staticCatalog, storyCompleteLine } from '../src/data/voiceLines.ts';
-import { sentenceRanges, joinWords } from '../src/utils/readAloud.ts';
 import {
   stripLetterNames,
   voiceLookupKey,
@@ -34,6 +33,7 @@ const OUT_DIR = join(ROOT, 'public', 'audio', 'voice');
 const PY = join(ROOT, 'scripts', '_edge_tts_batch.py');
 const FORCE = process.argv.includes('--force');
 const DRY = process.argv.includes('--dry-run');
+const PRUNE_ONLY = process.argv.includes('--prune-only');
 
 const VOICES = {
   zib: {
@@ -116,11 +116,9 @@ function collectJobs() {
     }
     addLine(bucket, 'control', storyCompleteLine(story.title));
 
+    // Per-word Say Word / Hear It clips only. Whole-sentence story read-aloud
+    // was removed so kids can't tap 🔊 instead of reading.
     for (const para of story.paragraphs) {
-      const ranges = sentenceRanges(para.words);
-      for (const range of ranges) {
-        addLine(bucket, 'story', joinWords(para.words, range.start, range.end));
-      }
       for (const word of para.words) {
         const clean = word.word.replace(/[^a-zA-Z]/g, '');
         if (clean) addLine(bucket, 'story', clean);
@@ -205,6 +203,46 @@ async function applyFxAndManifest(job, rawMp3, destMp3, metaPath) {
   return { words, durationMs };
 }
 
+async function pruneUnused(jobs, clips) {
+  const keepKeys = new Set(jobs.map((job) => voiceLookupKey(job.kind, job.text)));
+  const keepFiles = new Set(['manifest.json']);
+  const next = {};
+  let pruned = 0;
+
+  for (const [key, val] of Object.entries(clips)) {
+    if (keepKeys.has(key) && val?.file) {
+      next[key] = val;
+      keepFiles.add(val.file);
+    } else {
+      pruned += 1;
+      if (val?.file) {
+        await unlink(join(OUT_DIR, val.file)).catch(() => {});
+      }
+    }
+  }
+
+  const names = await readdir(OUT_DIR);
+  for (const name of names) {
+    if (!name.endsWith('.mp3')) continue;
+    if (keepFiles.has(name)) continue;
+    await unlink(join(OUT_DIR, name)).catch(() => {});
+    pruned += 1;
+  }
+
+  await writeFile(join(OUT_DIR, 'manifest.json'), JSON.stringify({
+    version: 1,
+    voices: {
+      zib: 'edge-tts en-US-BrianNeural, pitch +18Hz, rate +6%, light echo',
+      control: 'edge-tts en-US-AndrewNeural, subtle radio EQ (UI/briefing)',
+      story: 'edge-tts en-US-AndrewNeural, no EQ (Say Word / Hear It only)',
+    },
+    clips: next,
+  }, null, 2));
+
+  console.log(`Pruned unused clips=${pruned}; kept=${Object.keys(next).length}`);
+  return next;
+}
+
 async function main() {
   await mkdir(OUT_DIR, { recursive: true });
   const jobs = collectJobs();
@@ -228,6 +266,11 @@ async function main() {
     } catch {
       existing = { version: 1, clips: {} };
     }
+  }
+
+  if (PRUNE_ONLY) {
+    await pruneUnused(jobs, existing.clips || {});
+    return;
   }
 
   const clips = { ...existing.clips };
@@ -297,12 +340,13 @@ async function main() {
       voices: {
         zib: 'edge-tts en-US-BrianNeural, pitch +18Hz, rate +6%, light echo',
         control: 'edge-tts en-US-AndrewNeural, subtle radio EQ (UI/briefing)',
-        story: 'edge-tts en-US-AndrewNeural, no EQ (sentences + Say Word)',
+        story: 'edge-tts en-US-AndrewNeural, no EQ (Say Word / Hear It only)',
       },
       clips,
     }, null, 2));
   }
 
+  await pruneUnused(jobs, clips);
   console.log(`Done. built=${built} failed=${failed} catalog=${jobs.length}`);
 }
 

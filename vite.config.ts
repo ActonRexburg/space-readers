@@ -139,9 +139,10 @@ export default defineConfig({
     minify: 'terser',
     terserOptions: {
       compress: {
-        // Keep console.debug so we can confirm clip vs TTS fallback on a live SW.
-        drop_console: false,
-        pure_funcs: ['console.log']
+        // Keep [speak] clip / fallback-tts logs on production Chromebooks.
+        // console.debug is hidden in default DevTools (and some minifiers
+        // treat it as droppable); speak() uses console.info instead.
+        drop_console: false
       }
     },
     rollupOptions: {

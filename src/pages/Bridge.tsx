@@ -15,6 +15,7 @@ import { IntroVideo } from '../components/IntroVideo';
 import { useZibClips } from '../components/ZibClip';
 import { useZibOverlayLock } from '../hooks/useZibOverlayLock';
 import { SpeakButton, SpokenLine } from '../components/SpeakButton';
+import { ParentZone } from '../components/ParentZone';
 import { getAudioService } from '../services/audio';
 import { getAvatarById, DEFAULT_AVATAR } from '../data/avatars';
 import { getNextMission } from '../data/missions';
@@ -127,6 +128,7 @@ export function Bridge() {
         </button>
 
         <div className="flex items-center gap-3">
+          <ParentZone />
           <button
             type="button"
             onClick={() => getAudioService().speakText(UI.fuel, { voice: 'control' })}

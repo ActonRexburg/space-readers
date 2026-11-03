@@ -3,7 +3,7 @@
  *
  * kind 'zib'     → BrianNeural (speech bubbles, Zib reactions)
  * kind 'control' → AndrewNeural with light radio EQ (instructions, briefing, UI)
- * kind 'story'   → AndrewNeural, crystal-clear (story sentences + Say Word)
+ * kind 'story'   → AndrewNeural, crystal-clear (Say Word / Hear It only — never whole sentences)
  *
  * scripts/gen-voice.mjs reads this file plus missions/stories/interests.
  * Keep wording short. Every instruction line is also shown on screen with 🔊.
@@ -59,6 +59,8 @@ export function zibWordsKnownLine(count: number): string {
 }
 
 export function zibLearnedLine(count: number): string {
+  // Never show "Zib learned 0 new words!" — encourage instead.
+  if (count <= 0) return 'Great reading, Cadet!';
   return `Zib learned ${count} new ${plural(count, 'word')}!`;
 }
 
