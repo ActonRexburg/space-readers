@@ -51,7 +51,7 @@ export function Zib({
 
       {dialogue && (
         <div className="mt-3 relative max-w-xs flex items-start gap-2">
-          <SpeakButton text={dialogue} autoPlay={autoSpeak} />
+          <SpeakButton text={dialogue} autoPlay={autoSpeak} voice="zib" />
           <div className="bg-white/20 rounded-lg p-3 text-lg text-center flex-1">
             {dialogue}
           </div>

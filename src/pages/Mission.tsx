@@ -15,9 +15,12 @@ import { Button } from '../components/Button';
 import { Zib } from '../components/Zib';
 import { StoryReader } from '../components/StoryReader';
 import { useZibClips } from '../components/ZibClip';
+import { useZibOverlayLock } from '../hooks/useZibOverlayLock';
 import { SpeakButton, SpokenLine } from '../components/SpeakButton';
 import { getMissionById } from '../data/missions';
 import { getStoryById } from '../data/stories';
+import { zibLearnedLine, zibRankUpLine, UI } from '../data/voiceLines';
+import { splitSentences } from '../utils/readAloud';
 import type { Story, Rank } from '../types';
 import { RANK_ORDER, RANK_THRESHOLDS } from '../types';
 
@@ -35,7 +38,7 @@ function capitalize(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-type MissionPhase = 'briefing' | 'stories' | 'reading' | 'debrief' | 'rankup' | 'complete';
+type MissionPhase = 'briefing' | 'stories' | 'reading' | 'debrief' | 'rankup';
 
 export function Mission() {
   const { missionId } = useParams<{ missionId: string }>();
@@ -48,9 +51,7 @@ export function Mission() {
   } = useAppStore();
   const {
     triggerStoryStart,
-    triggerStoryComplete,
-    triggerPlanetUnlocked,
-    triggerRankUp
+    triggerStoryComplete
   } = useZibClips();
 
   const [phase, setPhase] = useState<MissionPhase>('briefing');
@@ -60,11 +61,16 @@ export function Mission() {
   const [totalWordsThisMission, setTotalWordsThisMission] = useState(0);
   const triggeredStoryStartFor = useRef<string | null>(null);
 
-  const [fuelBefore, setFuelBefore] = useState(0);
-  const [starsBefore, setStarsBefore] = useState(0);
+  const [fuelAtStart] = useState(() => useAppStore.getState().activeProgress?.fuelCredits ?? 0);
+  const [starsAtStart] = useState(() => useAppStore.getState().activeProgress?.starCredits ?? 0);
+  const [storyFuelEarned, setStoryFuelEarned] = useState(0);
   const [planetsBefore, setPlanetsBefore] = useState(0);
   const [rankBefore, setRankBefore] = useState<string | null>(null);
   const [newRank, setNewRank] = useState<string | null>(null);
+
+  // Hide Zib popups on Mission Complete and rank-up overlays.
+  useZibOverlayLock(phase === 'debrief' || phase === 'rankup');
+
   const confettiPieces = useMemo(() => (
     Array.from({ length: 30 }, (_, i) => ({
       id: i,
@@ -123,19 +129,17 @@ export function Mission() {
     setCurrentStory(null);
     triggeredStoryStartFor.current = null;
 
-    triggerStoryComplete();
-
     if (newCompletedStories.size === stories.length && mission) {
+      // Overlay coming — do not leave a clip on Mission Complete.
+      getZibClipService().skip();
       const latest = useAppStore.getState().activeProgress;
       const fuelAfterStories = latest?.fuelCredits ?? 0;
-      const starsAfterStories = latest?.starCredits ?? 0;
       const planetsAfterStories = latest?.planetsUnlocked.length ?? 0;
       const rankAfterStories = latest?.currentRank ?? 'Recruit';
       const fuelAfterMission = fuelAfterStories + mission.fuelReward;
       const rankAfterMission = calculateRank(fuelAfterMission);
 
-      setFuelBefore(fuelAfterStories);
-      setStarsBefore(starsAfterStories);
+      setStoryFuelEarned(fuelAfterStories - fuelAtStart);
       setPlanetsBefore(planetsAfterStories);
       setRankBefore(rankAfterStories);
 
@@ -144,35 +148,31 @@ export function Mission() {
       }
       setPhase('debrief');
     } else {
+      triggerStoryComplete();
       setPhase('stories');
     }
-  }, [currentStory, stories.length, completedStories, completeStory, addAlienWord, recordWordHelp, triggerStoryComplete, mission]);
+  }, [currentStory, stories.length, completedStories, completeStory, addAlienWord, recordWordHelp, triggerStoryComplete, mission, fuelAtStart]);
 
   const handleMissionComplete = useCallback(async () => {
     if (!mission) return;
 
     await completeMission(mission.id, mission.fuelReward, mission.starReward, mission.unlocksPlanet);
 
+    getZibClipService().skip();
     if (newRank && newRank !== rankBefore) {
-      setTimeout(() => triggerRankUp(), 300);
       setPhase('rankup');
     } else {
-      if (mission.unlocksPlanet) {
-        setTimeout(() => triggerPlanetUnlocked(), 300);
-      }
-      setPhase('complete');
+      navigate('/bridge');
     }
-  }, [mission, completeMission, triggerRankUp, triggerPlanetUnlocked, newRank, rankBefore]);
+  }, [mission, completeMission, newRank, rankBefore, navigate]);
 
   const handleContinueAfterRankUp = useCallback(() => {
-    if (mission?.unlocksPlanet) {
-      setTimeout(() => triggerPlanetUnlocked(), 300);
-    }
-    setPhase('complete');
-  }, [mission, triggerPlanetUnlocked]);
+    getZibClipService().skip();
+    navigate('/bridge');
+  }, [navigate]);
 
   useEffect(() => {
-    if (phase === 'stories' || phase === 'complete' || phase === 'briefing') {
+    if (phase === 'stories' || phase === 'briefing' || phase === 'debrief' || phase === 'rankup') {
       getZibClipService().skip();
     }
   }, [phase]);
@@ -200,10 +200,12 @@ export function Mission() {
     );
   }
 
-  const briefingText = `${mission.title}. ${mission.briefing}`;
+  const briefingSentences = splitSentences(mission.briefing);
   const zibLine = mission.alienDialogue[zibDialogueIndex] || '';
-  const completionSpeak = mission.completionMessage.replace(/\s+/g, ' ').trim();
-  const rankSpeak = newRank ? `Rank up! You are now ${newRank}!` : '';
+  const fuelTotal = fuelAtStart + storyFuelEarned + mission.fuelReward;
+  const starTotal = starsAtStart + mission.starReward;
+  const fuelSpeak = `Before ${fuelAtStart}. Story fuel plus ${storyFuelEarned}. Mission bonus plus ${mission.fuelReward}. Total ${fuelTotal}.`;
+  const rankSpeak = newRank ? zibRankUpLine(newRank) : '';
 
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden">
@@ -220,7 +222,7 @@ export function Mission() {
           </button>
           <div className="flex items-center gap-2 min-w-0">
             <h1 className="font-bold text-lg truncate">{mission.title}</h1>
-            <SpeakButton text={mission.title} />
+            <SpeakButton text={mission.title} voice="control" />
           </div>
           <div className="w-16" />
         </header>
@@ -228,26 +230,46 @@ export function Mission() {
 
       {phase === 'briefing' && (
         <main className="flex-1 relative z-10 p-6 flex flex-col items-center justify-center">
-          <div className="max-w-md w-full space-y-8">
+          <div className="max-w-md w-full space-y-6">
             <div className="flex flex-col items-center gap-3">
               <div className="text-5xl">🎯</div>
               <div className="flex items-center gap-3">
                 <h2 className="text-3xl font-bold text-star-gold">{mission.title}</h2>
-                <SpeakButton text={briefingText} autoPlay />
+                <SpeakButton text={mission.title} voice="control" />
               </div>
             </div>
+
+            <SpokenLine
+              text={mission.description}
+              autoPlay
+              voice="control"
+              textClassName="text-xl text-star-gold font-bold text-center"
+              className="justify-center"
+            />
+
+            <Card className="space-y-3 p-5">
+              {briefingSentences.map((line) => (
+                <SpokenLine
+                  key={line}
+                  text={line}
+                  voice="control"
+                  textClassName="text-xl text-white leading-snug"
+                />
+              ))}
+            </Card>
 
             <Card className="flex items-center gap-4 p-5">
               <Zib size="sm" />
               <div className="flex-1 min-w-0">
                 <SpokenLine
                   text={zibLine}
+                  voice="zib"
                   textClassName="text-xl text-cyan-100 leading-snug"
                 />
                 {zibDialogueIndex < mission.alienDialogue.length - 1 && (
                   <button
                     onClick={() => setZibDialogueIndex(i => i + 1)}
-                    className="mt-3 min-h-[44px] px-4 rounded-lg text-xl text-star-gold pulse-action"
+                    className="mt-3 min-h-[44px] px-4 rounded-lg text-xl text-star-gold pulse-idle"
                   >
                     Next →
                   </button>
@@ -260,7 +282,7 @@ export function Mission() {
               size="lg"
               glow
               onClick={() => setPhase('stories')}
-              className="w-full pulse-action text-2xl"
+              className="w-full pulse-idle text-2xl"
             >
               🚀 Accept
             </Button>
@@ -304,6 +326,7 @@ export function Mission() {
                       <div className="flex-1 min-w-0 flex items-center gap-2">
                         <h3 className="font-bold text-xl truncate">{story.title}</h3>
                         <SpeakButton
+                          voice="control"
                           text={story.storyContext ? `${story.title}. ${story.storyContext}` : story.title}
                         />
                       </div>
@@ -340,38 +363,49 @@ export function Mission() {
       )}
 
       {phase === 'debrief' && (
-        <main className="flex-1 relative z-10 p-6 flex flex-col items-center justify-center overflow-y-auto">
+        <main className="flex-1 relative z-50 p-6 flex flex-col items-center justify-center overflow-y-auto">
           <div className="max-w-md w-full space-y-8 py-4">
             <div className="text-center space-y-3">
               <div className="text-6xl">🎉</div>
-              <div className="flex items-center justify-center gap-3">
-                <h2 className="text-3xl font-bold text-star-gold">Mission Complete!</h2>
-                <SpeakButton text={completionSpeak} autoPlay />
-              </div>
+              <SpokenLine
+                text={UI.missionComplete}
+                autoPlay
+                voice="control"
+                className="justify-center"
+                textClassName="text-3xl font-bold text-star-gold"
+              />
+              <SpokenLine
+                text={mission.completionMessage}
+                voice="control"
+                className="justify-center"
+                textClassName="text-xl text-white leading-snug"
+              />
             </div>
 
             <Card className="flex items-center gap-4 p-5">
               <Zib size="md" />
               <SpokenLine
-                text={`Zib learned ${totalWordsThisMission} new words!`}
+                text={zibLearnedLine(totalWordsThisMission)}
+                voice="zib"
                 textClassName="text-xl text-alien-green font-bold"
               />
             </Card>
 
-            <Card glow="gold" className="text-center space-y-4">
-              <div className="flex items-center justify-center gap-3 text-fuel-orange text-2xl font-bold">
-                <span>{fuelBefore}</span>
-                <span>+</span>
-                <span>{mission.fuelReward}</span>
-                <span>=</span>
-                <span>{fuelBefore + mission.fuelReward} 🔥</span>
+            <Card glow="gold" className="text-center space-y-3">
+              {/* Breakdown starts from pre-mission fuel so it matches the Bridge before and after. */}
+              <div className="flex items-start justify-center gap-2">
+                <SpeakButton text={fuelSpeak} voice="control" />
+                <div className="text-fuel-orange space-y-1 text-xl font-bold text-left">
+                  <div>Before {fuelAtStart} 🔥</div>
+                  <div>Story fuel +{storyFuelEarned}</div>
+                  <div>Mission bonus +{mission.fuelReward}</div>
+                  <div className="text-2xl">Total {fuelTotal} 🔥</div>
+                </div>
               </div>
-              <div className="flex items-center justify-center gap-3 text-star-gold text-2xl font-bold">
-                <span>{starsBefore}</span>
-                <span>+</span>
-                <span>{mission.starReward}</span>
-                <span>=</span>
-                <span>{starsBefore + mission.starReward} ⭐</span>
+              <div className="text-star-gold space-y-1 text-xl font-bold pt-2">
+                <div>Before {starsAtStart} ⭐</div>
+                <div>Mission bonus +{mission.starReward}</div>
+                <div className="text-2xl">Total {starTotal} ⭐</div>
               </div>
 
               {mission.unlocksPlanet && (
@@ -401,7 +435,7 @@ export function Mission() {
       )}
 
       {phase === 'rankup' && newRank && (
-        <main className="flex-1 relative z-10 p-6 flex flex-col items-center justify-center overflow-hidden">
+        <main className="flex-1 relative z-50 p-6 flex flex-col items-center justify-center overflow-hidden">
           <div className="absolute inset-0 pointer-events-none overflow-hidden">
             {confettiPieces.map((piece) => (
               <div
@@ -426,10 +460,21 @@ export function Mission() {
               </div>
             </div>
 
-            <div className="flex items-center justify-center gap-3">
-              <h2 className="text-4xl font-bold text-alien-green text-glow-cyan">RANK UP!</h2>
-              <SpeakButton text={rankSpeak} autoPlay />
-            </div>
+            <SpokenLine
+              text={UI.rankUp}
+              voice="control"
+              autoPlay
+              className="justify-center"
+              textClassName="text-4xl font-bold text-alien-green text-glow-cyan"
+            />
+            {rankSpeak && (
+              <SpokenLine
+                text={rankSpeak}
+                voice="zib"
+                className="justify-center"
+                textClassName="text-2xl text-white"
+              />
+            )}
 
             <div className="space-card p-6 glow-green">
               <div className="flex items-center justify-center gap-4 text-2xl">
@@ -452,22 +497,6 @@ export function Mission() {
         </main>
       )}
 
-      {phase === 'complete' && (
-        <main className="flex-1 relative z-10 p-6 flex flex-col items-center justify-center">
-          <div className="max-w-md w-full text-center space-y-8">
-            <div className="text-6xl">🚀</div>
-            <Button
-              variant="primary"
-              size="lg"
-              glow
-              onClick={() => navigate('/bridge')}
-              className="w-full pulse-action text-2xl"
-            >
-              🏠 Bridge
-            </Button>
-          </div>
-        </main>
-      )}
     </div>
   );
 }

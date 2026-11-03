@@ -13,9 +13,12 @@ import { Button } from '../components/Button';
 import { Zib } from '../components/Zib';
 import { IntroVideo } from '../components/IntroVideo';
 import { useZibClips } from '../components/ZibClip';
+import { useZibOverlayLock } from '../hooks/useZibOverlayLock';
 import { SpeakButton, SpokenLine } from '../components/SpeakButton';
+import { getAudioService } from '../services/audio';
 import { getAvatarById, DEFAULT_AVATAR } from '../data/avatars';
 import { getNextMission } from '../data/missions';
+import { UI, zibWordsKnownLine, ZIB } from '../data/voiceLines';
 import { RANK_THRESHOLDS } from '../types';
 
 export function Bridge() {
@@ -26,6 +29,7 @@ export function Bridge() {
 
   const [showRankInfo, setShowRankInfo] = useState(false);
   const [showIntroVideo, setShowIntroVideo] = useState(false);
+  useZibOverlayLock(showRankInfo || showIntroVideo);
 
   useEffect(() => {
     if (!hasTriggeredWelcomeBack.current && activeProgress && activeProgress.storiesCompleted.length > 0) {
@@ -66,13 +70,13 @@ export function Bridge() {
     const wordsLearned = activeProgress?.alienLearnedWords.length ?? 0;
 
     if (wordsLearned === 0) {
-      return "Hello! I'm Zib. Can you teach me to read?";
+      return ZIB.helloTeach;
     } else if (wordsLearned < 10) {
-      return `I know ${wordsLearned} words now! Let's learn more!`;
+      return zibWordsKnownLine(wordsLearned);
     } else if (wordsLearned < 25) {
-      return "Reading is amazing! Each word opens a new world!";
+      return ZIB.readingAmazing;
     } else {
-      return "You're an incredible teacher! I can read so much now!";
+      return ZIB.incredibleTeacher;
     }
   }, [activeProgress?.alienLearnedWords.length]);
 
@@ -123,14 +127,24 @@ export function Bridge() {
         </button>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1 px-3 py-2 rounded-full border border-fuel-orange/50 bg-fuel-orange/10">
+          <button
+            type="button"
+            onClick={() => getAudioService().speakText(UI.fuel, { voice: 'control' })}
+            className="flex items-center gap-1 px-3 py-2 min-h-[44px] rounded-full border border-fuel-orange/50 bg-fuel-orange/10"
+            aria-label="Fuel"
+          >
             <span className="text-xl">🔥</span>
             <span className="font-bold text-lg text-fuel-orange">{activeProgress.fuelCredits}</span>
-          </div>
-          <div className="flex items-center gap-1 px-3 py-2 rounded-full border border-star-gold/50 bg-star-gold/10">
+          </button>
+          <button
+            type="button"
+            onClick={() => getAudioService().speakText(UI.stars, { voice: 'control' })}
+            className="flex items-center gap-1 px-3 py-2 min-h-[44px] rounded-full border border-star-gold/50 bg-star-gold/10"
+            aria-label="Stars"
+          >
             <span className="text-xl">⭐</span>
             <span className="font-bold text-lg text-star-gold">{activeProgress.starCredits}</span>
-          </div>
+          </button>
         </div>
       </header>
 
@@ -140,17 +154,28 @@ export function Bridge() {
           <Card className="relative overflow-hidden">
             <button
               onClick={() => setShowRankInfo(true)}
-              className="flex items-center gap-2 mb-3"
+              className="w-full"
+              aria-label="Space ranks"
             >
-              <span className="text-2xl">🎖️</span>
-              <span className="font-bold text-xl text-star-gold">{activeProgress.currentRank}</span>
+              <div className="flex items-center justify-between mb-3">
+                <span className="flex items-center gap-2">
+                  <span className="text-2xl">🎖️</span>
+                  <span className="font-bold text-xl text-star-gold">{activeProgress.currentRank}</span>
+                </span>
+                {rankProgress.nextRank && (
+                  <span className="flex items-center gap-1 text-lg text-white/80">
+                    <span className="text-xl">➡️</span>
+                    <span>{rankProgress.nextRank}</span>
+                  </span>
+                )}
+              </div>
+              <div className="h-4 bg-white/10 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-star-gold to-fuel-orange transition-all duration-500"
+                  style={{ width: `${rankProgress.percent}%` }}
+                />
+              </div>
             </button>
-            <div className="h-4 bg-white/10 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-star-gold to-fuel-orange transition-all duration-500"
-                style={{ width: `${rankProgress.percent}%` }}
-              />
-            </div>
           </Card>
 
           <Card className="flex flex-col sm:flex-row items-center gap-5 p-6">
@@ -160,6 +185,7 @@ export function Bridge() {
             />
             <SpokenLine
               text={zibDialogue}
+              voice="zib"
               className="flex-1"
               textClassName="text-xl text-cyan-100 leading-snug"
             />
@@ -177,15 +203,24 @@ export function Bridge() {
             <Card glow="gold" padding="lg" className="text-center space-y-5">
               <div className="flex items-center justify-center gap-3">
                 <h2 className="text-3xl font-bold">{nextMission.title}</h2>
-                <SpeakButton text={`${nextMission.title}. ${nextMission.description}`} />
+                <SpeakButton
+                  voice="control"
+                  text={`${nextMission.title}. ${nextMission.description}`}
+                />
               </div>
+              <SpokenLine
+                text={nextMission.description}
+                voice="control"
+                className="justify-center"
+                textClassName="text-xl text-white leading-snug"
+              />
 
               <Button
                 variant="success"
                 size="lg"
                 glow
                 onClick={handleStartMission}
-                className="w-full pulse-action text-2xl py-5"
+                className="w-full pulse-idle text-2xl py-5"
               >
                 🚀 Start Mission
               </Button>
@@ -193,7 +228,12 @@ export function Bridge() {
           ) : (
             <Card padding="lg" className="text-center space-y-4">
               <div className="text-5xl">🎉</div>
-              <h2 className="text-2xl font-bold">All Done!</h2>
+              <SpokenLine
+                text={UI.allDone}
+                voice="control"
+                className="justify-center"
+                textClassName="text-2xl font-bold"
+              />
             </Card>
           )}
         </div>

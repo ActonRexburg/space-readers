@@ -1,69 +1,71 @@
 /**
- * Audio Service Abstraction
- * 
- * Provides text-to-speech and audio playback capabilities.
- * Currently uses Web Speech API but designed to swap to:
- * - Prerecorded phoneme audio files
- * - Cloud TTS (Google, Amazon Polly, etc.)
- * 
- * The interface is designed to support both whole-word and
- * individual phoneme/grapheme pronunciation.
+ * Audio Service
+ *
+ * Playback order for words and sentences:
+ *   1. Pre-generated clip in public/audio/voice (hash lookup via manifest)
+ *   2. speechSynthesis with the best male en-US voice (Andrew/Guy/Davis)
+ *
+ * Phonemes on the decoder slider are ALWAYS isolated MP3s. Never TTS a letter
+ * name ("bee"/"ay"/"tee"). Spelled sequences like M-U-G are stripped before
+ * any speak() call.
+ *
+ * Voice kinds (see src/utils/voice.ts):
+ *   zib     — Zib speech bubbles
+ *   control — instructions, briefing, UI labels
+ *   story   — story read-aloud and Say Word (crystal clear)
  */
 
 import type { Grapheme, TTSConfig } from '../types';
 import { resolveAssetUrl } from '../utils/assets';
 import { phonemeClipKey } from '../data/phonemes';
+import {
+  pickMaleFallbackVoice,
+  stripLetterNames,
+  voiceLookupKey,
+  type VoiceKind,
+  type VoiceManifest,
+  type VoiceClipMeta,
+  type VoiceWordTiming
+} from '../utils/voice';
 
 export interface SpeakTextOptions {
   onWord?: (charIndex: number) => void;
+  voice?: VoiceKind;
 }
 
-// Default TTS configuration
 const DEFAULT_TTS_CONFIG: TTSConfig = {
-  engine: 'web-speech',
-  rate: 0.9,  // Slightly slower for kids
+  engine: 'prerecorded',
+  rate: 0.95,
   pitch: 1.0
 };
 
-// Interface for audio service operations
 export interface AudioService {
-  // Speak a complete word
-  speakWord(word: string): Promise<void>;
-  
-  // Speak an individual phoneme/sound (for decoder slider)
+  speakWord(word: string, options?: SpeakTextOptions): Promise<void>;
   speakPhoneme(grapheme: Grapheme): Promise<void>;
-  
-  // Speak a phrase or sentence. onWord receives the character index of the
-  // current word (Web Speech utterance boundary) so the UI can highlight it.
   speakText(text: string, options?: SpeakTextOptions): Promise<void>;
-  
-  // Stop any current speech
   stop(): void;
-  
-  // Check if speech is currently playing
   isSpeaking(): boolean;
-  
-  // Update configuration
   setConfig(config: Partial<TTSConfig>): void;
-  
-  // Get available voices
   getVoices(): SpeechSynthesisVoice[];
 }
 
-// Web Speech API implementation
 class WebSpeechAudioService implements AudioService {
   private synth: SpeechSynthesis;
   private config: TTSConfig;
-  private speaking: boolean = false;
+  private speaking = false;
   private selectedVoice: SpeechSynthesisVoice | null = null;
   private phonemeAudio: HTMLAudioElement | null = null;
   private phonemeCache = new Map<string, HTMLAudioElement>();
+  private clipAudio: HTMLAudioElement | null = null;
+  private clipTimer: ReturnType<typeof setInterval> | null = null;
+  private manifest: VoiceManifest | null = null;
+  private manifestPromise: Promise<VoiceManifest | null> | null = null;
+  private generation = 0;
 
   constructor(config: TTSConfig = DEFAULT_TTS_CONFIG) {
     this.synth = typeof window !== 'undefined' ? window.speechSynthesis : (null as unknown as SpeechSynthesis);
     this.config = config;
-    
-    // Load voices when they become available
+
     if (this.synth) {
       this.loadVoices();
       this.synth.onvoiceschanged = () => this.loadVoices();
@@ -72,81 +74,141 @@ class WebSpeechAudioService implements AudioService {
 
   private loadVoices(): void {
     if (!this.synth) return;
-    const voices = this.synth.getVoices();
-    
-    // Prefer child-friendly US English voices
-    const preferredVoices = [
-      'Google US English',
-      'Microsoft Zira',
-      'Samantha',  // macOS
-      'Alex'       // macOS fallback
-    ];
-    
-    for (const preferred of preferredVoices) {
-      const found = voices.find(v => v.name.includes(preferred));
-      if (found) {
-        this.selectedVoice = found;
-        break;
-      }
-    }
-    
-    // Fallback to first English voice
-    if (!this.selectedVoice) {
-      this.selectedVoice = voices.find(v => v.lang.startsWith('en')) ?? voices[0];
-    }
+    this.selectedVoice = pickMaleFallbackVoice(this.synth.getVoices());
   }
 
-  private createUtterance(text: string): SpeechSynthesisUtterance {
+  private async ensureManifest(): Promise<VoiceManifest | null> {
+    if (this.manifest) return this.manifest;
+    if (this.manifestPromise) return this.manifestPromise;
+
+    this.manifestPromise = (async () => {
+      try {
+        const url = resolveAssetUrl('audio/voice/manifest.json');
+        const res = await fetch(url);
+        if (!res.ok) return null;
+        const data = (await res.json()) as VoiceManifest;
+        this.manifest = data;
+        return data;
+      } catch {
+        return null;
+      }
+    })();
+
+    return this.manifestPromise;
+  }
+
+  private lookupClip(kind: VoiceKind, text: string): VoiceClipMeta | null {
+    if (!this.manifest) return null;
+    return this.manifest.clips[voiceLookupKey(kind, text)] ?? null;
+  }
+
+  private createUtterance(text: string, kind: VoiceKind): SpeechSynthesisUtterance {
     const utterance = new SpeechSynthesisUtterance(text);
-    
-    utterance.rate = this.config.rate;
-    utterance.pitch = this.config.pitch;
-    
+    utterance.rate = kind === 'zib' ? 1.06 : this.config.rate;
+    utterance.pitch = kind === 'zib' ? 1.15 : this.config.pitch;
     if (this.selectedVoice) {
       utterance.voice = this.selectedVoice;
     }
-    
     return utterance;
   }
 
-  private speak(utterance: SpeechSynthesisUtterance): Promise<void> {
+  private speakUtterance(
+    utterance: SpeechSynthesisUtterance,
+    gen: number,
+    onWord?: (charIndex: number) => void
+  ): Promise<void> {
     return new Promise((resolve, reject) => {
       this.speaking = true;
-      
+
+      if (onWord) {
+        utterance.onboundary = (event) => {
+          if (event.name && event.name !== 'word') return;
+          if (gen !== this.generation) return;
+          onWord(event.charIndex);
+        };
+      }
+
       utterance.onend = () => {
-        this.speaking = false;
+        if (gen === this.generation) this.speaking = false;
         resolve();
       };
-      
+
       utterance.onerror = (event) => {
-        this.speaking = false;
-        // Don't reject on interrupted - this is expected when stopping
+        if (gen === this.generation) this.speaking = false;
         if (event.error === 'interrupted') {
           resolve();
         } else {
           reject(new Error(`Speech error: ${event.error}`));
         }
       };
-      
-      // Chrome bug workaround - cancel before speaking
+
       this.synth.cancel();
       this.synth.speak(utterance);
     });
   }
 
-  async speakWord(word: string): Promise<void> {
-    if (!this.synth) return;
-    this.stopPhoneme();
-    const utterance = this.createUtterance(word);
-    // Slightly slower for individual words to help with comprehension
-    utterance.rate = Math.max(0.7, this.config.rate - 0.1);
-    return this.speak(utterance);
+  private fireWordTimings(
+    audio: HTMLAudioElement,
+    words: VoiceWordTiming[],
+    gen: number,
+    onWord: (charIndex: number) => void
+  ): () => void {
+    let next = 0;
+    const tick = () => {
+      if (gen !== this.generation) return;
+      const ms = audio.currentTime * 1000;
+      while (next < words.length && words[next].offsetMs <= ms + 30) {
+        onWord(words[next].charIndex);
+        next += 1;
+      }
+    };
+    const id = window.setInterval(tick, 40);
+    this.clipTimer = id;
+    audio.ontimeupdate = tick;
+    return () => {
+      window.clearInterval(id);
+      if (this.clipTimer === id) this.clipTimer = null;
+      audio.ontimeupdate = null;
+    };
+  }
+
+  private playClip(
+    clip: VoiceClipMeta,
+    gen: number,
+    onWord?: (charIndex: number) => void
+  ): Promise<void> {
+    return new Promise((resolve) => {
+      const audio = new Audio(resolveAssetUrl(`audio/voice/${clip.file}`));
+      audio.preload = 'auto';
+      this.clipAudio = audio;
+      this.speaking = true;
+
+      let clearWords: (() => void) | null = null;
+      if (onWord && clip.words.length > 0) {
+        clearWords = this.fireWordTimings(audio, clip.words, gen, onWord);
+      }
+
+      const finish = () => {
+        clearWords?.();
+        if (this.clipAudio === audio) this.clipAudio = null;
+        if (gen === this.generation) this.speaking = false;
+        resolve();
+      };
+
+      audio.onended = finish;
+      audio.onerror = finish;
+
+      audio.play().catch(() => {
+        finish();
+      });
+    });
   }
 
   async speakPhoneme(grapheme: Grapheme): Promise<void> {
     // Isolated clips only. NEVER speechSynthesis of the letter (that says "bee"/"ay"/"tee").
     this.synth?.cancel();
     this.stopPhoneme();
+    this.stopClip();
 
     const key = grapheme.audioKey || phonemeClipKey(grapheme.phoneme, grapheme.text);
     if (!key) {
@@ -179,25 +241,54 @@ class WebSpeechAudioService implements AudioService {
     }
   }
 
+  private stopClip(): void {
+    if (this.clipTimer) {
+      window.clearInterval(this.clipTimer);
+      this.clipTimer = null;
+    }
+    if (this.clipAudio) {
+      this.clipAudio.pause();
+      this.clipAudio.src = '';
+      this.clipAudio = null;
+    }
+  }
+
+  async speakWord(word: string, options?: SpeakTextOptions): Promise<void> {
+    return this.speakText(word, { ...options, voice: options?.voice ?? 'story' });
+  }
+
   async speakText(text: string, options?: SpeakTextOptions): Promise<void> {
-    if (!this.synth) return;
+    const kind: VoiceKind = options?.voice ?? 'control';
     const trimmed = text.replace(/\s+/g, ' ').trim();
     if (!trimmed) return;
-    this.stopPhoneme();
-    const utterance = this.createUtterance(trimmed);
-    if (options?.onWord) {
-      utterance.onboundary = (event) => {
-        // Some engines omit event.name; still highlight from charIndex.
-        if (event.name && event.name !== 'word') return;
-        options.onWord!(event.charIndex);
-      };
+
+    // Never speak letter names — strip M-U-G / F-I-SH before lookup or fallback.
+    const spoken = stripLetterNames(trimmed);
+    if (!spoken) return;
+
+    this.stop();
+    const gen = this.generation;
+
+    await this.ensureManifest();
+    if (gen !== this.generation) return;
+
+    const clip = this.lookupClip(kind, trimmed) ?? this.lookupClip(kind, spoken);
+    if (clip) {
+      await this.playClip(clip, gen, options?.onWord);
+      return;
     }
-    return this.speak(utterance);
+
+    if (!this.synth) return;
+    this.stopPhoneme();
+    const utterance = this.createUtterance(spoken, kind);
+    await this.speakUtterance(utterance, gen, options?.onWord);
   }
 
   stop(): void {
+    this.generation += 1;
     this.synth?.cancel();
     this.stopPhoneme();
+    this.stopClip();
     this.speaking = false;
   }
 
@@ -207,10 +298,10 @@ class WebSpeechAudioService implements AudioService {
 
   setConfig(config: Partial<TTSConfig>): void {
     this.config = { ...this.config, ...config };
-    
-    if (config.voice) {
+
+    if (config.voice && this.synth) {
       const voices = this.synth.getVoices();
-      const found = voices.find(v => v.name === config.voice);
+      const found = voices.find((v) => v.name === config.voice);
       if (found) {
         this.selectedVoice = found;
       }
@@ -222,17 +313,13 @@ class WebSpeechAudioService implements AudioService {
   }
 }
 
-// Factory function to create the appropriate audio service
-// In Phase 2, this can check config and return different implementations
 export function createAudioService(config?: TTSConfig): AudioService {
-  // Phoneme clips use HTMLAudioElement and work without Web Speech.
   if (typeof window !== 'undefined') {
     return new WebSpeechAudioService(config);
   }
   return createNoOpAudioService();
 }
 
-// No-op implementation for environments without speech
 function createNoOpAudioService(): AudioService {
   return {
     speakWord: async () => {},
@@ -245,7 +332,6 @@ function createNoOpAudioService(): AudioService {
   };
 }
 
-// Export singleton instance
 let audioServiceInstance: AudioService | null = null;
 
 export function getAudioService(): AudioService {

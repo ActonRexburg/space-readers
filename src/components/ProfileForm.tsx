@@ -10,6 +10,8 @@ import { useState, useEffect } from 'react';
 import type { Profile } from '../types';
 import { AVATARS, getAvatarById, INTEREST_OPTIONS } from '../data/avatars';
 import { Button } from './Button';
+import { SpokenLine } from './SpeakButton';
+import { UI } from '../data/voiceLines';
 
 interface ProfileFormProps {
   isOpen: boolean;
@@ -129,6 +131,13 @@ export function ProfileForm({
 
         {step === 'name' && (
           <div className="space-y-4">
+            <SpokenLine
+              text={UI.typeYourName}
+              voice="control"
+              autoPlay
+              className="justify-center"
+              textClassName="text-xl text-white"
+            />
             <input
               type="text"
               value={name}
@@ -152,6 +161,13 @@ export function ProfileForm({
 
         {step === 'avatar' && (
           <div className="space-y-5">
+            <SpokenLine
+              text={UI.pickAPicture}
+              voice="control"
+              autoPlay
+              className="justify-center"
+              textClassName="text-xl text-white"
+            />
             <div className="grid grid-cols-4 gap-3">
               {AVATARS.map((avatar) => (
                 <button
@@ -215,7 +231,7 @@ export function ProfileForm({
             variant="primary"
             onClick={handleNext}
             glow
-            className={`flex-1 pulse-action`}
+            className="flex-1 pulse-idle"
           >
             {primaryLabel}
           </Button>

@@ -10,7 +10,9 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import type { DecodableWord } from '../types';
 import { getAudioService } from '../services/audio';
 import { Button } from './Button';
-import { SpeakButton } from './SpeakButton';
+import { SpeakButton, SpokenLine } from './SpeakButton';
+import { useZibOverlayLock } from '../hooks/useZibOverlayLock';
+import { UI } from '../data/voiceLines';
 
 interface WordDecoderProps {
   word: DecodableWord;
@@ -30,6 +32,9 @@ export function WordDecoder({ word, isOpen, onClose, onComplete, onKeepTrying }:
   const audioService = useRef(getAudioService());
   const lastSpokenIndex = useRef(-1);
 
+  // Decoder is a full-screen overlay — never let a Zib popup sit on top of it.
+  useZibOverlayLock(isOpen);
+
   useEffect(() => {
     if (isOpen) {
       setSliderValue(0);
@@ -43,8 +48,16 @@ export function WordDecoder({ word, isOpen, onClose, onComplete, onKeepTrying }:
     }
   }, [isOpen, word.word]);
 
+  const COMPLETE_AT = 85;
+
   const handleSliderRelease = useCallback(() => {
-    if (hasStarted && !isComplete && sliderValue > 10 && sliderValue < 90) {
+    if (sliderValue >= COMPLETE_AT) {
+      setSliderValue(100);
+      setIsComplete(true);
+      return;
+    }
+
+    if (hasStarted && !isComplete && sliderValue > 10 && sliderValue < COMPLETE_AT) {
       const newMissCount = missCount + 1;
       setMissCount(newMissCount);
 
@@ -78,14 +91,14 @@ export function WordDecoder({ word, isOpen, onClose, onComplete, onKeepTrying }:
       audioService.current.speakPhoneme(word.graphemes[newActiveIndex]);
     }
 
-    if (value >= 90 && !isComplete) {
+    if (value >= COMPLETE_AT && !isComplete) {
       setIsComplete(true);
     }
   }, [getActiveGraphemeIndex, word.graphemes, isComplete]);
 
   const handleSliderInput = useCallback((e: React.FormEvent<HTMLInputElement>) => {
     const value = parseInt((e.target as HTMLInputElement).value, 10);
-    if (value >= 90 && !isComplete) {
+    if (value >= COMPLETE_AT && !isComplete) {
       setIsComplete(true);
     }
   }, [isComplete]);
@@ -95,7 +108,7 @@ export function WordDecoder({ word, isOpen, onClose, onComplete, onKeepTrying }:
     setIsClosing(true);
 
     audioService.current.stop();
-    await audioService.current.speakWord(word.word.replace(/[^a-zA-Z]/g, ''));
+    await audioService.current.speakWord(word.word.replace(/[^a-zA-Z]/g, ''), { voice: 'story' });
 
     onComplete();
     onClose();
@@ -126,13 +139,13 @@ export function WordDecoder({ word, isOpen, onClose, onComplete, onKeepTrying }:
             <div className="text-5xl font-bold text-star-gold text-glow-gold reading-text">
               {word.word}
             </div>
-            <SpeakButton text={cleanWord} />
+            <SpeakButton text={cleanWord} voice="story" />
           </div>
 
           <Button
             variant="success"
             onClick={async () => {
-              await audioService.current.speakWord(cleanWord);
+              await audioService.current.speakWord(cleanWord, { voice: 'story' });
               onComplete();
               onClose();
             }}
@@ -152,6 +165,13 @@ export function WordDecoder({ word, isOpen, onClose, onComplete, onKeepTrying }:
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div className="decoder-popup p-6 max-w-lg w-full">
+        <SpokenLine
+          text={UI.slideToSound}
+          voice="control"
+          className="justify-center mb-4"
+          textClassName="text-xl text-white font-semibold"
+        />
+
         <div className="flex justify-center flex-wrap gap-2 mb-8 min-h-[80px] items-center">
           {word.graphemes.map((grapheme, index) => (
             <span
@@ -165,10 +185,8 @@ export function WordDecoder({ word, isOpen, onClose, onComplete, onKeepTrying }:
 
         <div className="relative mb-8 px-2">
           {!hasStarted && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-              <div className="animate-bounce-x text-5xl">
-                👆
-              </div>
+            <div className="animate-slide-hand text-5xl z-10" aria-hidden="true">
+              👆
             </div>
           )}
 

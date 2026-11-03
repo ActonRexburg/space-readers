@@ -28,10 +28,10 @@ const VOICE_AUTO_DISMISS_MS = 6000;
 const ZIB_POSTER = resolveAssetUrl('zib-clips/poster/zib_interest_picker_intro.jpg');
 
 interface ZibClipProps {
-  position?: 'top-right' | 'center' | 'bottom-center';
+  position?: 'top-right' | 'center' | 'bottom-center' | 'bottom-left';
 }
 
-export function ZibClip({ position = 'top-right' }: ZibClipProps) {
+export function ZibClip({ position = 'bottom-left' }: ZibClipProps) {
   const [pendingClip, setPendingClip] = useState<PendingClip | null>(null);
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -55,13 +55,11 @@ export function ZibClip({ position = 'top-right' }: ZibClipProps) {
     }
   }, []);
 
-  // Dismiss popup on route change
+  // Dismiss popup on every route change
   useEffect(() => {
-    if (pendingClip) {
-      clearAllTimeouts();
-      service.skip();
-    }
-  }, [location.pathname, clearAllTimeouts]); // eslint-disable-line react-hooks/exhaustive-deps
+    clearAllTimeouts();
+    service.skip();
+  }, [location.pathname, clearAllTimeouts, service]);
 
   // Subscribe to clip changes
   useEffect(() => {
@@ -203,11 +201,12 @@ export function ZibClip({ position = 'top-right' }: ZibClipProps) {
 
   const { clip, mode } = pendingClip;
 
-  // Position classes - offset below header (≈60px) to avoid overlap with Read button
+  // Bottom-left sits above the reader nav bar and never covers story text.
   const positionClasses = {
     'top-right': 'top-16 right-4',
     'center': 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2',
-    'bottom-center': 'bottom-24 left-1/2 -translate-x-1/2'
+    'bottom-center': 'bottom-24 left-1/2 -translate-x-1/2',
+    'bottom-left': 'bottom-28 left-3'
   };
 
   // Voice-only mode OR video failed: show poster with voice
@@ -220,7 +219,7 @@ export function ZibClip({ position = 'top-right' }: ZibClipProps) {
           preload="none"
         />
         <div 
-          className={`fixed ${positionClasses[position]} z-50`}
+          className={`fixed ${positionClasses[position]} z-30`}
         >
           <div className="zib-comm-link-mini p-3 flex items-center gap-3 max-w-sm">
             {/* Zib poster image */}
@@ -252,7 +251,7 @@ export function ZibClip({ position = 'top-right' }: ZibClipProps) {
   // Full video mode
   return (
     <div 
-      className={`fixed ${positionClasses[position]} z-50`}
+      className={`fixed ${positionClasses[position]} z-30`}
     >
       <div className="zib-comm-link">
         {/* Header - Zib's Comm-Link */}
