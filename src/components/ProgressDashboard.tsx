@@ -15,6 +15,7 @@ import { Card } from './Card';
 import { Button } from './Button';
 import { InterestPicker } from './InterestPicker';
 import { ConfirmModal } from './ConfirmModal';
+import { OverlayPortal, OVERLAY_Z } from './OverlayPortal';
 
 interface ProgressDashboardProps {
   profiles: Profile[];
@@ -116,10 +117,22 @@ export function ProgressDashboard({
   };
 
   return (
-    <div className="fixed inset-0 bg-space-dark z-50 overflow-y-auto">
+    <OverlayPortal open>
+      <div
+        className={`fixed inset-0 ${OVERLAY_Z.baseBackdrop} bg-space-dark`}
+        data-overlay-backdrop="parent-dashboard"
+        aria-hidden="true"
+      />
+      <div
+        className={`fixed inset-0 ${OVERLAY_Z.baseDialog} overflow-y-auto bg-space-dark`}
+        data-testid="parent-dashboard"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="parent-dashboard-title"
+      >
       {/* Header */}
       <div className="sticky top-0 bg-space-deep/90 backdrop-blur-sm border-b border-white/10 p-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">📊 Progress Dashboard</h1>
+        <h1 id="parent-dashboard-title" className="text-2xl font-bold">📊 Progress Dashboard</h1>
         <Button variant="ghost" onClick={onClose}>
           Close ✕
         </Button>
@@ -164,6 +177,7 @@ export function ProgressDashboard({
                     </div>
                     <button
                       type="button"
+                      data-testid="parent-manage"
                       onClick={() => setManageProfile(profile)}
                       className="p-2 min-w-[44px] min-h-[44px] hover:bg-white/10 rounded-lg text-slate-300 hover:text-white"
                       aria-label={`Manage ${profile.name}`}
@@ -370,22 +384,31 @@ export function ProgressDashboard({
         </div>
       </div>
 
-      {/* Manage sheet — overlay, not a dropdown, because .space-card clips overflow. */}
-      {manageProfile && (
+      {/* Manage sheet portals to body so it isn't clipped by .space-card overflow. */}
+      <OverlayPortal open={!!manageProfile}>
         <div
-          className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
-          onClick={(e) => e.target === e.currentTarget && setManageProfile(null)}
+          className={`fixed inset-0 ${OVERLAY_Z.nestedBackdrop} bg-black/70 backdrop-blur-sm`}
+          data-overlay-backdrop="parent-manage"
+          onClick={() => setManageProfile(null)}
+          aria-hidden="true"
+        />
+        <div
+          className={`fixed inset-0 ${OVERLAY_Z.nestedDialog} flex items-center justify-center p-4`}
+          data-testid="parent-manage-sheet"
+          role="dialog"
+          aria-modal="true"
         >
           <div className="space-card p-6 max-w-sm w-full">
-            <h2 className="text-xl font-bold text-center mb-1">Manage {manageProfile.name}</h2>
+            <h2 className="text-xl font-bold text-center mb-1">Manage {manageProfile?.name}</h2>
             <p className="text-center text-slate-400 text-sm mb-6">Edit this player or remove them from this device.</p>
             <div className="space-y-3">
               <button
                 type="button"
+                data-testid="parent-manage-edit"
                 onClick={() => {
                   const profile = manageProfile;
                   setManageProfile(null);
-                  onEditProfile(profile);
+                  if (profile) onEditProfile(profile);
                 }}
                 className="w-full min-h-[48px] rounded-lg px-4 py-3 font-semibold
                   bg-white/10 border border-white/20 hover:bg-white/20 text-left"
@@ -394,6 +417,7 @@ export function ProgressDashboard({
               </button>
               <button
                 type="button"
+                data-testid="parent-manage-delete"
                 onClick={() => {
                   setDeleteTarget(manageProfile);
                   setManageProfile(null);
@@ -414,7 +438,7 @@ export function ProgressDashboard({
             </div>
           </div>
         </div>
-      )}
+      </OverlayPortal>
 
       <ConfirmModal
         isOpen={!!deleteTarget}
@@ -452,19 +476,22 @@ export function ProgressDashboard({
       />
 
       {/* Interest Editing Modal */}
-      {editingInterestsProfile && onUpdateInterests && (
-        <div className="fixed inset-0 z-[60]">
-          <InterestPicker
-            initialInterests={editingInterestsProfile.interests}
-            isEditing={true}
-            onComplete={(newInterests) => {
-              onUpdateInterests(editingInterestsProfile, newInterests);
-              setEditingInterestsProfile(null);
-            }}
-            onBack={() => setEditingInterestsProfile(null)}
-          />
+      <OverlayPortal open={!!editingInterestsProfile && !!onUpdateInterests}>
+        <div className={`fixed inset-0 ${OVERLAY_Z.nestedDialog}`}>
+          {editingInterestsProfile && onUpdateInterests && (
+            <InterestPicker
+              initialInterests={editingInterestsProfile.interests}
+              isEditing={true}
+              onComplete={(newInterests) => {
+                onUpdateInterests(editingInterestsProfile, newInterests);
+                setEditingInterestsProfile(null);
+              }}
+              onBack={() => setEditingInterestsProfile(null)}
+            />
+          )}
         </div>
-      )}
-    </div>
+      </OverlayPortal>
+      </div>
+    </OverlayPortal>
   );
 }

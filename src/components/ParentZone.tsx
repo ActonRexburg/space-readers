@@ -16,6 +16,7 @@ import type { Profile } from '../types';
 import { AdultGate } from './AdultGate';
 import { ProgressDashboard } from './ProgressDashboard';
 import { ProfileForm } from './ProfileForm';
+import { OverlayPortal, OVERLAY_Z } from './OverlayPortal';
 
 interface ParentZoneProps {
   /** Extra classes for the 👤 trigger button. */
@@ -78,6 +79,7 @@ export function ParentZone({ className = '' }: ParentZoneProps) {
         className={`p-3 min-w-[44px] min-h-[44px] hover:bg-neon-cyan/10 rounded-lg border border-neon-cyan/30 hover:border-neon-cyan/60 transition-all ${className}`}
         aria-label="Parent dashboard"
         title="Parent Zone"
+        data-testid="parent-zone-button"
       >
         <span className="text-xl">👤</span>
       </button>
@@ -140,8 +142,13 @@ export function ParentZone({ className = '' }: ParentZoneProps) {
         editProfile={editingProfile}
       />
 
-      {showPinChange && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[70] p-4">
+      <OverlayPortal open={showPinChange}>
+        <div
+          className={`fixed inset-0 ${OVERLAY_Z.nestedBackdrop} bg-black/80`}
+          data-overlay-backdrop="pin-change"
+          aria-hidden="true"
+        />
+        <div className={`fixed inset-0 ${OVERLAY_Z.nestedDialog} flex items-center justify-center p-4`}>
           <div className="space-card p-6 max-w-sm w-full">
             <h2 className="text-xl font-bold text-center mb-4">Change Parent PIN</h2>
             <input
@@ -174,7 +181,7 @@ export function ParentZone({ className = '' }: ParentZoneProps) {
             </div>
           </div>
         </div>
-      )}
+      </OverlayPortal>
     </>
   );
 }

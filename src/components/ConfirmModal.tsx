@@ -7,6 +7,7 @@
  */
 
 import { useEffect } from 'react';
+import { OverlayPortal, OVERLAY_Z } from './OverlayPortal';
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -44,17 +45,23 @@ export function ConfirmModal({
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [isOpen, onCancel]);
 
-  if (!isOpen) return null;
-
   return (
-    <div
-      className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[80] p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="confirm-modal-title"
-      aria-describedby="confirm-modal-message"
-      onClick={(e) => e.target === e.currentTarget && onCancel()}
-    >
+    <OverlayPortal open={isOpen}>
+      <div
+        className={`fixed inset-0 ${OVERLAY_Z.nestedBackdrop} bg-black/80 backdrop-blur-sm`}
+        data-overlay-backdrop="confirm"
+        onClick={onCancel}
+        aria-hidden="true"
+      />
+      <div
+        className={`fixed inset-0 ${OVERLAY_Z.nestedDialog} flex items-center justify-center p-4`}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="confirm-modal-title"
+        aria-describedby="confirm-modal-message"
+        data-testid="confirm-modal"
+        onClick={(e) => e.target === e.currentTarget && onCancel()}
+      >
       <div className="space-card p-6 max-w-sm w-full border-red-500/30">
         <h2
           id="confirm-modal-title"
@@ -81,6 +88,7 @@ export function ConfirmModal({
           </button>
           <button
             type="button"
+            data-testid="confirm-delete"
             onClick={onConfirm}
             className={
               destructive
@@ -97,6 +105,7 @@ export function ConfirmModal({
           </button>
         </div>
       </div>
-    </div>
+      </div>
+    </OverlayPortal>
   );
 }

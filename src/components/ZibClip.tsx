@@ -14,6 +14,7 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useLocation } from 'react-router-dom';
 import { getZibClipService, type PendingClip } from '../services/zibClips';
 import { resolveAssetUrl } from '../utils/assets';
@@ -42,6 +43,14 @@ export function ZibClip({ position = 'bottom-left' }: ZibClipProps) {
   const autoDismissRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const service = getZibClipService();
   const location = useLocation();
+  // Drop the popup on the same render as a route change so a stale
+  // "Got it!" Comm-Link cannot linger in the story-screen a11y tree.
+  const [routePath, setRoutePath] = useState(location.pathname);
+  const clipOnThisRoute = location.pathname === routePath ? pendingClip : null;
+  if (location.pathname !== routePath) {
+    setRoutePath(location.pathname);
+    setPendingClip(null);
+  }
 
   // Clear all timeouts helper
   const clearAllTimeouts = useCallback(() => {
@@ -59,6 +68,7 @@ export function ZibClip({ position = 'bottom-left' }: ZibClipProps) {
   useEffect(() => {
     clearAllTimeouts();
     service.skip();
+    setPendingClip(null);
   }, [location.pathname, clearAllTimeouts, service]);
 
   // Subscribe to clip changes
@@ -197,9 +207,10 @@ export function ZibClip({ position = 'bottom-left' }: ZibClipProps) {
     };
   }, [pendingClip, videoFailed, isVideoLoaded, service, clearAllTimeouts]);
 
-  if (!pendingClip) return null;
+  // Hidden popups must unmount fully — never leave a display:none Got it! in the tree.
+  if (!clipOnThisRoute) return null;
 
-  const { clip, mode } = pendingClip;
+  const { clip, mode } = clipOnThisRoute;
 
   // Bottom-left sits above the reader nav bar and never covers story text.
   const positionClasses = {
@@ -211,15 +222,16 @@ export function ZibClip({ position = 'bottom-left' }: ZibClipProps) {
 
   // Voice-only mode OR video failed: stacked card (avatar, text, Got it)
   if (mode === 'voice' || videoFailed) {
-    return (
+    return createPortal(
       <>
         <audio
           ref={audioRef}
           onEnded={handleAudioEnded}
           preload="none"
         />
-        <div 
-          className={`fixed ${positionClasses[position]} z-30`}
+        <div
+          className={`fixed ${positionClasses[position]} z-40`}
+          data-testid="zib-comm-link"
         >
           <div className="zib-comm-link-mini p-4 flex flex-col items-center gap-3">
             <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-alien-green shrink-0 glow-green">
@@ -240,14 +252,16 @@ export function ZibClip({ position = 'bottom-left' }: ZibClipProps) {
             </button>
           </div>
         </div>
-      </>
+      </>,
+      document.body
     );
   }
 
   // Full video mode
-  return (
-    <div 
-      className={`fixed ${positionClasses[position]} z-30`}
+  return createPortal(
+    <div
+      className={`fixed ${positionClasses[position]} z-40`}
+      data-testid="zib-comm-link"
     >
       <div className="zib-comm-link">
         {/* Header - Zib's Comm-Link */}
@@ -342,7 +356,8 @@ export function ZibClip({ position = 'bottom-left' }: ZibClipProps) {
         {/* Scanline effect */}
         <div className="zib-scanline" />
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

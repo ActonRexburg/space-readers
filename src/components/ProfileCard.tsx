@@ -20,6 +20,7 @@ export function ProfileCard({ profile, onClick, isSelected }: ProfileCardProps) 
   return (
     <button
       onClick={onClick}
+      data-testid={`profile-card-${profile.id}`}
       className={`
         profile-card flex flex-col items-center py-6
         ${isSelected ? 'profile-card-selected' : ''}
