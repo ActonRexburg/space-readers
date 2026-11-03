@@ -1,16 +1,15 @@
 /**
  * ZibClip Component
- * 
- * Comm-link popup/hologram panel for Zib story clips.
- * Features:
- * - Neon-styled holographic panel (not full screen)
- * - Shows video with poster, or plays voice-only
- * - Caption text from manifest always visible
- * - Large tap target to dismiss (48px+ "Got it" button)
- * - Auto-dismisses after clip ends
- * - Falls back to voice+poster if video won't load in 4s
- * - Bottom-left stacked card (~320–340px) so caption text can wrap normally
- * - Lazy-loads video (no preloading)
+ *
+ * Comm-link popup for Zib story clips.
+ * Videos stay on screen until they play or the cadet taps Skip/Got it.
+ * Do not auto-dismiss during load — a ~6s cap was unmounting the popup
+ * before Chromebooks finished fetching the mp4 (Brian: clips "don't seem
+ * to be loading").
+ *
+ * Autoplay uses muted + playsInline (Chrome allows that without a gesture).
+ * If even muted play is blocked, show a large Play button.
+ * Failures log with console.info('[zibclip] ...').
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
@@ -19,13 +18,6 @@ import { useLocation } from 'react-router-dom';
 import { getZibClipService, type PendingClip } from '../services/zibClips';
 import { resolveAssetUrl } from '../utils/assets';
 
-// Max time to wait for video before falling back to voice+poster
-const VIDEO_LOAD_TIMEOUT_MS = 4000;
-
-// Auto-dismiss voice-only clips after this duration
-const VOICE_AUTO_DISMISS_MS = 6000;
-
-// Zib poster image for avatar
 const ZIB_POSTER = resolveAssetUrl('zib-clips/poster/zib_interest_picker_intro.jpg');
 
 interface ZibClipProps {
@@ -36,15 +28,13 @@ export function ZibClip({ position = 'bottom-left' }: ZibClipProps) {
   const [pendingClip, setPendingClip] = useState<PendingClip | null>(null);
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [needsPlayButton, setNeedsPlayButton] = useState(false);
   const [videoFailed, setVideoFailed] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
-  const loadTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const autoDismissRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autoplayTried = useRef(false);
   const service = getZibClipService();
   const location = useLocation();
-  // Drop the popup on the same render as a route change so a stale
-  // "Got it!" Comm-Link cannot linger in the story-screen a11y tree.
   const [routePath, setRoutePath] = useState(location.pathname);
   const clipOnThisRoute = location.pathname === routePath ? pendingClip : null;
   if (location.pathname !== routePath) {
@@ -52,167 +42,152 @@ export function ZibClip({ position = 'bottom-left' }: ZibClipProps) {
     setPendingClip(null);
   }
 
-  // Clear all timeouts helper
-  const clearAllTimeouts = useCallback(() => {
-    if (loadTimeoutRef.current) {
-      clearTimeout(loadTimeoutRef.current);
-      loadTimeoutRef.current = null;
-    }
-    if (autoDismissRef.current) {
-      clearTimeout(autoDismissRef.current);
-      autoDismissRef.current = null;
-    }
-  }, []);
-
-  // Dismiss popup on every route change
   useEffect(() => {
-    clearAllTimeouts();
     service.skip();
     setPendingClip(null);
-  }, [location.pathname, clearAllTimeouts, service]);
+  }, [location.pathname, service]);
 
-  // Subscribe to clip changes
   useEffect(() => {
     const unsubscribe = service.subscribe((clip) => {
-      // Clear timeouts when clip changes
-      clearAllTimeouts();
-      
       setPendingClip(clip);
       setIsVideoLoaded(false);
       setIsPlaying(false);
+      setNeedsPlayButton(false);
       setVideoFailed(false);
+      autoplayTried.current = false;
+      if (clip) {
+        console.info('[zibclip] show', clip.clip.id, clip.mode);
+      }
     });
-    
-    // Check if there's already a clip showing
     setPendingClip(service.getCurrentClip());
-    
-    return () => {
-      unsubscribe();
-      clearAllTimeouts();
-    };
-  }, [service, clearAllTimeouts]);
+    return unsubscribe;
+  }, [service]);
 
-  // Handle video loaded — keep the video panel even if autoplay is blocked
-  const handleVideoCanPlay = useCallback(() => {
-    clearAllTimeouts();
-    
-    if (isVideoLoaded) return;
-    setIsVideoLoaded(true);
-    
-    const video = videoRef.current;
-    if (!video) return;
-
+  const tryAutoplay = useCallback((video: HTMLVideoElement, clipId: string) => {
+    video.muted = true;
+    video.playsInline = true;
     const playPromise = video.play();
     if (playPromise === undefined) {
       setIsPlaying(true);
       return;
     }
-
     playPromise
       .then(() => {
+        console.info('[zibclip] autoplay muted ok', clipId);
         setIsPlaying(true);
-      })
-      .catch((error) => {
-        console.warn('Zib clip autoplay blocked:', error);
-        if (error.name === 'NotAllowedError') {
-          video.muted = true;
-          video.play()
-            .then(() => setIsPlaying(true))
-            .catch(() => {
-              // Stay on video UI with a play button (do not collapse to a still)
-              setIsPlaying(false);
-            });
+        video.muted = false;
+        // Unmuting after muted autoplay often needs a tap on ChromeOS.
+        if (video.muted) {
+          console.info('[zibclip] still muted, showing play for sound', clipId);
+          setNeedsPlayButton(true);
         } else {
-          setIsPlaying(false);
+          setNeedsPlayButton(false);
         }
+      })
+      .catch((error: DOMException) => {
+        console.info('[zibclip] autoplay blocked', clipId, error?.name, error?.message);
+        setIsPlaying(false);
+        setNeedsPlayButton(true);
       });
-  }, [isVideoLoaded, clearAllTimeouts]);
-
-  // Handle video error - fall back to voice mode
-  const handleVideoError = useCallback(() => {
-    console.warn('Zib clip video error - falling back to voice mode');
-    setVideoFailed(true);
-    // Clear timeout
-    if (loadTimeoutRef.current) {
-      clearTimeout(loadTimeoutRef.current);
-      loadTimeoutRef.current = null;
-    }
   }, []);
 
-  // Handle video ended
-  const handleVideoEnded = useCallback(() => {
-    setIsPlaying(false);
-    // Auto-dismiss after a short delay
-    setTimeout(() => {
-      service.complete();
-    }, 500);
-  }, [service]);
+  const handleVideoCanPlay = useCallback(() => {
+    const video = videoRef.current;
+    const clip = pendingClip?.clip;
+    if (!video || !clip) return;
+    if (!isVideoLoaded) {
+      console.info('[zibclip] canplay', clip.id);
+      setIsVideoLoaded(true);
+    }
+    if (!autoplayTried.current && !isPlaying && !needsPlayButton) {
+      autoplayTried.current = true;
+      tryAutoplay(video, clip.id);
+    }
+  }, [pendingClip, isVideoLoaded, isPlaying, needsPlayButton, tryAutoplay]);
 
-  // Handle audio ended (voice-only mode)
+  const handleVideoError = useCallback(() => {
+    const video = videoRef.current;
+    const err = video?.error;
+    console.info(
+      '[zibclip] video error',
+      pendingClip?.clip.id,
+      err?.code,
+      err?.message,
+      video?.currentSrc
+    );
+    setVideoFailed(true);
+    setNeedsPlayButton(false);
+  }, [pendingClip]);
+
+  const handleVideoEnded = useCallback(() => {
+    console.info('[zibclip] ended', pendingClip?.clip.id);
+    setIsPlaying(false);
+    setTimeout(() => service.complete(), 500);
+  }, [service, pendingClip]);
+
   const handleAudioEnded = useCallback(() => {
     setIsPlaying(false);
-    setTimeout(() => {
-      service.complete();
-    }, 300);
+    setTimeout(() => service.complete(), 300);
   }, [service]);
 
-  // Handle tap to dismiss
   const handleDismiss = useCallback(() => {
-    // Stop video/audio
-    if (videoRef.current) {
-      videoRef.current.pause();
-    }
-    if (audioRef.current) {
-      audioRef.current.pause();
-    }
+    if (videoRef.current) videoRef.current.pause();
+    if (audioRef.current) audioRef.current.pause();
+    console.info('[zibclip] dismiss', pendingClip?.clip.id);
     service.skip();
-  }, [service]);
+  }, [service, pendingClip]);
 
-  // Start playing when clip arrives
+  const handleManualPlay = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = false;
+    video.playsInline = true;
+    const p = video.play();
+    if (p === undefined) {
+      setIsPlaying(true);
+      setNeedsPlayButton(false);
+      return;
+    }
+    p.then(() => {
+      console.info('[zibclip] manual play ok', pendingClip?.clip.id);
+      setIsPlaying(true);
+      setNeedsPlayButton(false);
+    }).catch((error: DOMException) => {
+      console.info('[zibclip] manual play failed', error?.name, error?.message);
+      video.muted = true;
+      video.play()
+        .then(() => {
+          setIsPlaying(true);
+          setNeedsPlayButton(false);
+        })
+        .catch((err: DOMException) => {
+          console.info('[zibclip] muted retry failed', err?.name, err?.message);
+        });
+    });
+  }, [pendingClip]);
+
+  // Voice-only: try audio.play(); if blocked, cadet taps Got it (no silent 6s skip).
   useEffect(() => {
     if (!pendingClip) return;
-
-    if (pendingClip.mode === 'voice' || videoFailed) {
-      // Voice-only mode - play audio immediately
-      if (audioRef.current) {
-        audioRef.current.src = pendingClip.clip.voiceUrl;
-        audioRef.current.play().catch(() => {});
+    if (pendingClip.mode !== 'voice' && !videoFailed) return;
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.src = pendingClip.clip.voiceUrl;
+    audio.play()
+      .then(() => {
+        console.info('[zibclip] voice play ok', pendingClip.clip.id);
         setIsPlaying(true);
-      }
-      
-      autoDismissRef.current = setTimeout(() => {
-        service.skip();
-      }, VOICE_AUTO_DISMISS_MS);
-    } else {
-      // Video mode - start loading immediately
-      if (videoRef.current) {
-        videoRef.current.load();
-      }
-      
-      loadTimeoutRef.current = setTimeout(() => {
-        if (!isVideoLoaded) {
-          console.warn('Zib clip video load timeout - falling back to voice');
-          setVideoFailed(true);
-        }
-      }, VIDEO_LOAD_TIMEOUT_MS);
+      })
+      .catch((error: DOMException) => {
+        console.info('[zibclip] voice play failed', pendingClip.clip.id, error?.name, error?.message);
+      });
+  }, [pendingClip, videoFailed]);
 
-      // Hard cap so clips cannot linger across story parts
-      autoDismissRef.current = setTimeout(() => {
-        service.skip();
-      }, Math.max(VOICE_AUTO_DISMISS_MS, pendingClip.clip.durationMs + 1000));
-    }
-    
-    return () => {
-      clearAllTimeouts();
-    };
-  }, [pendingClip, videoFailed, isVideoLoaded, service, clearAllTimeouts]);
-
-  // Hidden popups must unmount fully — never leave a display:none Got it! in the tree.
   if (!clipOnThisRoute) return null;
 
   const { clip, mode } = clipOnThisRoute;
 
-  // Bottom-left sits above the reader nav bar and never covers story text.
   const positionClasses = {
     'top-right': 'top-16 right-4',
     'center': 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2',
@@ -220,14 +195,13 @@ export function ZibClip({ position = 'bottom-left' }: ZibClipProps) {
     'bottom-left': 'bottom-28 left-3'
   };
 
-  // Voice-only mode OR video failed: stacked card (avatar, text, Got it)
   if (mode === 'voice' || videoFailed) {
     return createPortal(
       <>
         <audio
           ref={audioRef}
           onEnded={handleAudioEnded}
-          preload="none"
+          preload="auto"
         />
         <div
           className={`fixed ${positionClasses[position]} z-40`}
@@ -235,8 +209,8 @@ export function ZibClip({ position = 'bottom-left' }: ZibClipProps) {
         >
           <div className="zib-comm-link-mini p-4 flex flex-col items-center gap-3">
             <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-alien-green shrink-0 glow-green">
-              <img 
-                src={clip.posterUrl || ZIB_POSTER} 
+              <img
+                src={clip.posterUrl || ZIB_POSTER}
                 alt="Zib"
                 className="w-full h-full object-cover"
               />
@@ -257,14 +231,12 @@ export function ZibClip({ position = 'bottom-left' }: ZibClipProps) {
     );
   }
 
-  // Full video mode
   return createPortal(
     <div
       className={`fixed ${positionClasses[position]} z-40`}
       data-testid="zib-comm-link"
     >
       <div className="zib-comm-link">
-        {/* Header - Zib's Comm-Link */}
         <div className="flex items-center justify-between px-4 py-2 border-b border-neon-cyan/30">
           <div className="flex items-center gap-2">
             <span className="text-lg">📡</span>
@@ -272,7 +244,7 @@ export function ZibClip({ position = 'bottom-left' }: ZibClipProps) {
               Zib's Comm-Link
             </span>
           </div>
-          <button 
+          <button
             className="px-4 py-2 min-w-[56px] min-h-[56px] text-white/80 hover:text-white hover:bg-white/10 rounded-lg font-medium transition-colors flex items-center gap-1"
             onClick={(e) => {
               e.stopPropagation();
@@ -283,13 +255,11 @@ export function ZibClip({ position = 'bottom-left' }: ZibClipProps) {
           </button>
         </div>
 
-        {/* Video container */}
         <div className="relative aspect-video bg-black/50">
-          {/* Loading state */}
           {!isVideoLoaded && (
             <div className="absolute inset-0 flex items-center justify-center">
-              <img 
-                src={clip.posterUrl} 
+              <img
+                src={clip.posterUrl}
                 alt="Zib"
                 className="absolute inset-0 w-full h-full object-cover opacity-50"
               />
@@ -299,48 +269,40 @@ export function ZibClip({ position = 'bottom-left' }: ZibClipProps) {
               </div>
             </div>
           )}
-          
-          {/* Video element - WebM first, MP4 fallback */}
-          {/* Use preload="metadata" to start loading immediately */}
+
           <video
+            key={clip.id}
             ref={videoRef}
             className={`w-full h-full object-cover ${isVideoLoaded ? 'opacity-100' : 'opacity-0'}`}
             poster={clip.posterUrl}
             preload="auto"
             playsInline
+            muted
             onLoadedMetadata={() => {
-              // Metadata loaded - video is accessible, clear timeout
-              if (loadTimeoutRef.current) {
-                clearTimeout(loadTimeoutRef.current);
-                loadTimeoutRef.current = null;
-              }
+              console.info('[zibclip] metadata', clip.id);
             }}
             onCanPlay={handleVideoCanPlay}
             onEnded={handleVideoEnded}
             onError={handleVideoError}
           >
-            <source src={clip.videoUrl.replace('.mp4', '.webm')} type="video/webm" />
+            <source src={clip.videoWebmUrl} type="video/webm" />
             <source src={clip.videoUrl} type="video/mp4" />
           </video>
 
-          {/* Play indicator if paused */}
-          {isVideoLoaded && !isPlaying && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-              <button 
-                className="w-16 h-16 rounded-full bg-neon-cyan/20 border-2 border-neon-cyan flex items-center justify-center"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  videoRef.current?.play();
-                  setIsPlaying(true);
-                }}
+          {isVideoLoaded && (!isPlaying || needsPlayButton) && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+              <button
+                type="button"
+                className="w-20 h-20 rounded-full bg-neon-cyan/30 border-4 border-neon-cyan flex items-center justify-center shadow-[0_0_20px_rgba(0,245,255,0.5)]"
+                onClick={handleManualPlay}
+                aria-label="Play Zib clip"
               >
-                <span className="text-3xl ml-1">▶</span>
+                <span className="text-4xl ml-1">▶</span>
               </button>
             </div>
           )}
         </div>
 
-        {/* Caption then Got it underneath so the card stays readable */}
         <div className="px-4 py-3 bg-space-deep/80 flex flex-col gap-3">
           <p className="text-lg text-white font-medium leading-snug">
             "{clip.caption}"
@@ -353,7 +315,6 @@ export function ZibClip({ position = 'bottom-left' }: ZibClipProps) {
           </button>
         </div>
 
-        {/* Scanline effect */}
         <div className="zib-scanline" />
       </div>
     </div>,
@@ -361,12 +322,9 @@ export function ZibClip({ position = 'bottom-left' }: ZibClipProps) {
   );
 }
 
-/**
- * Hook to trigger Zib clips from components
- */
 export function useZibClips() {
   const service = getZibClipService();
-  
+
   return {
     triggerInterestPickerIntro: service.triggerInterestPickerIntro.bind(service),
     triggerInterestsDone: service.triggerInterestsDone.bind(service),

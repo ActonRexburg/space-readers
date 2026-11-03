@@ -108,9 +108,6 @@ export function StoryReader({ story, onComplete, onExit }: StoryReaderProps) {
         `}
       >
         {word.word}
-        {word.isSightWord && (
-          <span className="ml-0.5 text-[0.55em] align-super" aria-hidden="true">❤️</span>
-        )}
       </span>
     );
   };

@@ -11283,6 +11283,27 @@
           "charIndex": 17
         }
       ]
+    },
+    "zib|Great reading, Cadet!": {
+      "file": "09b83d9c1bf84992.mp3",
+      "durationMs": 2256,
+      "words": [
+        {
+          "text": "Great",
+          "offsetMs": 82,
+          "charIndex": 0
+        },
+        {
+          "text": "reading",
+          "offsetMs": 353,
+          "charIndex": 6
+        },
+        {
+          "text": "Cadet",
+          "offsetMs": 1285,
+          "charIndex": 15
+        }
+      ]
     }
   }
 }

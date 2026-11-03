@@ -2,13 +2,13 @@
  * Voice-clip lookup helpers shared by the runtime speak() path and
  * scripts/gen-voice.mjs (keep the key format in sync).
  *
- * Two recorded voices, plus phoneme MP3s on the decoder slider:
+ * Two recorded voices:
  *   zib     — edge-tts en-US-BrianNeural, pitch +18Hz, rate +6%, light echo
  *   control — edge-tts en-US-AndrewNeural, subtle radio EQ (UI / briefing)
  *   story   — edge-tts en-US-AndrewNeural, no EQ (Say Word / Hear It only)
  *
- * Never send letter names to TTS. Spelled sequences like M-U-G stay silent;
- * the decoder slider uses isolated phoneme clips instead.
+ * Never send letter names to TTS. Spelled sequences like M-U-G stay silent.
+ * The decoder slider is visual-only — no phoneme clips, no letter names.
  */
 
 export type VoiceKind = 'zib' | 'control' | 'story';
@@ -31,12 +31,15 @@ export interface VoiceManifest {
 }
 
 export function normalizeVoiceText(text: string): string {
-  return text.replace(/\s+/g, ' ').trim();
+  return text
+    .replace(/[\u2018\u2019\u201A\u2032]/g, "'")
+    .replace(/[\u201C\u201D\u201E\u2033]/g, '"')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 /**
  * Drop spelled-out letter names (M-U-G, F-I-SH) so they are never spoken.
- * Phoneme playback stays on public/audio/phonemes/*.mp3.
  */
 export function stripLetterNames(text: string): string {
   return text

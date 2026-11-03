@@ -204,6 +204,7 @@ export function Mission() {
   const zibLine = mission.alienDialogue[zibDialogueIndex] || '';
   const fuelTotal = fuelAtStart + storyFuelEarned + mission.fuelReward;
   const starTotal = starsAtStart + mission.starReward;
+  // Dynamic totals — no baked clip; speak() falls back to speechSynthesis.
   const fuelSpeak = `Before ${fuelAtStart}. Story fuel plus ${storyFuelEarned}. Mission bonus plus ${mission.fuelReward}. Total ${fuelTotal}.`;
   const rankSpeak = newRank ? zibRankUpLine(newRank) : '';
 

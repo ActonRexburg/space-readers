@@ -2,7 +2,7 @@
  * Kid-sized read-aloud control.
  *
  * 44px+ speaker button. Tapping plays the app voice; tapping again stops.
- * Never used for graphemes — those stay on phoneme clips.
+ * play() must start in this click turn — do not await a fetch first.
  */
 
 import { useCallback, useEffect, useId, useState, type MouseEvent, type PointerEvent } from 'react';
@@ -89,8 +89,11 @@ export function SpeakButton({
     (e: MouseEvent | PointerEvent) => {
       e.stopPropagation();
       e.preventDefault();
+      const audio = getAudioService();
+      // Unlock in the same turn as the tap so ChromeOS allows audio.play().
+      audio.unlock();
       if (activePlayId === id) {
-        getAudioService().stop();
+        audio.stop();
         activePlayId = null;
         notifyPlay();
         onEnd?.();
