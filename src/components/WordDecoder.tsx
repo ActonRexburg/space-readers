@@ -39,6 +39,7 @@ export function WordDecoder({ word, isOpen, onClose, onComplete, onKeepTrying }:
       setHasTriggeredKeepTrying(false);
       setIsClosing(false);
       lastSpokenIndex.current = -1;
+      audioService.current.stop();
     }
   }, [isOpen, word.word]);
 
@@ -82,7 +83,7 @@ export function WordDecoder({ word, isOpen, onClose, onComplete, onKeepTrying }:
     if (newActiveIndex !== lastSpokenIndex.current && newActiveIndex >= 0 && newActiveIndex < word.graphemes.length) {
       lastSpokenIndex.current = newActiveIndex;
       
-      // Speak the phoneme
+      // Play isolated phoneme clip (silence if no clip — never letter names)
       audioService.current.speakPhoneme(word.graphemes[newActiveIndex]);
     }
     

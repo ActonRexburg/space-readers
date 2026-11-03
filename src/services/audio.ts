@@ -11,6 +11,8 @@
  */
 
 import type { Grapheme, TTSConfig } from '../types';
+import { resolveAssetUrl } from '../utils/assets';
+import { phonemeClipKey } from '../data/phonemes';
 
 // Default TTS configuration
 const DEFAULT_TTS_CONFIG: TTSConfig = {
@@ -49,19 +51,22 @@ class WebSpeechAudioService implements AudioService {
   private config: TTSConfig;
   private speaking: boolean = false;
   private selectedVoice: SpeechSynthesisVoice | null = null;
+  private phonemeAudio: HTMLAudioElement | null = null;
+  private phonemeCache = new Map<string, HTMLAudioElement>();
 
   constructor(config: TTSConfig = DEFAULT_TTS_CONFIG) {
-    this.synth = window.speechSynthesis;
+    this.synth = typeof window !== 'undefined' ? window.speechSynthesis : (null as unknown as SpeechSynthesis);
     this.config = config;
     
     // Load voices when they become available
-    this.loadVoices();
-    if (typeof window !== 'undefined') {
-      window.speechSynthesis.onvoiceschanged = () => this.loadVoices();
+    if (this.synth) {
+      this.loadVoices();
+      this.synth.onvoiceschanged = () => this.loadVoices();
     }
   }
 
   private loadVoices(): void {
+    if (!this.synth) return;
     const voices = this.synth.getVoices();
     
     // Prefer child-friendly US English voices
@@ -125,6 +130,8 @@ class WebSpeechAudioService implements AudioService {
   }
 
   async speakWord(word: string): Promise<void> {
+    if (!this.synth) return;
+    this.stopPhoneme();
     const utterance = this.createUtterance(word);
     // Slightly slower for individual words to help with comprehension
     utterance.rate = Math.max(0.7, this.config.rate - 0.1);
@@ -132,26 +139,55 @@ class WebSpeechAudioService implements AudioService {
   }
 
   async speakPhoneme(grapheme: Grapheme): Promise<void> {
-    // For phonemes, we use the text representation
-    // Phase 2 can use grapheme.audioKey for prerecorded sounds
-    const utterance = this.createUtterance(grapheme.text);
-    // Very slow for individual sounds
-    utterance.rate = 0.5;
-    return this.speak(utterance);
+    // Isolated clips only. NEVER speechSynthesis of the letter (that says "bee"/"ay"/"tee").
+    this.synth?.cancel();
+    this.stopPhoneme();
+
+    const key = grapheme.audioKey || phonemeClipKey(grapheme.phoneme, grapheme.text);
+    if (!key) {
+      return;
+    }
+
+    const url = resolveAssetUrl(`audio/phonemes/${key}.mp3`);
+    let audio = this.phonemeCache.get(key);
+    if (!audio) {
+      audio = new Audio(url);
+      audio.preload = 'auto';
+      this.phonemeCache.set(key, audio);
+    }
+
+    audio.currentTime = 0;
+    this.phonemeAudio = audio;
+
+    try {
+      await audio.play();
+    } catch {
+      // Missing file, decode error, or autoplay block — stay silent.
+    }
+  }
+
+  private stopPhoneme(): void {
+    if (this.phonemeAudio) {
+      this.phonemeAudio.pause();
+      this.phonemeAudio.currentTime = 0;
+      this.phonemeAudio = null;
+    }
   }
 
   async speakText(text: string): Promise<void> {
+    if (!this.synth) return;
     const utterance = this.createUtterance(text);
     return this.speak(utterance);
   }
 
   stop(): void {
-    this.synth.cancel();
+    this.synth?.cancel();
+    this.stopPhoneme();
     this.speaking = false;
   }
 
   isSpeaking(): boolean {
-    return this.speaking || this.synth.speaking;
+    return this.speaking || Boolean(this.synth?.speaking);
   }
 
   setConfig(config: Partial<TTSConfig>): void {
@@ -167,19 +203,17 @@ class WebSpeechAudioService implements AudioService {
   }
 
   getVoices(): SpeechSynthesisVoice[] {
-    return this.synth.getVoices();
+    return this.synth?.getVoices() ?? [];
   }
 }
 
 // Factory function to create the appropriate audio service
 // In Phase 2, this can check config and return different implementations
 export function createAudioService(config?: TTSConfig): AudioService {
-  // Check if Web Speech API is available
-  if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+  // Phoneme clips use HTMLAudioElement and work without Web Speech.
+  if (typeof window !== 'undefined') {
     return new WebSpeechAudioService(config);
   }
-  
-  // Return a no-op service if speech is not available
   return createNoOpAudioService();
 }
 
@@ -205,50 +239,3 @@ export function getAudioService(): AudioService {
   }
   return audioServiceInstance;
 }
-
-// Utility function for phoneme pronunciation hints
-// Maps common graphemes to pronunciation-friendly text
-export const PHONEME_HINTS: Record<string, string> = {
-  'sh': 'shh',
-  'ch': 'chuh',
-  'th': 'thh',
-  'wh': 'wuh',
-  'ck': 'k',
-  'ng': 'ng',
-  'qu': 'kwuh',
-  'ph': 'f',
-  'wr': 'r',
-  'kn': 'n',
-  'gn': 'n',
-  'mb': 'm',
-  'a': 'ah',
-  'e': 'eh',
-  'i': 'ih',
-  'o': 'oh',
-  'u': 'uh',
-  'a_e': 'ay',  // Magic e patterns
-  'i_e': 'eye',
-  'o_e': 'oh',
-  'u_e': 'you',
-  'e_e': 'ee',
-  'ai': 'ay',
-  'ay': 'ay',
-  'ea': 'ee',
-  'ee': 'ee',
-  'ie': 'eye',
-  'oa': 'oh',
-  'ow': 'oh',
-  'oo': 'oo',
-  'ou': 'ow',
-  'oi': 'oy',
-  'oy': 'oy',
-  'ar': 'ar',
-  'er': 'er',
-  'ir': 'er',
-  'or': 'or',
-  'ur': 'er',
-  'aw': 'aw',
-  'au': 'aw',
-  'ew': 'oo',
-  'igh': 'eye'
-};
