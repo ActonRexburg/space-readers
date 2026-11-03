@@ -23,7 +23,7 @@ export function ProfileCard({ profile, onClick, isSelected }: ProfileCardProps) 
       className={`
         profile-card flex flex-col items-center py-6
         ${isSelected ? 'profile-card-selected' : ''}
-        ${isNew ? 'pulse-action' : ''}
+        ${isNew ? 'pulse-idle' : ''}
       `}
     >
       <div

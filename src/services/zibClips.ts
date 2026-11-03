@@ -30,6 +30,8 @@ class ZibClipService {
   private currentClip: PendingClip | null = null;
   private listeners: Set<ClipChangeListener> = new Set();
   private enabled: boolean = true;
+  // Full-screen overlays (decoder, rank-up, mission complete) hide Zib popups.
+  private overlayLocks = 0;
   
   // Throttling state for word_cracked
   private wordCrackedCount: number = 0;
@@ -89,8 +91,23 @@ class ZibClipService {
    * Trigger a clip to play
    * Returns false if clips are disabled or another clip is already playing
    */
+  /** Hide and block Zib popups while a full-screen overlay is open. */
+  lockOverlays(): void {
+    this.overlayLocks += 1;
+    this.skip();
+  }
+
+  unlockOverlays(): void {
+    this.overlayLocks = Math.max(0, this.overlayLocks - 1);
+  }
+
+  isOverlayLocked(): boolean {
+    return this.overlayLocks > 0;
+  }
+
   trigger(clipId: ZibClipId, options: ClipTriggerOptions = {}): boolean {
     if (!this.enabled) return false;
+    if (this.overlayLocks > 0) return false;
     
     // Don't stack clips - if one is playing, don't interrupt
     if (this.currentClip) return false;

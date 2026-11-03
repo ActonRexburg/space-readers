@@ -203,9 +203,11 @@ export function createDecodableWord(word: string): DecodableWord {
  * Parse a paragraph of text into DecodableWords
  */
 export function parseTextToWords(text: string): DecodableWord[] {
-  // Split by whitespace while preserving punctuation attached to words
-  const tokens = text.match(/[\w']+[.,!?;:]*|\s+/g) || [];
-  
+  // Keep leading/trailing quotes attached to the word so "'There it is!'" stays one token,
+  // not "is!" + a leftover quote that starts a fake next sentence.
+  // Hyphens stay on the token so "M-U-G." is one unit (never spoken as letter names).
+  const tokens = text.match(/[“”"‘’']*[\w']+(?:-[\w']+)*[.,!?;:]*[“”"‘’']*|[“”"‘’']+/g) || [];
+
   return tokens
     .filter(token => token.trim().length > 0)
     .map(token => createDecodableWord(token.trim()));

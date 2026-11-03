@@ -80,11 +80,11 @@ export default defineConfig({
           // Cache audio files similarly
           {
             urlPattern: /\.mp3$/i,
-            handler: 'NetworkFirst',
+            handler: 'CacheFirst',
             options: {
               cacheName: 'audio-cache',
               expiration: {
-                maxEntries: 20,
+                maxEntries: 500,
                 maxAgeSeconds: 60 * 60 * 24 * 30
               },
               cacheableResponse: {

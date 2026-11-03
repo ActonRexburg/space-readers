@@ -11,7 +11,8 @@ import { getAudioService } from '../services/audio';
 import { useZibClips } from './ZibClip';
 import { Button } from './Button';
 import { Zib } from './Zib';
-import { SpeakButton } from './SpeakButton';
+import { SpokenLine } from './SpeakButton';
+import { UI, pickMoreLine, ZIB } from '../data/voiceLines';
 
 interface InterestPickerProps {
   initialInterests?: string[];
@@ -43,7 +44,7 @@ export function InterestPicker({
   }, [isEditing, triggerInterestPickerIntro]);
 
   const handleTileClick = useCallback((interest: InterestOption) => {
-    audioService.speakWord(interest.label);
+    audioService.speakWord(interest.label, { voice: 'control' });
 
     setSelectedInterests(prev => {
       const newSet = new Set(prev);
@@ -77,11 +78,12 @@ export function InterestPicker({
   const isReady = selectionCount >= MIN_INTERESTS;
   const gaugePercent = Math.min(100, (selectionCount / MIN_INTERESTS) * 100);
 
-  const zibLine = selectionCount === 0
-    ? "Tap the pictures you love."
+  const statusLine = selectionCount === 0
+    ? ZIB.tapPictures
     : isReady
-      ? "Fuel tank full. Tap Launch!"
-      : `Pick ${MIN_INTERESTS - selectionCount} more.`;
+      ? UI.tapLaunch
+      : pickMoreLine(MIN_INTERESTS - selectionCount);
+  const statusVoice = selectionCount === 0 ? 'zib' as const : 'control' as const;
 
   return (
     <div className="min-h-screen flex flex-col bg-space-dark relative overflow-hidden">
@@ -106,10 +108,21 @@ export function InterestPicker({
         </div>
       </header>
 
-      <div className="relative z-10 px-4 py-4">
+      <div className="relative z-10 px-4 py-4 space-y-3">
+        <SpokenLine
+          text={UI.pickTen}
+          voice="control"
+          autoPlay
+          className="justify-center max-w-4xl mx-auto"
+          textClassName="text-xl text-white font-semibold"
+        />
         <div className="max-w-4xl mx-auto flex items-center justify-center gap-4">
           <Zib size="sm" />
-          <SpeakButton text={zibLine} />
+          <SpokenLine
+            text={statusLine}
+            voice={statusVoice}
+            textClassName="text-xl text-cyan-100 leading-snug"
+          />
         </div>
       </div>
 

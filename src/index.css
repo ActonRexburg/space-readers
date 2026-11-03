@@ -429,17 +429,21 @@ body {
 }
 
 .pulse-action {
-  animation: pulse-action 1.6s ease-in-out infinite;
+  animation: pulse-action 2.4s ease-in-out infinite;
+}
+
+.pulse-idle {
+  animation: pulse-action 2.4s ease-in-out 3s infinite;
 }
 
 @keyframes pulse-action {
   0%, 100% {
     transform: scale(1);
-    box-shadow: 0 0 12px rgba(251, 191, 36, 0.4), 0 0 24px rgba(251, 191, 36, 0.15);
+    box-shadow: 0 0 8px rgba(251, 191, 36, 0.25), 0 0 14px rgba(251, 191, 36, 0.1);
   }
   50% {
-    transform: scale(1.04);
-    box-shadow: 0 0 28px rgba(251, 191, 36, 0.85), 0 0 48px rgba(251, 191, 36, 0.35);
+    transform: scale(1.015);
+    box-shadow: 0 0 16px rgba(251, 191, 36, 0.5), 0 0 24px rgba(251, 191, 36, 0.2);
   }
 }
 
@@ -449,7 +453,9 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pulse-action {
+  .pulse-action,
+  .pulse-idle,
+  .animate-slide-hand {
     animation: none;
   }
 }
@@ -522,18 +528,17 @@ body {
   height: 44px !important;
 }
 
-/* Horizontal bounce animation for hand hint */
-@keyframes bounce-x {
-  0%, 100% {
-    transform: translateX(0);
-  }
-  50% {
-    transform: translateX(40px);
-  }
+/* Hand hint: slide left → right along the decoder slider until first touch */
+@keyframes slide-hand {
+  0% { left: 0; }
+  100% { left: calc(100% - 2.75rem); }
 }
 
-.animate-bounce-x {
-  animation: bounce-x 1.5s ease-in-out infinite;
+.animate-slide-hand {
+  position: absolute;
+  top: -2.35rem;
+  animation: slide-hand 1.5s ease-in-out infinite alternate;
+  pointer-events: none;
 }
 
 /* Grapheme display */
@@ -884,7 +889,7 @@ button, .touch-button, .word-highlight, .profile-card, .interest-tile {
    ============================================ */
 
 .zib-comm-link {
-  width: min(380px, calc(100vw - 32px));
+  width: min(260px, calc(100vw - 24px));
   background: linear-gradient(135deg, rgba(5, 5, 16, 0.98) 0%, rgba(18, 18, 42, 0.95) 100%);
   border: 2px solid var(--color-alien-green);
   border-radius: 16px;

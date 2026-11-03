@@ -7,6 +7,7 @@
 
 import { useCallback, useEffect, useId, useState, type MouseEvent, type PointerEvent } from 'react';
 import { getAudioService } from '../services/audio';
+import type { VoiceKind } from '../utils/voice';
 
 interface SpeakButtonProps {
   text: string;
@@ -16,6 +17,8 @@ interface SpeakButtonProps {
   onEnd?: () => void;
   className?: string;
   label?: string;
+  /** zib = BrianNeural bubbles; control = Andrew UI/briefing; story = Andrew read-aloud. */
+  voice?: VoiceKind;
 }
 
 let activePlayId: string | null = null;
@@ -32,7 +35,8 @@ export function SpeakButton({
   onStart,
   onEnd,
   className = '',
-  label
+  label,
+  voice = 'control'
 }: SpeakButtonProps) {
   const id = useId();
   const [, setTick] = useState(0);
@@ -63,6 +67,7 @@ export function SpeakButton({
 
     try {
       await audio.speakText(trimmed, {
+        voice,
         onWord: onWord
           ? (charIndex) => {
               if (activePlayId === id) onWord(charIndex);
@@ -78,7 +83,7 @@ export function SpeakButton({
         onEnd?.();
       }
     }
-  }, [id, text, onWord, onStart, onEnd]);
+  }, [id, text, voice, onWord, onStart, onEnd]);
 
   const toggle = useCallback(
     (e: MouseEvent | PointerEvent) => {
@@ -124,19 +129,21 @@ interface SpokenLineProps {
   autoPlay?: boolean;
   className?: string;
   textClassName?: string;
+  voice?: VoiceKind;
 }
 
 export function SpokenLine({
   text,
   autoPlay = false,
   className = '',
-  textClassName = 'text-lg leading-snug'
+  textClassName = 'text-lg leading-snug',
+  voice = 'control'
 }: SpokenLineProps) {
   if (!text.trim()) return null;
 
   return (
     <div className={`flex items-start gap-2 ${className}`}>
-      <SpeakButton text={text} autoPlay={autoPlay} className="shrink-0" />
+      <SpeakButton text={text} autoPlay={autoPlay} voice={voice} className="shrink-0" />
       <p className={`flex-1 min-w-0 ${textClassName}`}>{text}</p>
     </div>
   );

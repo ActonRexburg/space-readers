@@ -63,7 +63,7 @@ const story3Paragraphs = [
   createParagraph("'Yes! You did it!' I gave Zib a high five."),
   createParagraph("'What is that?' Zib saw my pet fish."),
   createParagraph("'F-I-SH. Fish!' I said. Zib's eyes got big."),
-  createParagraph("'Fish! I can read! This is the best day!"),
+  createParagraph("'Fish! I can read! This is the best day!'"),
   createParagraph("Zib ran to tell the ship. 'I know words now!'")
 ];
 

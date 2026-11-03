@@ -14,6 +14,8 @@ import { ProfileForm } from '../components/ProfileForm';
 import { AdultGate } from '../components/AdultGate';
 import { ProgressDashboard } from '../components/ProgressDashboard';
 import type { Profile } from '../types';
+import { SpokenLine } from '../components/SpeakButton';
+import { UI } from '../data/voiceLines';
 
 export function ProfilePicker() {
   const navigate = useNavigate();
@@ -152,16 +154,35 @@ export function ProfilePicker() {
         {profiles.length === 0 ? (
           <div className="text-center max-w-md space-card p-10">
             <div className="text-7xl mb-6 float">👽</div>
+            <SpokenLine
+              text={UI.tapToCreate}
+              voice="control"
+              autoPlay
+              className="justify-center mb-6"
+              textClassName="text-xl text-white"
+            />
             <button
               onClick={handleAddProfile}
-              className="touch-button btn-neon-gold pulse-action px-10 py-5 text-2xl font-bold"
+              className="touch-button btn-neon-gold pulse-idle px-10 py-5 text-2xl font-bold"
             >
               🚀 Create Player
             </button>
           </div>
         ) : (
           <div className="w-full max-w-2xl">
-            <h2 className="text-2xl text-center mb-8 text-neon-cyan text-glow-cyan">Who's playing?</h2>
+            <SpokenLine
+              text={UI.whoIsPlaying}
+              voice="control"
+              autoPlay
+              className="justify-center mb-8"
+              textClassName="text-2xl text-neon-cyan text-glow-cyan"
+            />
+            <SpokenLine
+              text={UI.tapYourName}
+              voice="control"
+              className="justify-center mb-6"
+              textClassName="text-xl text-white"
+            />
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
               {profiles.map(profile => (
                 <ProfileCard

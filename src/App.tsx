@@ -85,8 +85,8 @@ export function App() {
 
   return (
     <BrowserRouter basename={basename}>
-      {/* Global Zib Clip popup - renders on top of everything, positioned away from Next button */}
-      <ZibClip position="top-right" />
+      {/* Zib popup sits bottom-left (above reader nav) so it never covers story text. Overlays at z-50 hide it. */}
+      <ZibClip position="bottom-left" />
       
       <Routes>
         {/* Profile picker / home */}

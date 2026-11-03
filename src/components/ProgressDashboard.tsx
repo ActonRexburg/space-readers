@@ -230,21 +230,25 @@ export function ProgressDashboard({
                     </div>
                   )}
 
-                  {/* Recent sessions */}
-                  {summary.recentSessions.length > 0 && (
+                  {/* Recent sessions — hide empty 0-word / 0m rows */}
+                  {summary.recentSessions.filter(s => s.wordsDecoded.length > 0 || s.durationMs >= 60000).length > 0 && (
                     <div>
                       <h3 className="text-sm font-semibold text-slate-300 mb-2">
                         📅 Recent Reading Sessions
                       </h3>
                       <div className="space-y-1">
-                        {summary.recentSessions.map((session, i) => (
+                        {summary.recentSessions
+                          .filter(s => s.wordsDecoded.length > 0 || s.durationMs >= 60000)
+                          .map((session, i) => (
                           <div 
                             key={i}
                             className="flex items-center justify-between text-sm py-1 px-2 bg-white/5 rounded"
                           >
                             <span className="text-slate-400">{formatDate(session.date)}</span>
                             <span>{formatTime(session.durationMs)}</span>
-                            <span className="text-alien-green">{session.wordsDecoded.length} words</span>
+                            <span className="text-alien-green">
+                              {session.wordsDecoded.length} {session.wordsDecoded.length === 1 ? 'word' : 'words'}
+                            </span>
                           </div>
                         ))}
                       </div>

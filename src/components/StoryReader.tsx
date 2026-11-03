@@ -12,6 +12,8 @@ import { Button } from './Button';
 import { SpeakButton } from './SpeakButton';
 import { getAudioService } from '../services/audio';
 import { useZibClips } from './ZibClip';
+import { useZibOverlayLock } from '../hooks/useZibOverlayLock';
+import { storyCompleteLine } from '../data/voiceLines';
 import { getZibClipService } from '../services/zibClips';
 import { joinWords, sentenceRanges, wordIndexFromChar } from '../utils/readAloud';
 
@@ -107,7 +109,9 @@ export function StoryReader({ story, onComplete, onExit }: StoryReaderProps) {
   const paragraph = story.paragraphs[currentParagraph];
   const progress = ((currentParagraph + 1) / story.paragraphs.length) * 100;
   const ranges = sentenceRanges(paragraph.words);
-  const completeMessage = `Story complete! ${story.title}`;
+  const completeMessage = storyCompleteLine(story.title);
+
+  useZibOverlayLock(selectedWord !== null || isFinished);
 
   useEffect(() => {
     if (isFinished) {
@@ -117,12 +121,12 @@ export function StoryReader({ story, onComplete, onExit }: StoryReaderProps) {
 
   if (isFinished) {
     return (
-      <div className="fixed inset-0 bg-gradient-to-b from-space-deep to-space-purple flex flex-col items-center justify-center p-6 z-40">
+      <div className="fixed inset-0 bg-gradient-to-b from-space-deep to-space-purple flex flex-col items-center justify-center p-6 z-50">
         <div className="space-card p-8 max-w-md w-full text-center space-y-6">
           <div className="text-6xl">🎉</div>
           <div className="flex items-center justify-center gap-3">
             <h2 className="text-3xl font-bold text-star-gold">Story Complete!</h2>
-            <SpeakButton text={completeMessage} autoPlay />
+            <SpeakButton text={completeMessage} voice="control" autoPlay />
           </div>
           <p className="text-xl text-white">{story.title}</p>
 
@@ -152,7 +156,7 @@ export function StoryReader({ story, onComplete, onExit }: StoryReaderProps) {
 
         <div className="flex items-center gap-2 min-w-0 flex-1 justify-center px-2">
           <h1 className="text-xl font-semibold truncate">{story.title}</h1>
-          <SpeakButton text={story.title} />
+          <SpeakButton text={story.title} voice="control" />
         </div>
 
         <div className="w-[88px]" />
@@ -173,6 +177,7 @@ export function StoryReader({ story, onComplete, onExit }: StoryReaderProps) {
               <div key={`${paragraph.id}-${si}`} className="flex items-start gap-3">
                 <SpeakButton
                   text={sentenceText}
+                  voice="story"
                   className="mt-2"
                   onStart={() => setSpokenWordIndex(null)}
                   onWord={(charIndex) => {
@@ -206,7 +211,7 @@ export function StoryReader({ story, onComplete, onExit }: StoryReaderProps) {
           variant="primary"
           onClick={handleNextParagraph}
           glow
-          className="flex-1 py-4 text-lg pulse-action"
+          className="flex-1 py-4 text-lg pulse-idle"
         >
           {currentParagraph === story.paragraphs.length - 1 ? '✓ Finish' : 'Next →'}
         </Button>
