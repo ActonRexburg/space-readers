@@ -2,9 +2,13 @@
  * Kid-sized read-aloud control.
  *
  * 44px+ speaker button. Tapping plays the app voice; tapping again stops.
- * unlock() the shared AudioContext in this click turn, then speak().
- * Web Audio can fetch+decode after that; HTMLAudio fallback still must
- * not await a network round-trip before element.play().
+ * HTMLAudioElement.play() must start in this click turn (no await fetch).
+ * Do not create an AudioContext here — a live context ducks TTS + HTML
+ * on Chrome/Windows. Pre-#8 🔊 was speechSynthesis only and had sound.
+ *
+ * Bind onClick only — pointerdown + click both firing would start then
+ * immediately stop (toggle sees isPlaying). stopPropagation so a parent
+ * does not call stop().
  */
 
 import { useCallback, useEffect, useId, useState, type MouseEvent, type PointerEvent } from 'react';
@@ -25,6 +29,8 @@ interface SpeakButtonProps {
 
 let activePlayId: string | null = null;
 const playListeners = new Set<() => void>();
+/** Track mounted SpeakButtons so Strict Mode remount does not stop() the clip we just started. */
+const mountedSpeakIds = new Set<string>();
 
 function notifyPlay() {
   playListeners.forEach((fn) => fn());
@@ -45,15 +51,23 @@ export function SpeakButton({
   const isPlaying = activePlayId === id;
 
   useEffect(() => {
+    mountedSpeakIds.add(id);
     const listener = () => setTick((t) => t + 1);
     playListeners.add(listener);
     return () => {
       playListeners.delete(listener);
-      if (activePlayId === id) {
-        getAudioService().stop();
-        activePlayId = null;
-        notifyPlay();
-      }
+      mountedSpeakIds.delete(id);
+      const playId = id;
+      // Strict Mode unmounts then remounts in the same turn. A sync stop()
+      // here cancelled TTS/HTML the autoPlay/click just started (Brian heard
+      // nothing). Wait a macrotask: remount re-adds the same useId().
+      window.setTimeout(() => {
+        if (!mountedSpeakIds.has(playId) && activePlayId === playId) {
+          getAudioService().stop();
+          activePlayId = null;
+          notifyPlay();
+        }
+      }, 0);
     };
   }, [id]);
 
@@ -92,8 +106,6 @@ export function SpeakButton({
       e.stopPropagation();
       e.preventDefault();
       const audio = getAudioService();
-      // Unlock in the same turn as the tap so ChromeOS allows audio.play().
-      audio.unlock();
       if (activePlayId === id) {
         audio.stop();
         activePlayId = null;

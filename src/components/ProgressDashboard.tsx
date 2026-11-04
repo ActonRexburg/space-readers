@@ -367,7 +367,6 @@ export function ProgressDashboard({
                   setAudioTestResult('Beeping…');
                   try {
                     const audio = getAudioService();
-                    audio.unlock();
                     const beep = await audio.runBeepTest();
                     setAudioTestResult(`Beep:\n${beep}`);
                   } catch (err) {
@@ -390,10 +389,9 @@ export function ProgressDashboard({
                   setAudioTestResult('Playing…');
                   try {
                     const audio = getAudioService();
-                    audio.unlock();
                     const result = await audio.runAudioTest();
                     setAudioTestResult(
-                      `Beep:\n${result.beep}\n\nZib:\n${result.zib}\n\nMission Control:\n${result.control}\n\n${result.settings}`
+                      `TTS (browser voice):\n${result.tts}\n\nZib:\n${result.zib}\n\nMission Control:\n${result.control}\n\nBeep:\n${result.beep}\n\n${result.settings}`
                     );
                   } catch (err) {
                     setAudioTestResult(`error: ${err instanceof Error ? err.message : String(err)}`);

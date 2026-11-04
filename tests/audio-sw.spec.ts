@@ -1,10 +1,11 @@
 /**
  * Headed/preview check: voice mp3s with the service worker ACTIVE.
  *
- * Load, reload so SW controls the page, clear nothing, play a clip twice
- * (network decode, then in-memory AudioBuffer cache hit). Verify
- * currentTime/contextDelta advances. Then plant a poisoned audio-cache*
- * 206 and confirm Web Audio fetch still returns a full body.
+ * 🔊 is HTMLAudioElement only (no live AudioContext — that ducks HTML/TTS
+ * on Chrome/Windows). Load, reload so SW controls the page, play a clip
+ * twice, verify currentTime advances at volume=1. Then plant a poisoned
+ * audio-cache* body and confirm NetworkOnly fetch still returns a full mp3.
+ * Parent Zone Audio test is sequential: TTS onend → clips onend → beep.
  */
 import { test, expect, type Page } from '@playwright/test';
 
@@ -107,7 +108,9 @@ async function playSpeakerOnce(page: Page) {
   }, { timeout: 8000 }).toBeGreaterThan(0.3);
   const dbg = await readDbg(page);
   expect(dbg?.error ?? null).toBeNull();
-  expect(dbg?.engine === 'webaudio' || dbg?.engine === 'html').toBeTruthy();
+  expect(dbg?.engine).toBe('html');
+  expect(dbg?.htmlVolume).toBe(1);
+  expect(dbg?.htmlMuted).toBe(false);
   // Wait out the clip so the next click is play, not the stop toggle.
   await expect(speaker).not.toHaveClass(/speak-btn-playing/, { timeout: 8000 });
   return dbg;
@@ -146,17 +149,15 @@ test('SW-active voice clips advance on miss, hit, and poisoned audio-cache', asy
     timeout: 8000
   });
 
-  // Cache miss (first decode) then cache hit (in-memory AudioBuffer).
   const first = await playSpeakerOnce(page);
-  expect(first?.cache === 'network' || first?.cache === 'memory' || first?.engine === 'html').toBeTruthy();
+  expect(first?.engine).toBe('html');
+  expect(first?.htmlVolume).toBe(1);
+  expect(first?.htmlMuted).toBe(false);
 
   const second = await playSpeakerOnce(page);
-  // Second play may be in-memory Web Audio or HTML fallback (stalled ctx).
-  expect(second?.engine === 'webaudio' || second?.engine === 'html').toBeTruthy();
-  if (second?.engine === 'html') {
-    expect(second.htmlVolume).toBe(1);
-    expect(second.htmlMuted).toBe(false);
-  }
+  expect(second?.engine).toBe('html');
+  expect(second.htmlVolume).toBe(1);
+  expect(second.htmlMuted).toBe(false);
 
   // Plant a poisoned CacheFirst leftover: 206 with 4 bytes. NetworkOnly +
   // Web Audio fetch() must still return a real mp3 body.
@@ -245,16 +246,20 @@ test('Parent Zone Audio test reports fetch/decode/advanced evidence', async ({ p
   const result = page.getByTestId('audio-test-result');
   await expect(result).toBeVisible();
   await expect.poll(async () => (await result.innerText()).includes('Playing…') === false, {
-    timeout: 45_000
+    timeout: 60_000
   }).toBe(true);
 
   const text = await result.innerText();
+  expect(text, text).toMatch(/TTS \(browser voice\):/);
+  expect(text, text).toMatch(/tts:/);
   expect(text, text).toMatch(/Beep:/);
   expect(text, text).toMatch(/440Hz sine/);
   expect(text, text).toMatch(/fetch:\s+200\s+\d+ bytes/);
   expect(text, text).toMatch(/decode:\s+OK duration=/);
   expect(text, text).toMatch(/bufferPeak:/);
   expect(text, text).toMatch(/gain: 1/);
+  expect(text, text).toMatch(/html: currentTime=/);
+  expect(text, text).toMatch(/volume=1 muted=false/);
   expect(text, text).toMatch(/RESULT: PASS/);
   expect(text, text).toMatch(/Zib:/);
   expect(text, text).toMatch(/Mission Control:/);

@@ -80,18 +80,11 @@ export function App() {
     service.setEnabled(settings.zibClipsEnabled !== false);
   }, [settings.zibClipsEnabled]);
 
-  // Preload voice clips before the first 🔊 tap. Awaiting this fetch inside
-  // the click handler was dropping Chrome's user-gesture and silencing play().
+  // Preload voice clips before the first 🔊 tap. Do NOT create an
+  // AudioContext on pointerdown — that ducks speechSynthesis + HTMLAudio
+  // on Chrome/Windows (pre-#8 TTS had no context and worked).
   useEffect(() => {
-    const audio = getAudioService();
-    void audio.preloadManifest();
-    const unlock = () => audio.unlock();
-    window.addEventListener('pointerdown', unlock, { capture: true, once: true });
-    window.addEventListener('keydown', unlock, { capture: true, once: true });
-    return () => {
-      window.removeEventListener('pointerdown', unlock, { capture: true });
-      window.removeEventListener('keydown', unlock, { capture: true });
-    };
+    void getAudioService().preloadManifest();
   }, []);
 
   // Get basename from Vite's BASE_URL (e.g., "/space-readers/")

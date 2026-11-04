@@ -71,11 +71,24 @@ test('tapping a speaker plays a clip without NotAllowedError', async ({ page }) 
   }, { timeout: 8000 }).toBeGreaterThan(0.05);
 
   const dbg = await page.evaluate(() => {
-    return (window as unknown as { __srAudio?: { playing?: boolean; currentTime?: number; error?: string | null; file?: string; engine?: string } }).__srAudio;
+    return (window as unknown as {
+      __srAudio?: {
+        playing?: boolean;
+        currentTime?: number;
+        error?: string | null;
+        file?: string;
+        engine?: string;
+        htmlVolume?: number;
+        htmlMuted?: boolean;
+      }
+    }).__srAudio;
   });
 
   const afterClick = logs.slice(logCountBeforeClick).join('\n');
   expect(afterClick, afterClick).not.toMatch(/NotAllowedError/);
   expect(dbg?.error ?? null).toBeNull();
   expect(dbg?.file || dbg?.playing || (dbg?.currentTime ?? 0) > 0).toBeTruthy();
+  expect(dbg?.engine).toBe('html');
+  expect(dbg?.htmlVolume).toBe(1);
+  expect(dbg?.htmlMuted).toBe(false);
 });
