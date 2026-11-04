@@ -8,6 +8,7 @@
 import { useMemo, useState } from 'react';
 import type { Profile, ProfileProgress, ProgressSummary } from '../types';
 import { getAvatarById, DEFAULT_AVATAR } from '../data/avatars';
+import { AvatarImage } from './AvatarImage';
 import { getInterestsByIds } from '../data/interests';
 import { getStoryById } from '../data/stories';
 import { RANK_THRESHOLDS } from '../types';
@@ -164,12 +165,7 @@ export function ProgressDashboard({
                 <Card key={summary.profileId} padding="lg">
                   {/* Profile header */}
                   <div className="flex items-center gap-4 mb-8">
-                    <div 
-                      className="w-16 h-16 rounded-full flex items-center justify-center text-3xl"
-                      style={{ backgroundColor: `${avatar.color}30`, borderColor: avatar.color, borderWidth: '2px' }}
-                    >
-                      {avatar.emoji}
-                    </div>
+                    <AvatarImage avatar={avatar} size="md" alt={summary.profileName} />
                     <div className="flex-1">
                       <h2 className="text-xl font-bold">{summary.profileName}</h2>
                       <div className="flex items-center gap-2 text-sm text-slate-400">

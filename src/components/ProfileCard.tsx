@@ -1,11 +1,12 @@
 /**
  * Profile Card Component (Tron Style)
  *
- * Displays a child profile with avatar for selection.
+ * Displays a child profile with illustrated avatar for selection.
  */
 
 import type { Profile } from '../types';
 import { getAvatarById, DEFAULT_AVATAR } from '../data/avatars';
+import { AvatarImage } from './AvatarImage';
 
 interface ProfileCardProps {
   profile: Profile;
@@ -25,21 +26,8 @@ export function ProfileCard({ profile, onClick, isSelected }: ProfileCardProps) 
         ${isSelected ? 'profile-card-selected' : ''}
       `}
     >
-      <div
-        className="w-24 h-24 rounded-full flex items-center justify-center text-5xl mb-4 relative"
-        style={{
-          backgroundColor: `${avatar.color}20`,
-          boxShadow: `0 0 15px ${avatar.color}40, inset 0 0 10px ${avatar.color}20`
-        }}
-      >
-        <div
-          className="absolute inset-0 rounded-full"
-          style={{
-            border: `2px solid ${avatar.color}`,
-            boxShadow: `0 0 10px ${avatar.color}60`
-          }}
-        />
-        <span className="relative z-10">{avatar.emoji}</span>
+      <div className="mb-4">
+        <AvatarImage avatar={avatar} size="lg" alt={profile.name} />
       </div>
 
       <span className="text-xl font-semibold text-white truncate max-w-full">

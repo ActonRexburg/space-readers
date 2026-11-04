@@ -18,6 +18,7 @@ import { SpeakButton, SpokenLine } from '../components/SpeakButton';
 import { ParentZone } from '../components/ParentZone';
 import { getAudioService } from '../services/audio';
 import { getAvatarById, DEFAULT_AVATAR } from '../data/avatars';
+import { AvatarImage } from '../components/AvatarImage';
 import { getNextMission } from '../data/missions';
 import { UI, zibWordsKnownLine, ZIB } from '../data/voiceLines';
 import { RANK_THRESHOLDS } from '../types';
@@ -116,16 +117,7 @@ export function Bridge() {
           className="flex items-center gap-3 hover:bg-neon-cyan/10 rounded-lg p-2 -m-2 transition-colors"
           aria-label="Switch player"
         >
-          <div
-            className="w-12 h-12 rounded-full flex items-center justify-center text-2xl"
-            style={{
-              backgroundColor: `${avatar.color}20`,
-              border: `2px solid ${avatar.color}`,
-              boxShadow: `0 0 10px ${avatar.color}40`
-            }}
-          >
-            {avatar.emoji}
-          </div>
+          <AvatarImage avatar={avatar} size="sm" alt={activeProfile.name} />
           <div className="text-left text-lg font-semibold">{activeProfile.name}</div>
         </button>
 

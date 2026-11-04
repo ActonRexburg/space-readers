@@ -44,9 +44,10 @@ export default defineConfig({
       },
       workbox: {
         // Bump so Chromebooks stuck on an old SW drop stale caches on activate.
-        cacheId: 'sr-2026-11-audio',
-        // Include core app assets in precache (not videos - too large)
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,jpg}'],
+        cacheId: 'sr-2026-11-avatars',
+        // Include core app assets in precache (not videos - too large).
+        // webp = Brian's 12 illustrated avatars (~10–18KB each) so the picker is instant.
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,jpg,webp}'],
         // Exclude large video files from precache
         globIgnores: ['**/*.mp4', '**/*.webm', '**/*.mp3'],
         // Force new service worker to take control immediately
@@ -62,7 +63,7 @@ export default defineConfig({
           /\/audio\//,
           /\/videos?\//,
           /\/zib-clips\//,
-          /\.(?:json|mp3|opus|webm|mp4|png|jpe?g|gif|svg|ico|woff2?)$/i
+          /\.(?:json|mp3|opus|webm|webp|mp4|png|jpe?g|gif|svg|ico|woff2?)$/i
         ],
         runtimeCaching: [
           // Cache Google Fonts
@@ -89,6 +90,21 @@ export default defineConfig({
           {
             urlPattern: /\.(mp4|webm)$/i,
             handler: 'NetworkOnly'
+          },
+          // Illustrated avatars — CacheFirst so Who's playing? is instant on Chromebook.
+          {
+            urlPattern: /\/avatars\/.*\.webp$/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'avatar-cache-v1',
+              expiration: {
+                maxEntries: 20,
+                maxAgeSeconds: 60 * 60 * 24 * 365
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
           },
           // Voice manifest must stay JSON (never the HTML app shell).
           {

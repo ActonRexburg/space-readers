@@ -9,6 +9,7 @@
 import { useState, useEffect } from 'react';
 import type { Profile } from '../types';
 import { AVATARS, getAvatarById, INTEREST_OPTIONS } from '../data/avatars';
+import { AvatarImage } from './AvatarImage';
 import { Button } from './Button';
 import { SpokenLine } from './SpeakButton';
 import { ConfirmModal } from './ConfirmModal';
@@ -179,27 +180,28 @@ export function ProfileForm({
               className="justify-center"
               textClassName="text-xl text-white"
             />
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-4 gap-3" data-testid="avatar-chooser">
               {AVATARS.map((avatar) => (
                 <button
                   key={avatar.id}
+                  type="button"
                   onClick={() => setAvatarId(avatar.id)}
-                  className={`
-                    w-full aspect-square rounded-xl flex items-center justify-center text-3xl
-                    transition-all duration-200
-                    ${avatar.id === avatarId
-                      ? 'bg-star-gold/30 scale-110 glow-gold'
-                      : 'bg-white/10 hover:bg-white/20'}
-                  `}
-                  style={{ borderColor: avatar.color, borderWidth: avatar.id === avatarId ? '3px' : '1px' }}
+                  className="w-full aspect-square rounded-full p-0 bg-transparent flex"
                   aria-label={avatar.name}
+                  aria-pressed={avatar.id === avatarId}
                 >
-                  {avatar.emoji}
+                  <AvatarImage
+                    avatar={avatar}
+                    size="fill"
+                    selected={avatar.id === avatarId}
+                    alt={avatar.name}
+                  />
                 </button>
               ))}
             </div>
-            <p className="text-center text-star-gold text-xl font-semibold">
-              {selectedAvatar.emoji} {selectedAvatar.name}
+            <p className="text-center text-star-gold text-xl font-semibold flex items-center justify-center gap-2">
+              <AvatarImage avatar={selectedAvatar} size="sm" alt="" />
+              {selectedAvatar.name}
             </p>
           </div>
         )}

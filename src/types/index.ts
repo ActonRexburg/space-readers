@@ -16,6 +16,9 @@ export type ClassroomId = string;
 export interface Avatar {
   id: string;
   name: string;
+  /** Illustrated character art (public/avatars/<id>.webp). */
+  image: string;
+  /** Fallback if the webp fails to load. */
   emoji: string;
   color: string;
 }
