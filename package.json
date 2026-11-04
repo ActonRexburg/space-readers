@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build && cp dist/index.html dist/404.html",
     "lint": "oxlint",
     "preview": "vite preview",
-    "test": "playwright test",
+    "test": "playwright test && playwright test -c playwright.sw.config.ts",
+    "test:sw": "playwright test -c playwright.sw.config.ts",
     "gen:voice": "npx --yes tsx scripts/gen-voice.mjs"
   },
   "dependencies": {
