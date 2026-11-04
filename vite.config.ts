@@ -45,7 +45,7 @@ export default defineConfig({
       workbox: {
         // Bump so Chromebooks stuck on an old SW drop stale caches on activate.
         // webaudio = voice mp3s left CacheFirst (Range/206 silent playback).
-        cacheId: 'sr-2026-11-webaudio',
+        cacheId: 'sr-2026-11-beep',
         // Deletes leftover audio-cache* runtime caches on activate. public/
         // copies next to sw.js so this relative importScripts URL resolves.
         importScripts: ['sw-purge-audio-cache.js'],

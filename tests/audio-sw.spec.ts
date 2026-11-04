@@ -85,7 +85,10 @@ type AudioDbg = {
   cache?: 'memory' | 'network';
   duration?: number;
   contextDelta?: number;
-  lastTest?: { zib: string; control: string };
+  htmlVolume?: number;
+  htmlMuted?: boolean;
+  gain?: number;
+  lastTest?: { zib: string; control: string; beep?: string };
 };
 
 async function readDbg(page: Page): Promise<AudioDbg | null> {
@@ -148,9 +151,11 @@ test('SW-active voice clips advance on miss, hit, and poisoned audio-cache', asy
   expect(first?.cache === 'network' || first?.cache === 'memory' || first?.engine === 'html').toBeTruthy();
 
   const second = await playSpeakerOnce(page);
-  // Second play should come from the in-memory buffer when Web Audio worked.
-  if (second?.engine === 'webaudio') {
-    expect(second.cache).toBe('memory');
+  // Second play may be in-memory Web Audio or HTML fallback (stalled ctx).
+  expect(second?.engine === 'webaudio' || second?.engine === 'html').toBeTruthy();
+  if (second?.engine === 'html') {
+    expect(second.htmlVolume).toBe(1);
+    expect(second.htmlMuted).toBe(false);
   }
 
   // Plant a poisoned CacheFirst leftover: 206 with 4 bytes. NetworkOnly +
@@ -240,17 +245,21 @@ test('Parent Zone Audio test reports fetch/decode/advanced evidence', async ({ p
   const result = page.getByTestId('audio-test-result');
   await expect(result).toBeVisible();
   await expect.poll(async () => (await result.innerText()).includes('Playing…') === false, {
-    timeout: 25_000
+    timeout: 45_000
   }).toBe(true);
 
   const text = await result.innerText();
+  expect(text, text).toMatch(/Beep:/);
+  expect(text, text).toMatch(/440Hz sine/);
   expect(text, text).toMatch(/fetch:\s+200\s+\d+ bytes/);
   expect(text, text).toMatch(/decode:\s+OK duration=/);
-  expect(text, text).toMatch(/advanced:\s+contextDelta=/);
-  expect(text, text).toMatch(/PASS \(need >0\.3s after 600ms\)/);
+  expect(text, text).toMatch(/bufferPeak:/);
+  expect(text, text).toMatch(/gain: 1/);
   expect(text, text).toMatch(/RESULT: PASS/);
   expect(text, text).toMatch(/Zib:/);
   expect(text, text).toMatch(/Mission Control:/);
+  expect(text, text).toMatch(/settings raw:/);
+  expect(text, text).toMatch(/settings merged:/);
 
   await result.scrollIntoViewIfNeeded();
   await result.screenshot({

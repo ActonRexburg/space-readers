@@ -8,23 +8,28 @@
  * Decoder slider is silent — never phoneme clips, never letter names.
  * "Say Word" / "Hear It" still play the whole-word story clip.
  *
- * WHY WEB AUDIO (not HTMLAudioElement) FOR VOICE MP3s:
- * Chrome media elements send Range: bytes=0- . GitHub Pages answers 206.
- * The old Workbox CacheFirst + RangeRequestsPlugin route for /audio/*.mp3
- * then cached or served that partial response (or a stale audio-cache*
- * entry from an older SW). play() still resolved, so the Parent Zone
- * "Audio test" printed "OK clip" while speakers stayed silent. Zib
- * comm-link <video> is NetworkOnly and was never on this path.
+ * Two stacked reasons 🔊 was silent while Zib <video> had sound:
  *
- * Fix: fetch() the mp3 (no Range) → arrayBuffer → decodeAudioData →
- * BufferSource on a shared AudioContext resumed on the first user tap.
- * HTMLAudioElement is only a fallback. Word-timing callbacks are driven
- * from AudioContext.currentTime so they keep working.
+ * 1. The voice catalog was digital silence. gen-voice applied
+ *    `afade=t=out:d=0.04` WITHOUT st=, so ffmpeg faded to 0 at t=0 and
+ *    left the rest of every clip at gain 0 (max_volume -91 dB). Decode
+ *    succeeded, duration was real, HTML currentTime advanced, play()
+ *    resolved — and nobody heard anything. TTS never ran because the
+ *    clip "succeeded".
  *
- * Chromebook/ChromeOS: never await a fetch between a tap and
- * HTMLAudioElement.play() — that drops user-gesture activation.
- * Web Audio is different: once the shared context is running, later
- * BufferSource.start() does not need a gesture, so fetch+decode is OK.
+ * 2. On Chrome/Windows the shared AudioContext can report state=running
+ *    while currentTime barely moves (Brian: 0.05s in 600ms) and the
+ *    analyser stays at 0. That context can also duck HTML/TTS. Video
+ *    uses a different pipeline so it still has sound.
+ *
+ * Unlock used to play a WAV at volume=0.01 (throwaway, not reused).
+ * Settings never applied a volume, but getSettings used to return raw
+ * JSON (missing keys / leftover volume: 0).
+ *
+ * Robust path: Web Audio with an explicit GainNode at 1. After ~400ms, if
+ * the context clock barely moved OR the analyser is silent, CLOSE the
+ * context (stop ducking) and play a FRESH HTMLAudioElement with
+ * volume=1, muted=false. Word timings then use element.currentTime.
  *
  * Voice kinds (see src/utils/voice.ts):
  *   zib     — Zib speech bubbles
@@ -36,6 +41,7 @@
 
 import type { TTSConfig } from '../types';
 import { resolveAssetUrl } from '../utils/assets';
+import { mergeDeviceSettings } from './storage';
 import {
   pickMaleFallbackVoice,
   stripLetterNames,
@@ -53,8 +59,10 @@ export interface SpeakTextOptions {
 }
 
 export interface AudioTestResult {
+  beep: string;
   zib: string;
   control: string;
+  settings: string;
 }
 
 const DEFAULT_TTS_CONFIG: TTSConfig = {
@@ -63,9 +71,12 @@ const DEFAULT_TTS_CONFIG: TTSConfig = {
   pitch: 1.0
 };
 
-/** Tiny silent WAV so the first tap can unlock Chrome's autoplay gate. */
-const SILENT_WAV =
-  'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+/** Hard-coded output gain. Never read a volume from settings (0 / NaN = silence). */
+const PLAYBACK_GAIN = 1;
+const BEEP_GAIN = 0.3;
+const WATCHDOG_MS = 400;
+const MIN_CONTEXT_DELTA = 0.15;
+const MIN_ANALYSER_PEAK = 2;
 
 export interface AudioService {
   speakWord(word: string, options?: SpeakTextOptions): Promise<void>;
@@ -78,8 +89,10 @@ export interface AudioService {
   preloadManifest(): Promise<VoiceManifest | null>;
   /** Resume the shared AudioContext; call from the first pointerdown. */
   unlock(): void;
-  /** Parent Settings: play one Zib clip and one Mission Control clip. */
+  /** Parent Settings: beep + one Zib clip + one Mission Control clip. */
   runAudioTest(): Promise<AudioTestResult>;
+  /** 440Hz oscillator — does Web Audio reach the speakers at all? */
+  runBeepTest(): Promise<string>;
 }
 
 class WebSpeechAudioService implements AudioService {
@@ -89,11 +102,13 @@ class WebSpeechAudioService implements AudioService {
   private selectedVoice: SpeechSynthesisVoice | null = null;
   private clipAudio: HTMLAudioElement | null = null;
   private clipSource: AudioBufferSourceNode | null = null;
+  private outputGain: GainNode | null = null;
   private clipTimer: ReturnType<typeof setInterval> | null = null;
   private manifest: VoiceManifest | null = null;
   private manifestPromise: Promise<VoiceManifest | null> | null = null;
   private generation = 0;
-  private unlocked = false;
+  /** True only after Web Audio produced a moving clock AND analyser signal. */
+  private webaudioOk = false;
   /** Shared context — created/resumed on the first user tap, then reused. */
   private ctx: AudioContext | null = null;
   /** In-memory decoded clips so a second play is a cache hit (no refetch). */
@@ -145,18 +160,60 @@ class WebSpeechAudioService implements AudioService {
     return this.ctx;
   }
 
-  unlock(): void {
-    this.ensureCtx();
-    if (this.unlocked) return;
-    this.unlocked = true;
-
-    const silent = new Audio(SILENT_WAV);
-    silent.volume = 0.01;
-    silent.play()
-      .then(() => console.info('[speak] audio unlocked', this.ctx?.state ?? 'no-ctx'))
-      .catch((err: DOMException) => {
-        console.info('[speak] silent unlock play() failed', err?.name, err?.message);
+  /**
+   * Close a stalled/silent AudioContext so it cannot duck HTML audio or TTS.
+   * Does NOT bump generation — the caller still wants to play via HTML.
+   */
+  private abandonWebAudio(reason: string): void {
+    console.info('[speak] abandon webaudio', reason);
+    this.stopClip();
+    const ctx = this.ctx;
+    this.ctx = null;
+    this.outputGain = null;
+    this.bufferCache.clear();
+    if (ctx && ctx.state !== 'closed') {
+      void ctx.suspend().then(() => ctx.close()).catch(() => {
+        try {
+          void ctx.close();
+        } catch {
+          /* already closed */
+        }
       });
+    }
+  }
+
+  unlock(): void {
+    // App.tsx calls unlock() on the first pointerdown anywhere (math keypad,
+    // parent 👤, …). That AudioContext can sit "running" with a stalled
+    // clock on Chrome/Windows and then duck HTML/TTS. If we have never
+    // actually heard Web Audio, recreate the context on this gesture.
+    if (this.ctx && !this.webaudioOk) {
+      this.abandonWebAudio('recreate ctx on unlock — never got a signal');
+    }
+    this.ensureCtx();
+    if (this.ctx && this.ctx.state === 'suspended') {
+      void this.ctx.resume();
+    }
+
+    // Do NOT play a volume=0.01 HTML element. A 1-sample buffer at gain 1
+    // resumes the graph without training Chrome to treat this tab as quiet.
+    const ctx = this.ctx;
+    if (ctx) {
+      try {
+        const buf = ctx.createBuffer(1, 1, ctx.sampleRate);
+        const src = ctx.createBufferSource();
+        const gain = ctx.createGain();
+        gain.gain.value = PLAYBACK_GAIN;
+        src.buffer = buf;
+        src.connect(gain);
+        gain.connect(ctx.destination);
+        src.start(0);
+        void ctx.resume();
+        console.info('[speak] audio unlocked', ctx.state);
+      } catch (err) {
+        console.info('[speak] AudioContext unlock failed', err);
+      }
+    }
   }
 
   async preloadManifest(): Promise<VoiceManifest | null> {
@@ -212,6 +269,7 @@ class WebSpeechAudioService implements AudioService {
 
   private createUtterance(text: string, kind: VoiceKind): SpeechSynthesisUtterance {
     const utterance = new SpeechSynthesisUtterance(text);
+    utterance.volume = 1;
     utterance.rate = kind === 'zib' ? 1.06 : this.config.rate;
     utterance.pitch = kind === 'zib' ? 1.15 : this.config.pitch;
     if (this.selectedVoice) {
@@ -298,7 +356,13 @@ class WebSpeechAudioService implements AudioService {
     let next = 0;
     const tick = () => {
       if (gen !== this.generation) return;
-      exposeAudioDebug({ currentTime: audio.currentTime, playing: true, engine: 'html' });
+      exposeAudioDebug({
+        currentTime: audio.currentTime,
+        playing: true,
+        engine: 'html',
+        htmlVolume: audio.volume,
+        htmlMuted: audio.muted
+      });
       if (!onWord) return;
       const ms = audio.currentTime * 1000;
       while (next < words.length && words[next].offsetMs <= ms + 30) {
@@ -344,8 +408,9 @@ class WebSpeechAudioService implements AudioService {
   }
 
   /**
-   * fetch → decode → BufferSource. Safe to await: the shared context was
-   * resumed on the first tap, so start() does not need a fresh gesture.
+   * fetch → decode → GainNode(1) → BufferSource. After WATCHDOG_MS, reject
+   * if the clock stalled or the analyser is silent so the caller can close
+   * this context and use HTML.
    */
   private async playClipWebAudio(
     clip: VoiceClipMeta,
@@ -365,10 +430,22 @@ class WebSpeechAudioService implements AudioService {
     const { buffer, cache } = await this.decodeClip(url, clip.file);
     if (gen !== this.generation) return;
 
+    const peakSample = bufferPeak(buffer);
+    if (peakSample < 0.01) {
+      throw new Error(`decoded buffer is silent peak=${peakSample.toFixed(4)}`);
+    }
+
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize = 2048;
+    const gain = ctx.createGain();
+    gain.gain.value = PLAYBACK_GAIN;
     const source = ctx.createBufferSource();
     source.buffer = buffer;
-    source.connect(ctx.destination);
+    source.connect(gain);
+    gain.connect(analyser);
+    analyser.connect(ctx.destination);
     this.clipSource = source;
+    this.outputGain = gain;
     this.speaking = true;
     const startedAt = ctx.currentTime;
     exposeAudioDebug({
@@ -378,18 +455,24 @@ class WebSpeechAudioService implements AudioService {
       engine: 'webaudio',
       currentTime: 0,
       cache,
-      duration: buffer.duration
+      duration: buffer.duration,
+      gain: PLAYBACK_GAIN,
+      bufferPeak: peakSample
     });
 
     const clearWords = this.fireWordTimingsCtx(startedAt, clip.words, gen, onWord);
 
     await new Promise<void>((resolve, reject) => {
       let settled = false;
+      let watchdog = 0;
+
       const succeed = () => {
         if (settled) return;
         settled = true;
+        window.clearTimeout(watchdog);
         clearWords();
         if (this.clipSource === source) this.clipSource = null;
+        if (this.outputGain === gain) this.outputGain = null;
         if (gen === this.generation) this.speaking = false;
         exposeAudioDebug({
           currentTime: ctx.currentTime - startedAt,
@@ -399,25 +482,49 @@ class WebSpeechAudioService implements AudioService {
         });
         resolve();
       };
+
+      const fail = (reason: string) => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(watchdog);
+        clearWords();
+        try {
+          source.stop();
+        } catch {
+          /* already stopped */
+        }
+        if (this.clipSource === source) this.clipSource = null;
+        if (this.outputGain === gain) this.outputGain = null;
+        exposeAudioDebug({ error: reason, playing: false, engine: 'webaudio' });
+        reject(new Error(reason));
+      };
+
       source.onended = succeed;
       try {
         source.start(0);
       } catch (err) {
-        if (settled) return;
-        settled = true;
-        clearWords();
-        if (this.clipSource === source) this.clipSource = null;
-        if (gen === this.generation) this.speaking = false;
-        const reason = err instanceof Error ? err.message : String(err);
-        exposeAudioDebug({ error: reason, playing: false, engine: 'webaudio' });
-        reject(new Error(reason));
+        fail(err instanceof Error ? err.message : String(err));
+        return;
       }
+
+      watchdog = window.setTimeout(() => {
+        if (settled) return;
+        const delta = ctx.currentTime - startedAt;
+        const peak = analyserPeak(analyser);
+        exposeAudioDebug({ contextDelta: delta, analyserPeak: peak });
+        if (delta < MIN_CONTEXT_DELTA || peak < MIN_ANALYSER_PEAK) {
+          fail(`webaudio silent delta=${delta.toFixed(2)} analyser=${peak}`);
+        } else {
+          this.webaudioOk = true;
+        }
+      }, WATCHDOG_MS);
     });
   }
 
   /**
-   * HTMLAudioElement fallback. play() runs in the Promise executor so it
-   * stays in the same turn as the caller when this is the first path.
+   * Fresh HTMLAudioElement. Always volume=1, muted=false, never reused
+   * after the old silent-unlock WAV. play() runs in the executor so it
+   * stays in the same turn when this is the first path.
    */
   private playClipHtml(
     clip: VoiceClipMeta,
@@ -428,20 +535,45 @@ class WebSpeechAudioService implements AudioService {
     return new Promise((resolve, reject) => {
       const audio = new Audio(url);
       audio.preload = 'auto';
+      audio.volume = 1;
+      audio.muted = false;
+      audio.setAttribute('playsinline', 'true');
+      audio.setAttribute('data-sr-voice', '1');
+      document.body.appendChild(audio);
       this.clipAudio = audio;
       this.speaking = true;
-      exposeAudioDebug({ file: clip.file, error: null, engine: 'html', playing: false });
+      exposeAudioDebug({
+        file: clip.file,
+        error: null,
+        engine: 'html',
+        playing: false,
+        htmlVolume: audio.volume,
+        htmlMuted: audio.muted
+      });
+      console.info('[speak] html play', clip.file, 'volume', audio.volume, 'muted', audio.muted);
 
       const clearWords = this.fireWordTimingsHtml(audio, clip.words, gen, onWord);
+
+      const detach = () => {
+        if (audio.parentNode) audio.parentNode.removeChild(audio);
+      };
 
       let settled = false;
       const succeed = () => {
         if (settled) return;
         settled = true;
         clearWords();
+        detach();
         if (this.clipAudio === audio) this.clipAudio = null;
         if (gen === this.generation) this.speaking = false;
-        exposeAudioDebug({ currentTime: audio.currentTime, error: null, engine: 'html', playing: false });
+        exposeAudioDebug({
+          currentTime: audio.currentTime,
+          error: null,
+          engine: 'html',
+          playing: false,
+          htmlVolume: audio.volume,
+          htmlMuted: audio.muted
+        });
         resolve();
       };
 
@@ -449,9 +581,17 @@ class WebSpeechAudioService implements AudioService {
         if (settled) return;
         settled = true;
         clearWords();
+        detach();
         if (this.clipAudio === audio) this.clipAudio = null;
         if (gen === this.generation) this.speaking = false;
-        exposeAudioDebug({ currentTime: audio.currentTime, error: reason, engine: 'html', playing: false });
+        exposeAudioDebug({
+          currentTime: audio.currentTime,
+          error: reason,
+          engine: 'html',
+          playing: false,
+          htmlVolume: audio.volume,
+          htmlMuted: audio.muted
+        });
         reject(new Error(reason));
       };
 
@@ -467,7 +607,14 @@ class WebSpeechAudioService implements AudioService {
       if (playPromise === undefined) return;
       playPromise
         .then(() => {
-          exposeAudioDebug({ currentTime: audio.currentTime, error: null, playing: true, engine: 'html' });
+          exposeAudioDebug({
+            currentTime: audio.currentTime,
+            error: null,
+            playing: true,
+            engine: 'html',
+            htmlVolume: audio.volume,
+            htmlMuted: audio.muted
+          });
         })
         .catch((err: DOMException) => {
           const reason = `${err?.name || 'PlayError'}: ${err?.message || 'audio.play() rejected'}`;
@@ -478,9 +625,8 @@ class WebSpeechAudioService implements AudioService {
   }
 
   /**
-   * Prefer Web Audio when the shared context is already running (first tap
-   * called unlock()). Otherwise start HTMLAudioElement.play() synchronously
-   * so Chromebook autoplay-gesture rules still hold.
+   * Try Web Audio. If the clock stalls or the analyser is silent, close the
+   * context (it ducks HTML/TTS on Chrome Windows) and play a fresh <audio>.
    */
   private playClip(
     clip: VoiceClipMeta,
@@ -493,12 +639,15 @@ class WebSpeechAudioService implements AudioService {
     const ctx = this.ctx;
     if (ctx && ctx.state !== 'closed') {
       return this.playClipWebAudio(clip, url, gen, onWord).catch((err) => {
-        console.info(
-          '[speak] webaudio failed, html fallback',
-          clip.file,
-          err instanceof Error ? err.message : err
-        );
+        const reason = err instanceof Error ? err.message : String(err);
+        console.info('[speak] webaudio failed', clip.file, reason);
         if (gen !== this.generation) return;
+        // Silent decoded buffers are silent as HTML too — skip to TTS.
+        if (/silent/i.test(reason)) {
+          this.abandonWebAudio(reason);
+          throw err;
+        }
+        this.abandonWebAudio(reason);
         return this.playClipHtml(clip, url, gen, onWord);
       });
     }
@@ -568,21 +717,89 @@ class WebSpeechAudioService implements AudioService {
   }
 
   /**
-   * Real evidence for Brian — fetch status/bytes, decode, duration, and
-   * whether playback advanced after 600ms. play() resolving is NOT enough.
-   * On any failure, also try HTMLAudioElement + speechSynthesis.
+   * Real evidence for Brian — beep, buffer peak, gain, element volume/muted,
+   * stored settings, fetch/decode, and whether playback advanced.
    */
   async runAudioTest(): Promise<AudioTestResult> {
     this.unlock();
     await this.ensureManifest();
 
-    const result: AudioTestResult = { zib: 'not run', control: 'not run' };
+    const result: AudioTestResult = {
+      beep: 'not run',
+      zib: 'not run',
+      control: 'not run',
+      settings: dumpSettings()
+    };
 
+    result.beep = await this.probeBeep();
     result.zib = await this.probeClip('zib', ZIB.helloTeach);
     result.control = await this.probeClip('control', UI.whoIsPlaying);
+    result.settings = dumpSettings();
 
     exposeAudioDebug({ lastTest: result });
     return result;
+  }
+
+  async runBeepTest(): Promise<string> {
+    this.unlock();
+    return this.probeBeep();
+  }
+
+  /** 440Hz oscillator at 0.3 gain for 1s — does Web Audio reach the speakers? */
+  private async probeBeep(): Promise<string> {
+    const lines: string[] = ['440Hz sine gain=0.3 for 1s'];
+    this.unlock();
+    const ctx = this.ensureCtx();
+    if (!ctx) return 'beep: FAIL no AudioContext';
+    try {
+      await ctx.resume();
+    } catch (err) {
+      lines.push(`resume: FAIL ${err instanceof Error ? err.message : String(err)}`);
+    }
+    lines.push(`ctx: ${ctx.state} sampleRate=${ctx.sampleRate} baseLatency=${ctx.baseLatency?.toFixed?.(4) ?? '?'}`);
+
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize = 2048;
+    const gain = ctx.createGain();
+    gain.gain.value = BEEP_GAIN;
+    const osc = ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.value = 440;
+    osc.connect(gain);
+    gain.connect(analyser);
+    analyser.connect(ctx.destination);
+    this.outputGain = gain;
+
+    try {
+      const t0 = ctx.currentTime;
+      osc.start();
+      await wait(1000);
+      const delta = ctx.currentTime - t0;
+      const peak = analyserPeak(analyser);
+      try {
+        osc.stop();
+      } catch {
+        /* already stopped */
+      }
+      const clockOk = delta > 0.3;
+      const signalOk = peak > 2;
+      lines.push(`gain: ${BEEP_GAIN}`);
+      lines.push(
+        `advanced: contextDelta=${delta.toFixed(2)}s ${clockOk ? 'PASS' : 'FAIL'} (need >0.3s after 1s)`
+      );
+      lines.push(`analyserPeak: ${peak} ${signalOk ? 'PASS signal' : 'WARN silent-or-no-sink'}`);
+      if (!clockOk || !signalOk) {
+        this.abandonWebAudio(`beep silent delta=${delta.toFixed(2)} analyser=${peak}`);
+        lines.push('RESULT: FAIL (closed AudioContext so it cannot duck HTML)');
+      } else {
+        this.webaudioOk = true;
+        lines.push('RESULT: PASS (you should have heard a beep)');
+      }
+      return lines.join('\n');
+    } catch (err) {
+      this.abandonWebAudio('beep threw');
+      return `beep: FAIL ${err instanceof Error ? err.message : String(err)}`;
+    }
   }
 
   private async probeClip(kind: VoiceKind, text: string): Promise<string> {
@@ -607,20 +824,17 @@ class WebSpeechAudioService implements AudioService {
       }
     }
     lines.push(`ctx: ${ctx?.state ?? 'none'}`);
+    lines.push(`gain: ${PLAYBACK_GAIN}`);
 
-    let fetchStatus = 0;
-    let bytes = 0;
     let raw: ArrayBuffer | null = null;
     try {
-      // no-store so this report is a real network GET, not a stale SW cache.
       const res = await fetch(url, { cache: 'no-store' });
-      fetchStatus = res.status;
       raw = await res.arrayBuffer();
-      bytes = raw.byteLength;
+      const bytes = raw.byteLength;
       const contentRange = res.headers.get('content-range');
       const contentType = res.headers.get('content-type') || '';
       lines.push(
-        `fetch: ${fetchStatus} ${bytes} bytes type=${contentType || '?'}` +
+        `fetch: ${res.status} ${bytes} bytes type=${contentType || '?'}` +
           (contentRange ? ` content-range=${contentRange}` : '')
       );
       if (!res.ok || bytes < 100) {
@@ -644,9 +858,13 @@ class WebSpeechAudioService implements AudioService {
     try {
       decoded = await ctx.decodeAudioData(raw.slice(0));
       this.bufferCache.set(clip.file, decoded);
+      const peakSample = bufferPeak(decoded);
       lines.push(
         `decode: OK duration=${decoded.duration.toFixed(2)}s ` +
           `channels=${decoded.numberOfChannels} rate=${decoded.sampleRate}`
+      );
+      lines.push(
+        `bufferPeak: ${peakSample.toFixed(4)} ${peakSample > 0.01 ? 'PASS has audio' : 'FAIL silent buffer'}`
       );
     } catch (err) {
       lines.push(`decode: FAIL ${err instanceof Error ? err.message : String(err)}`);
@@ -659,17 +877,23 @@ class WebSpeechAudioService implements AudioService {
     const gen = this.generation;
     const analyser = ctx.createAnalyser();
     analyser.fftSize = 2048;
+    const gain = ctx.createGain();
+    gain.gain.value = PLAYBACK_GAIN;
     const source = ctx.createBufferSource();
     source.buffer = decoded;
-    source.connect(analyser);
+    source.connect(gain);
+    gain.connect(analyser);
     analyser.connect(ctx.destination);
     this.clipSource = source;
+    this.outputGain = gain;
     this.speaking = true;
     exposeAudioDebug({
       file: clip.file,
       engine: 'webaudio',
       playing: true,
       duration: decoded.duration,
+      gain: PLAYBACK_GAIN,
+      bufferPeak: bufferPeak(decoded),
       error: null
     });
 
@@ -690,12 +914,8 @@ class WebSpeechAudioService implements AudioService {
       }
       delta = ctx.currentTime - t0;
       advanced = delta > 0.3;
-      const data = new Uint8Array(analyser.fftSize);
-      analyser.getByteTimeDomainData(data);
-      for (let i = 0; i < data.length; i += 1) {
-        peak = Math.max(peak, Math.abs(data[i] - 128));
-      }
-      lines.push(`engine: webaudio`);
+      peak = analyserPeak(analyser);
+      lines.push('engine: webaudio');
       lines.push(
         `advanced: contextDelta=${delta.toFixed(2)}s ` +
           `${advanced ? 'PASS' : 'FAIL'} (need >0.3s after 600ms)`
@@ -708,32 +928,38 @@ class WebSpeechAudioService implements AudioService {
         playing: true,
         engine: 'webaudio',
         contextDelta: delta,
-        analyserPeak: peak
+        analyserPeak: peak,
+        gain: PLAYBACK_GAIN
       });
     } catch (err) {
       lines.push(`play: FAIL ${err instanceof Error ? err.message : String(err)}`);
+      this.abandonWebAudio('probe play threw');
       lines.push(await this.probeHtml(url));
       lines.push(await this.probeTts(text, kind));
       return lines.join('\n');
     }
 
-    if (!advanced) {
+    const silentOut = !advanced || peak < MIN_ANALYSER_PEAK;
+    if (silentOut) {
       try {
         source.stop();
       } catch {
         /* already stopped */
       }
+      this.abandonWebAudio(
+        `probe silent delta=${delta.toFixed(2)} analyser=${peak}`
+      );
       lines.push(await this.probeHtml(url));
       lines.push(await this.probeTts(text, kind));
       return lines.join('\n');
     }
 
-    // Let the rest of the clip play so Brian actually hears it.
     const remainingMs = Math.max(0, Math.min(decoded.duration * 1000 - 600, 10000));
     await Promise.race([ended, wait(remainingMs + 200)]);
     if (this.clipSource === source) this.clipSource = null;
     if (gen === this.generation) this.speaking = false;
-    lines.push(advanced ? 'RESULT: PASS (clip played)' : 'RESULT: FAIL');
+    this.webaudioOk = true;
+    lines.push('RESULT: PASS (clip played via webaudio)');
     return lines.join('\n');
   }
 
@@ -741,22 +967,34 @@ class WebSpeechAudioService implements AudioService {
     try {
       const audio = new Audio(url);
       audio.preload = 'auto';
+      audio.volume = 1;
+      audio.muted = false;
+      audio.setAttribute('playsinline', 'true');
+      document.body.appendChild(audio);
       this.clipAudio = audio;
       await audio.play();
       await wait(600);
       const t = audio.currentTime;
       const err = audio.error;
+      const vol = audio.volume;
+      const muted = audio.muted;
+      const ok = t > 0.3 && !err && vol > 0.5 && !muted;
+      // Keep playing so Brian actually hears it (do not pause at 600ms).
+      const remain = Math.max(0, Math.min(((audio.duration || 3) - t) * 1000, 8000));
+      await wait(remain);
       audio.pause();
       audio.src = '';
+      if (audio.parentNode) audio.parentNode.removeChild(audio);
       if (this.clipAudio === audio) this.clipAudio = null;
-      const ok = t > 0.3 && !err;
       return (
-        `html: currentTime=${t.toFixed(2)}s ${ok ? 'PASS' : 'FAIL'}` +
-        (err ? ` error=${err.code} ${err.message}` : '')
+        `html: currentTime=${t.toFixed(2)}s volume=${vol} muted=${muted} ` +
+        `${ok ? 'PASS' : 'FAIL'}` +
+        (err ? ` error=${err.code} ${err.message}` : '') +
+        (ok ? ' RESULT: PASS (html fallback)' : '')
       );
     } catch (err) {
       const msg = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
-      return `html: FAIL ${msg}`;
+      return `html: FAIL ${msg} volume=? muted=?`;
     }
   }
 
@@ -767,6 +1005,7 @@ class WebSpeechAudioService implements AudioService {
     try {
       const gen = this.generation;
       const utterance = this.createUtterance(text, kind);
+      utterance.volume = 1;
       const spoken = new Promise<string>((resolve) => {
         utterance.onstart = () => resolve('started');
         utterance.onend = () => resolve('ended');
@@ -774,11 +1013,13 @@ class WebSpeechAudioService implements AudioService {
       });
       this.synth.cancel();
       this.synth.speak(utterance);
-      const outcome = await Promise.race([spoken, wait(1500).then(() => 'timeout')]);
+      const outcome = await Promise.race([spoken, wait(2000).then(() => 'timeout')]);
       const speaking = this.synth.speaking;
+      // Give it a moment to be audible before we cancel for the next probe.
+      if (speaking) await wait(800);
       this.synth.cancel();
       if (gen === this.generation) this.speaking = false;
-      return `tts: ${outcome} speaking=${speaking} voice=${voiceName} voices=${voices.length}`;
+      return `tts: ${outcome} speaking=${speaking} volume=1 voice=${voiceName} voices=${voices.length}`;
     } catch (err) {
       return `tts: FAIL ${err instanceof Error ? err.message : String(err)} voices=${voices.length}`;
     }
@@ -809,9 +1050,18 @@ class WebSpeechAudioService implements AudioService {
       }
       this.clipSource = null;
     }
+    if (this.outputGain) {
+      try {
+        this.outputGain.disconnect();
+      } catch {
+        /* already disconnected */
+      }
+      this.outputGain = null;
+    }
     if (this.clipAudio) {
       this.clipAudio.pause();
       this.clipAudio.src = '';
+      if (this.clipAudio.parentNode) this.clipAudio.parentNode.removeChild(this.clipAudio);
       this.clipAudio = null;
     }
   }
@@ -847,6 +1097,10 @@ interface AudioDebugState {
   duration?: number;
   contextDelta?: number;
   analyserPeak?: number;
+  gain?: number;
+  bufferPeak?: number;
+  htmlVolume?: number;
+  htmlMuted?: boolean;
   lastTest?: AudioTestResult;
 }
 
@@ -860,6 +1114,45 @@ function wait(ms: number): Promise<void> {
   return new Promise((resolve) => {
     window.setTimeout(resolve, ms);
   });
+}
+
+function bufferPeak(buffer: AudioBuffer): number {
+  let peak = 0;
+  for (let c = 0; c < buffer.numberOfChannels; c += 1) {
+    const data = buffer.getChannelData(c);
+    for (let i = 0; i < data.length; i += 1) {
+      const v = Math.abs(data[i]);
+      if (v > peak) peak = v;
+    }
+  }
+  return peak;
+}
+
+function analyserPeak(analyser: AnalyserNode): number {
+  const data = new Uint8Array(analyser.fftSize);
+  analyser.getByteTimeDomainData(data);
+  let peak = 0;
+  for (let i = 0; i < data.length; i += 1) {
+    peak = Math.max(peak, Math.abs(data[i] - 128));
+  }
+  return peak;
+}
+
+function dumpSettings(): string {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+    return 'settings: n/a';
+  }
+  let raw: unknown = null;
+  try {
+    raw = JSON.parse(localStorage.getItem('space_readers_settings') || 'null');
+  } catch {
+    raw = 'PARSE_ERROR';
+  }
+  const merged = mergeDeviceSettings(raw);
+  return (
+    `settings raw: ${JSON.stringify(raw)}\n` +
+    `settings merged: ${JSON.stringify(merged)}`
+  );
 }
 
 export function createAudioService(config?: TTSConfig): AudioService {
@@ -879,7 +1172,13 @@ function createNoOpAudioService(): AudioService {
     getVoices: () => [],
     preloadManifest: async () => null,
     unlock: () => {},
-    runAudioTest: async () => ({ zib: 'noop', control: 'noop' })
+    runAudioTest: async () => ({
+      beep: 'noop',
+      zib: 'noop',
+      control: 'noop',
+      settings: 'noop'
+    }),
+    runBeepTest: async () => 'noop'
   };
 }
 

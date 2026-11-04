@@ -77,7 +77,7 @@ export function App() {
   // Sync Zib clips enabled setting with the service
   useEffect(() => {
     const service = getZibClipService();
-    service.setEnabled(settings.zibClipsEnabled);
+    service.setEnabled(settings.zibClipsEnabled !== false);
   }, [settings.zibClipsEnabled]);
 
   // Preload voice clips before the first 🔊 tap. Awaiting this fetch inside
