@@ -8,6 +8,7 @@
 import { useMemo, useState } from 'react';
 import type { Profile, ProfileProgress, ProgressSummary } from '../types';
 import { getAvatarById, DEFAULT_AVATAR } from '../data/avatars';
+import { AvatarImage } from './AvatarImage';
 import { getInterestsByIds } from '../data/interests';
 import { getStoryById } from '../data/stories';
 import { RANK_THRESHOLDS } from '../types';
@@ -164,12 +165,7 @@ export function ProgressDashboard({
                 <Card key={summary.profileId} padding="lg">
                   {/* Profile header */}
                   <div className="flex items-center gap-4 mb-8">
-                    <div 
-                      className="w-16 h-16 rounded-full flex items-center justify-center text-3xl"
-                      style={{ backgroundColor: `${avatar.color}30`, borderColor: avatar.color, borderWidth: '2px' }}
-                    >
-                      {avatar.emoji}
-                    </div>
+                    <AvatarImage avatar={avatar} size="md" alt={summary.profileName} />
                     <div className="flex-1">
                       <h2 className="text-xl font-bold">{summary.profileName}</h2>
                       <div className="flex items-center gap-2 text-sm text-slate-400">
@@ -373,7 +369,9 @@ export function ProgressDashboard({
                     const audio = getAudioService();
                     audio.unlock();
                     const result = await audio.runAudioTest();
-                    setAudioTestResult(`Zib: ${result.zib}\nMission Control: ${result.control}`);
+                    setAudioTestResult(
+                      `Zib:\n${result.zib}\n\nMission Control:\n${result.control}`
+                    );
                   } catch (err) {
                     setAudioTestResult(`error: ${err instanceof Error ? err.message : String(err)}`);
                   } finally {
@@ -388,7 +386,7 @@ export function ProgressDashboard({
               {audioTestResult && (
                 <pre
                   data-testid="audio-test-result"
-                  className="mt-2 text-sm whitespace-pre-wrap text-neon-cyan/80"
+                  className="mt-2 text-xs sm:text-sm whitespace-pre-wrap text-neon-cyan/90 font-mono"
                 >
                   {audioTestResult}
                 </pre>

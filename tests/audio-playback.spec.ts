@@ -63,8 +63,15 @@ test('tapping a speaker plays a clip without NotAllowedError', async ({ page }) 
     });
   }, { timeout: 8000 }).not.toBeNull();
 
+  await expect.poll(() => {
+    return page.evaluate(() => {
+      const dbg = (window as unknown as { __srAudio?: { currentTime?: number } }).__srAudio;
+      return dbg?.currentTime ?? 0;
+    });
+  }, { timeout: 8000 }).toBeGreaterThan(0.05);
+
   const dbg = await page.evaluate(() => {
-    return (window as unknown as { __srAudio?: { playing?: boolean; currentTime?: number; error?: string | null; file?: string } }).__srAudio;
+    return (window as unknown as { __srAudio?: { playing?: boolean; currentTime?: number; error?: string | null; file?: string; engine?: string } }).__srAudio;
   });
 
   const afterClick = logs.slice(logCountBeforeClick).join('\n');

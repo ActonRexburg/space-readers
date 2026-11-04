@@ -2,7 +2,9 @@
  * Kid-sized read-aloud control.
  *
  * 44px+ speaker button. Tapping plays the app voice; tapping again stops.
- * play() must start in this click turn — do not await a fetch first.
+ * unlock() the shared AudioContext in this click turn, then speak().
+ * Web Audio can fetch+decode after that; HTMLAudio fallback still must
+ * not await a network round-trip before element.play().
  */
 
 import { useCallback, useEffect, useId, useState, type MouseEvent, type PointerEvent } from 'react';
