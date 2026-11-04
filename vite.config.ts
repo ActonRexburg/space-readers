@@ -44,8 +44,8 @@ export default defineConfig({
       },
       workbox: {
         // Bump so Chromebooks stuck on an old SW drop stale caches on activate.
-        // webaudio = voice mp3s left CacheFirst (Range/206 silent playback).
-        cacheId: 'sr-2026-11-webaudio',
+        // html = 🔊 is HTMLAudio only; a live AudioContext ducked TTS+HTML.
+        cacheId: 'sr-2026-11-html',
         // Deletes leftover audio-cache* runtime caches on activate. public/
         // copies next to sw.js so this relative importScripts URL resolves.
         importScripts: ['sw-purge-audio-cache.js'],
@@ -127,8 +127,8 @@ export default defineConfig({
           },
           // Voice MP3s: NetworkOnly, same as video. CacheFirst + Range +
           // GitHub Pages 206 (or a stale audio-cache* 200) made HTMLAudio
-          // play() resolve with silence. Playback now uses fetch()+Web Audio
-          // (no Range header); this route must not intercept a poisoned cache.
+          // play() resolve with silence. 🔊 plays a fresh HTMLAudioElement
+          // (no live AudioContext). This route must not serve a poisoned cache.
           {
             urlPattern: /\/audio\/.*\.mp3$/i,
             handler: 'NetworkOnly'

@@ -357,7 +357,29 @@ export function ProgressDashboard({
               </button>
             )}
             
-            <div className="p-3">
+            <div className="p-3 space-y-2">
+              <button
+                type="button"
+                data-testid="beep-test"
+                disabled={audioTestBusy}
+                onClick={async () => {
+                  setAudioTestBusy(true);
+                  setAudioTestResult('Beeping…');
+                  try {
+                    const audio = getAudioService();
+                    const beep = await audio.runBeepTest();
+                    setAudioTestResult(`Beep:\n${beep}`);
+                  } catch (err) {
+                    setAudioTestResult(`error: ${err instanceof Error ? err.message : String(err)}`);
+                  } finally {
+                    setAudioTestBusy(false);
+                  }
+                }}
+                className="w-full min-h-[48px] rounded-lg px-4 py-3 font-semibold text-left
+                  bg-white/10 border border-white/20 hover:bg-white/20 disabled:opacity-50"
+              >
+                Beep test
+              </button>
               <button
                 type="button"
                 data-testid="audio-test"
@@ -367,10 +389,9 @@ export function ProgressDashboard({
                   setAudioTestResult('Playing…');
                   try {
                     const audio = getAudioService();
-                    audio.unlock();
                     const result = await audio.runAudioTest();
                     setAudioTestResult(
-                      `Zib:\n${result.zib}\n\nMission Control:\n${result.control}`
+                      `TTS (browser voice):\n${result.tts}\n\nZib:\n${result.zib}\n\nMission Control:\n${result.control}\n\nBeep:\n${result.beep}\n\n${result.settings}`
                     );
                   } catch (err) {
                     setAudioTestResult(`error: ${err instanceof Error ? err.message : String(err)}`);

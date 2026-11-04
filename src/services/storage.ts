@@ -32,6 +32,29 @@ const DEFAULT_SETTINGS: DeviceSettings = {
   zibClipsEnabled: true
 };
 
+/**
+ * Merge a stored settings blob onto defaults.
+ *
+ * getItem() used to return the raw JSON as-is. Older clients saved
+ * `{ parentPin, volume: 0 }` or omitted `zibClipsEnabled` / `speechRate`.
+ * Missing keys stay `undefined`; `volume: 0` is a leftover that must NEVER
+ * be applied to media elements (NaN/0 = silence). We drop unknown keys and
+ * clamp speechRate.
+ */
+export function mergeDeviceSettings(raw: unknown): DeviceSettings {
+  const stored = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
+  const rate = Number(stored.speechRate);
+  const pin = typeof stored.parentPin === 'string' ? stored.parentPin.trim() : '';
+  return {
+    parentPin: pin || DEFAULT_SETTINGS.parentPin,
+    audioEnabled: stored.audioEnabled !== false,
+    speechRate: Number.isFinite(rate) && rate >= 0.5 && rate <= 2 ? rate : DEFAULT_SETTINGS.speechRate,
+    zibClipsEnabled: stored.zibClipsEnabled !== false,
+    activeProfileId: typeof stored.activeProfileId === 'string' ? stored.activeProfileId : undefined,
+    lastSyncedAt: typeof stored.lastSyncedAt === 'number' ? stored.lastSyncedAt : undefined
+  };
+}
+
 // Interface for storage operations
 // This interface should be implemented by any storage backend
 export interface StorageService {
@@ -142,11 +165,25 @@ class LocalStorageService implements StorageService {
 
   // Settings operations
   async getSettings(): Promise<DeviceSettings> {
-    return this.getItem<DeviceSettings>(STORAGE_KEYS.SETTINGS, DEFAULT_SETTINGS);
+    const item = localStorage.getItem(STORAGE_KEYS.SETTINGS);
+    if (!item) return { ...DEFAULT_SETTINGS };
+    let parsed: unknown = null;
+    try {
+      parsed = JSON.parse(item);
+    } catch {
+      console.warn('Failed to parse localStorage key: space_readers_settings');
+      return { ...DEFAULT_SETTINGS };
+    }
+    const merged = mergeDeviceSettings(parsed);
+    // Rewrite old blobs (volume: 0, missing keys) so they cannot come back.
+    if (settingsNeedsHeal(parsed, merged)) {
+      this.setItem(STORAGE_KEYS.SETTINGS, merged);
+    }
+    return merged;
   }
 
   async saveSettings(settings: DeviceSettings): Promise<void> {
-    this.setItem(STORAGE_KEYS.SETTINGS, settings);
+    this.setItem(STORAGE_KEYS.SETTINGS, mergeDeviceSettings(settings));
   }
 
   // Custom stories operations
@@ -178,6 +215,19 @@ class LocalStorageService implements StorageService {
     this.setItem(STORAGE_KEYS.PROGRESS, {});
     this.setItem(STORAGE_KEYS.CUSTOM_STORIES, {});
   }
+}
+
+function settingsNeedsHeal(raw: unknown, merged: DeviceSettings): boolean {
+  if (!raw || typeof raw !== 'object') return true;
+  const stored = raw as Record<string, unknown>;
+  if ('volume' in stored || 'muted' in stored) return true;
+  if (!('audioEnabled' in stored) || !('speechRate' in stored) || !('zibClipsEnabled' in stored)) {
+    return true;
+  }
+  if (stored.audioEnabled !== merged.audioEnabled) return true;
+  if (Number(stored.speechRate) !== merged.speechRate) return true;
+  if (stored.zibClipsEnabled !== merged.zibClipsEnabled) return true;
+  return false;
 }
 
 // Export singleton instance

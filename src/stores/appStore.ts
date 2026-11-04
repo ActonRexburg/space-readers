@@ -16,7 +16,7 @@ import type {
   StoryId,
   MissionId
 } from '../types';
-import { storageService, createInitialProgress } from '../services/storage';
+import { storageService, createInitialProgress, mergeDeviceSettings } from '../services/storage';
 import { RANK_ORDER, RANK_THRESHOLDS } from '../types';
 
 interface AppState {
@@ -79,12 +79,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   activeProgress: null,
   profiles: [],
   allProgress: {},
-  settings: {
-    parentPin: '1234',
-    audioEnabled: true,
-    speechRate: 1.0,
-    zibClipsEnabled: true
-  },
+  settings: mergeDeviceSettings(null),
   isAdultGateOpen: false,
 
   initialize: async () => {
@@ -114,10 +109,11 @@ export const useAppStore = create<AppState>((set, get) => ({
         }
       }
 
+      const mergedSettings = mergeDeviceSettings(settings);
       set({
         profiles,
         allProgress,
-        settings,
+        settings: mergedSettings,
         activeProfile,
         activeProgress,
         isLoading: false,
@@ -159,7 +155,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
 
     // Save active profile to settings
-    const newSettings = { ...settings, activeProfileId: profileId };
+    const newSettings = mergeDeviceSettings({ ...settings, activeProfileId: profileId });
     await storageService.saveSettings(newSettings);
 
     set({
@@ -215,7 +211,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     // If we deleted the active profile, clear it so ProtectedRoute
     // sends the user back to the profile picker.
     if (activeProfile?.id === profileId) {
-      const newSettings = { ...settings, activeProfileId: undefined };
+      const newSettings = mergeDeviceSettings({ ...settings, activeProfileId: undefined });
       await storageService.saveSettings(newSettings);
       
       set({
@@ -237,7 +233,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     await storageService.resetAllData();
 
     const { settings } = get();
-    const newSettings = { ...settings, activeProfileId: undefined };
+    const newSettings = mergeDeviceSettings({ ...settings, activeProfileId: undefined });
     await storageService.saveSettings(newSettings);
 
     set({
@@ -257,7 +253,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   updateSettings: async (newSettings: Partial<DeviceSettings>) => {
-    const settings = { ...get().settings, ...newSettings };
+    const settings = mergeDeviceSettings({ ...get().settings, ...newSettings });
     await storageService.saveSettings(settings);
     set({ settings });
   },

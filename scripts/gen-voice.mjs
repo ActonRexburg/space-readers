@@ -144,6 +144,23 @@ function run(cmd, args) {
   });
 }
 
+function maxVolumeDb(path) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(
+      'ffmpeg',
+      ['-hide_banner', '-i', path, '-af', 'volumedetect', '-f', 'null', '-'],
+      { stdio: ['ignore', 'pipe', 'pipe'] }
+    );
+    let err = '';
+    child.stderr.on('data', (d) => { err += d.toString(); });
+    child.on('error', reject);
+    child.on('close', () => {
+      const match = err.match(/max_volume:\s*([-\d.]+)/);
+      resolve(match ? parseFloat(match[1]) : -99);
+    });
+  });
+}
+
 function runCapture(cmd, args) {
   return new Promise((resolve, reject) => {
     const child = spawn(cmd, args, { stdio: ['ignore', 'pipe', 'pipe'] });
@@ -170,9 +187,12 @@ async function fileExists(path) {
 
 async function applyFxAndManifest(job, rawMp3, destMp3, metaPath) {
   const profile = VOICES[job.kind];
-  const af = profile.fx
-    ? `${profile.fx},afade=t=in:st=0:d=0.02,afade=t=out:d=0.04`
-    : 'afade=t=in:st=0:d=0.02,afade=t=out:d=0.04';
+  // Fade-in only. `afade=t=out:d=0.04` WITHOUT st= starts the fade at t=0
+  // and leaves the rest of the clip at gain 0 — that is how the live
+  // catalog shipped as valid mp3s with duration but digital silence
+  // (ffmpeg max_volume -91 dB). 🔊 then "played" and never fell back to TTS.
+  const fadeIn = 'afade=t=in:st=0:d=0.02';
+  const af = profile.fx ? `${profile.fx},${fadeIn}` : fadeIn;
 
   await runCapture('ffmpeg', [
     '-y', '-hide_banner', '-loglevel', 'error',
@@ -183,6 +203,15 @@ async function applyFxAndManifest(job, rawMp3, destMp3, metaPath) {
     '-b:a', '48k',
     destMp3,
   ]);
+
+  // The live catalog was once committed as valid mp3s with duration but
+  // digital silence (ffmpeg max_volume -91 dB). Reject those so 🔊 cannot
+  // "succeed" while Brian hears nothing.
+  const peakDb = await maxVolumeDb(destMp3);
+  if (!(peakDb > -40)) {
+    await unlink(destMp3).catch(() => {});
+    throw new Error(`silent mp3 max_volume=${peakDb} dB`);
+  }
 
   const meta = JSON.parse(await readFile(metaPath, 'utf8'));
   const words = mapWordCharIndexes(job.text, meta.words || []);

@@ -8,7 +8,7 @@
   "clips": {
     "control|Tap your name.": {
       "file": "d200a7cb811e991c.mp3",
-      "durationMs": 1032,
+      "durationMs": 1920,
       "words": [
         {
           "text": "Tap",
@@ -118,7 +118,7 @@
     },
     "control|Pick 10 things you like.": {
       "file": "65ec4972cb41b485.mp3",
-      "durationMs": 1584,
+      "durationMs": 1920,
       "words": [
         {
           "text": "Pick",
@@ -191,7 +191,7 @@
     },
     "control|Stars": {
       "file": "19cd96272cfb9c29.mp3",
-      "durationMs": 1008,
+      "durationMs": 1920,
       "words": [
         {
           "text": "Stars",
@@ -960,7 +960,7 @@
     },
     "zib|Cadet, you've been promoted!": {
       "file": "8ec7e515d589e337.mp3",
-      "durationMs": 1944,
+      "durationMs": 1992,
       "words": [
         {
           "text": "Cadet",
@@ -5031,7 +5031,7 @@
     },
     "control|Zib cannot read yet.": {
       "file": "57de9961b4ab9487.mp3",
-      "durationMs": 1656,
+      "durationMs": 1920,
       "words": [
         {
           "text": "Zib",
@@ -5558,7 +5558,7 @@
     },
     "control|Zib needs new sounds.": {
       "file": "7aa66f41a3f8494a.mp3",
-      "durationMs": 1776,
+      "durationMs": 1920,
       "words": [
         {
           "text": "Zib",
@@ -5830,7 +5830,7 @@
     },
     "control|Read the texts on Mars.": {
       "file": "5fd6f18236c9e434.mp3",
-      "durationMs": 1752,
+      "durationMs": 1920,
       "words": [
         {
           "text": "Read",
@@ -7717,7 +7717,7 @@
     },
     "control|Zib's First Words": {
       "file": "11b405c484d05441.mp3",
-      "durationMs": 1680,
+      "durationMs": 1920,
       "words": [
         {
           "text": "Zib's",
@@ -8037,8 +8037,14 @@
     },
     "story|shut": {
       "file": "98b8527a624f49ff.mp3",
-      "durationMs": 648,
-      "words": []
+      "durationMs": 840,
+      "words": [
+        {
+          "text": "shut",
+          "offsetMs": 112,
+          "charIndex": 0
+        }
+      ]
     },
     "story|one": {
       "file": "78eed0304a27e9af.mp3",
@@ -9977,7 +9983,7 @@
     },
     "control|Mission to the Red Planet": {
       "file": "d353a8e4936be942.mp3",
-      "durationMs": 1776,
+      "durationMs": 1920,
       "words": [
         {
           "text": "Mission",
@@ -10800,7 +10806,7 @@
     },
     "control|Trains": {
       "file": "a800d405fab7381a.mp3",
-      "durationMs": 984,
+      "durationMs": 1920,
       "words": [
         {
           "text": "Trains",
@@ -10882,7 +10888,7 @@
     },
     "control|Pirates": {
       "file": "ca7cf4d8ee65ce96.mp3",
-      "durationMs": 1032,
+      "durationMs": 1920,
       "words": [
         {
           "text": "Pirates",
