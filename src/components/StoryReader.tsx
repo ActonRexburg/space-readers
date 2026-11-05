@@ -21,6 +21,7 @@ import { storyCompleteLine } from '../data/voiceLines';
 import { getZibClipService } from '../services/zibClips';
 import { sentenceRanges } from '../utils/readAloud';
 import { useIdleGlow } from '../hooks/useIdleGlow';
+import { resolveAssetUrl } from '../utils/assets';
 
 interface StoryReaderProps {
   story: Story;
@@ -127,6 +128,15 @@ export function StoryReader({ story, onComplete, onExit }: StoryReaderProps) {
     }
   }, [isFinished]);
 
+  const pageImage = paragraph?.image;
+  const nextImage = story.paragraphs[currentParagraph + 1]?.image;
+
+  useEffect(() => {
+    if (!nextImage) return;
+    const preload = new Image();
+    preload.src = resolveAssetUrl(nextImage);
+  }, [nextImage]);
+
   if (isFinished) {
     return (
       <div className="fixed inset-0 bg-gradient-to-b from-space-deep to-space-purple flex flex-col items-center justify-center p-6 z-50">
@@ -177,8 +187,18 @@ export function StoryReader({ story, onComplete, onExit }: StoryReaderProps) {
         />
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 sm:p-8">
-        <div className="max-w-3xl mx-auto space-y-8">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+        <div className="max-w-3xl mx-auto space-y-4">
+          {pageImage && (
+            <img
+              src={resolveAssetUrl(pageImage)}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              data-testid="story-page-image"
+              className="story-page-image"
+            />
+          )}
           {ranges.map((range, si) => (
             <p key={`${paragraph.id}-${si}`} className="story-text-large leading-loose">
               {paragraph.words.slice(range.start, range.end).map((word, i) =>

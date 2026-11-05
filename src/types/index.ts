@@ -139,6 +139,8 @@ export interface StoryParagraph {
   words: DecodableWord[];
   // Original text for display purposes
   rawText: string;
+  /** Optional page art, relative to public/ (e.g. stories/story1/page1.webp). */
+  image?: string;
 }
 
 // Mission with narrative framing

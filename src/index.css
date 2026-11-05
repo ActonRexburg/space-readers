@@ -373,6 +373,20 @@ body[data-overlay-lock='true'] {
   color: #f0f9ff;
 }
 
+/* Premade-book page art. Sentence stays the focus; ~36vh cap so
+   Chromebook 1366x768 and phones keep Next/Back on screen. */
+.story-page-image {
+  display: block;
+  width: min(100%, 28rem);
+  max-height: 36vh;
+  height: auto;
+  object-fit: contain;
+  margin: 0 auto 0.5rem;
+  border-radius: 12px;
+  border: 2px solid var(--color-neon-cyan);
+  background: rgba(0, 245, 255, 0.06);
+}
+
 @media (min-width: 768px) {
   .story-text-large {
     font-size: 2rem; /* 32px on larger screens */
