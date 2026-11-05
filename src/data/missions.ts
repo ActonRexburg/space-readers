@@ -6,6 +6,7 @@
  */
 
 import type { Mission } from '../types';
+import { RANK_ORDER } from '../types';
 
 export const MISSIONS: Mission[] = [
   {
@@ -75,38 +76,34 @@ export function getMissionById(id: string): Mission | undefined {
   return MISSIONS.find(m => m.id === id);
 }
 
+export function isMissionUnlocked(
+  mission: Mission,
+  completedMissions: string[],
+  currentRank: string
+): boolean {
+  const rankIndex = RANK_ORDER.indexOf(currentRank as (typeof RANK_ORDER)[number]);
+  if (mission.requiredRank) {
+    const requiredIndex = RANK_ORDER.indexOf(
+      mission.requiredRank as (typeof RANK_ORDER)[number]
+    );
+    if (rankIndex < requiredIndex) return false;
+  }
+  if (mission.prerequisiteMissions) {
+    for (const prereq of mission.prerequisiteMissions) {
+      if (!completedMissions.includes(prereq)) return false;
+    }
+  }
+  return true;
+}
+
 // Get available missions for a player based on their progress
 export function getAvailableMissions(
   completedMissions: string[],
   currentRank: string
 ): Mission[] {
-  const rankOrder = ['Recruit', 'Cadet', 'Pilot', 'Commander', 'Captain', 'Admiral'];
-  const rankIndex = rankOrder.indexOf(currentRank);
-
-  return MISSIONS.filter(mission => {
-    // Check if already completed
-    if (completedMissions.includes(mission.id)) {
-      return false; // Still show completed missions, but mark them
-    }
-
-    // Check rank requirement
-    if (mission.requiredRank) {
-      const requiredIndex = rankOrder.indexOf(mission.requiredRank);
-      if (rankIndex < requiredIndex) {
-        return false;
-      }
-    }
-
-    // Check prerequisite missions
-    if (mission.prerequisiteMissions) {
-      for (const prereq of mission.prerequisiteMissions) {
-        if (!completedMissions.includes(prereq)) {
-          return false;
-        }
-      }
-    }
-
-    return true;
+  return MISSIONS.filter((mission) => {
+    if (completedMissions.includes(mission.id)) return false;
+    return isMissionUnlocked(mission, completedMissions, currentRank);
   });
 }
 
@@ -114,4 +111,33 @@ export function getAvailableMissions(
 export function getNextMission(completedMissions: string[], currentRank: string): Mission | undefined {
   const available = getAvailableMissions(completedMissions, currentRank);
   return available.find(m => !completedMissions.includes(m.id));
+}
+
+export type MissionMapStatus = 'completed' | 'current' | 'locked';
+
+export interface MissionMapNode {
+  mission: Mission;
+  status: MissionMapStatus;
+  completed: boolean;
+  playable: boolean;
+}
+
+/** Star-map nodes in campaign order: completed, the current planet, then locked upcoming. */
+export function getMissionMap(
+  completedMissions: string[],
+  currentRank: string
+): MissionMapNode[] {
+  const next = getNextMission(completedMissions, currentRank);
+  const firstIncomplete = MISSIONS.find((m) => !completedMissions.includes(m.id));
+  const currentId = next?.id ?? firstIncomplete?.id ?? MISSIONS[MISSIONS.length - 1]?.id;
+
+  return MISSIONS.map((mission) => {
+    const completed = completedMissions.includes(mission.id);
+    const playable = !completed && isMissionUnlocked(mission, completedMissions, currentRank);
+    let status: MissionMapStatus;
+    if (mission.id === currentId) status = 'current';
+    else if (completed) status = 'completed';
+    else status = 'locked';
+    return { mission, status, completed, playable };
+  });
 }

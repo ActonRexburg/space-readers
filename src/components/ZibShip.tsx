@@ -13,10 +13,11 @@ interface ZibShipProps {
   energy: number;
   parts: readonly string[];
   phase?: ShipMotionPhase;
-  size?: 'sm' | 'lg';
+  size?: 'sm' | 'lg' | 'hero';
   showParticles?: boolean;
   /** Snap the gauge with no 2s fill (used when the meter resets after upgrade). */
   snapFill?: boolean;
+  className?: string;
 }
 
 function hasPart(parts: readonly string[], id: ShipPartId): boolean {
@@ -29,17 +30,19 @@ export function ZibShip({
   phase = 'idle',
   size = 'sm',
   showParticles = false,
-  snapFill = false
+  snapFill = false,
+  className = ''
 }: ZibShipProps) {
   const uid = useId().replace(/:/g, '');
   const fill = Math.max(0, Math.min(SHIP_ENERGY_MAX, energy));
   const enginesOn = phase === 'full' || phase === 'liftoff' || phase === 'upgraded';
   const lift = phase === 'liftoff';
-  const wide = size === 'lg';
+  const sizeClass =
+    size === 'hero' ? 'zib-ship-hero' : size === 'lg' ? 'zib-ship-lg' : 'zib-ship-sm';
 
   return (
     <div
-      className={`zib-ship ${wide ? 'zib-ship-lg' : 'zib-ship-sm'} ${lift ? 'ship-liftoff' : ''} ${enginesOn ? 'ship-engines-on' : ''}`}
+      className={`zib-ship ${sizeClass} ${lift ? 'ship-liftoff' : ''} ${enginesOn ? 'ship-engines-on' : ''} ${className}`}
       data-testid="zib-ship"
       data-ship-phase={phase}
       aria-hidden="true"
