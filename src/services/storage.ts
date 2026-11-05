@@ -15,6 +15,7 @@ import type {
   Story,
   ProfileId
 } from '../types';
+import { hydrateShipProgress } from '../data/ship';
 
 // Storage keys for localStorage
 const STORAGE_KEYS = {
@@ -153,7 +154,8 @@ class LocalStorageService implements StorageService {
       STORAGE_KEYS.PROGRESS,
       {}
     );
-    return allProgress[profileId] ?? null;
+    const stored = allProgress[profileId];
+    return stored ? withShipProgress(stored) : null;
   }
 
   async saveProgress(progress: ProfileProgress): Promise<void> {
@@ -254,8 +256,27 @@ export function createInitialProgress(profileId: ProfileId): ProfileProgress {
     missionsCompleted: [],
     planetsUnlocked: ['earth'],  // Start with Earth unlocked
     alienLearnedWords: [],
+    shipEnergy: 0,
+    shipPartsUnlocked: [],
     wordHelpCount: {},
     sessionHistory: []
+  };
+}
+
+export function withShipProgress(progress: ProfileProgress): ProfileProgress {
+  const ship = hydrateShipProgress(progress);
+  if (
+    progress.shipEnergy === ship.shipEnergy
+    && Array.isArray(progress.shipPartsUnlocked)
+    && progress.shipPartsUnlocked.length === ship.shipPartsUnlocked.length
+    && progress.shipPartsUnlocked.every((id, i) => id === ship.shipPartsUnlocked[i])
+  ) {
+    return progress;
+  }
+  return {
+    ...progress,
+    shipEnergy: ship.shipEnergy,
+    shipPartsUnlocked: ship.shipPartsUnlocked
   };
 }
 

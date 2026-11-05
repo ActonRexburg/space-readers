@@ -11310,6 +11310,512 @@
           "charIndex": 15
         }
       ]
+    },
+    "control|Ship energy rising.": {
+      "file": "0e027705923e26ca.mp3",
+      "durationMs": 1920,
+      "words": [
+        {
+          "text": "Ship",
+          "offsetMs": 100,
+          "charIndex": 0
+        },
+        {
+          "text": "energy",
+          "offsetMs": 487,
+          "charIndex": 5
+        },
+        {
+          "text": "rising",
+          "offsetMs": 812,
+          "charIndex": 12
+        }
+      ]
+    },
+    "control|Ship upgraded!": {
+      "file": "d9ff5cff4eaa5450.mp3",
+      "durationMs": 1920,
+      "words": [
+        {
+          "text": "Ship",
+          "offsetMs": 100,
+          "charIndex": 0
+        },
+        {
+          "text": "upgraded",
+          "offsetMs": 300,
+          "charIndex": 5
+        }
+      ]
+    },
+    "zib|More power for the ship!": {
+      "file": "b1620225184fa1bc.mp3",
+      "durationMs": 1992,
+      "words": [
+        {
+          "text": "More",
+          "offsetMs": 82,
+          "charIndex": 0
+        },
+        {
+          "text": "power",
+          "offsetMs": 365,
+          "charIndex": 5
+        },
+        {
+          "text": "for",
+          "offsetMs": 790,
+          "charIndex": 11
+        },
+        {
+          "text": "the",
+          "offsetMs": 955,
+          "charIndex": 15
+        },
+        {
+          "text": "ship",
+          "offsetMs": 1037,
+          "charIndex": 19
+        }
+      ]
+    },
+    "zib|You earned it, Recruit!": {
+      "file": "85c52a65ccd342af.mp3",
+      "durationMs": 1992,
+      "words": [
+        {
+          "text": "You",
+          "offsetMs": 58,
+          "charIndex": 0
+        },
+        {
+          "text": "earned",
+          "offsetMs": 188,
+          "charIndex": 4
+        },
+        {
+          "text": "it",
+          "offsetMs": 448,
+          "charIndex": 11
+        },
+        {
+          "text": "Recruit",
+          "offsetMs": 648,
+          "charIndex": 15
+        }
+      ]
+    },
+    "control|Promotion confirmed. Welcome, Recruit.": {
+      "file": "6a10ed0fcc144ef6.mp3",
+      "durationMs": 3000,
+      "words": [
+        {
+          "text": "Promotion",
+          "offsetMs": 112,
+          "charIndex": 0
+        },
+        {
+          "text": "confirmed",
+          "offsetMs": 537,
+          "charIndex": 10
+        },
+        {
+          "text": "Welcome",
+          "offsetMs": 1525,
+          "charIndex": 21
+        },
+        {
+          "text": "Recruit",
+          "offsetMs": 2112,
+          "charIndex": 30
+        }
+      ]
+    },
+    "control|Promoted to Recruit!": {
+      "file": "f8260303bc163530.mp3",
+      "durationMs": 1920,
+      "words": [
+        {
+          "text": "Promoted",
+          "offsetMs": 112,
+          "charIndex": 0
+        },
+        {
+          "text": "to",
+          "offsetMs": 512,
+          "charIndex": 9
+        },
+        {
+          "text": "Recruit",
+          "offsetMs": 625,
+          "charIndex": 12
+        }
+      ]
+    },
+    "zib|You earned it, Cadet!": {
+      "file": "6a8c0503c5011884.mp3",
+      "durationMs": 1992,
+      "words": [
+        {
+          "text": "You",
+          "offsetMs": 58,
+          "charIndex": 0
+        },
+        {
+          "text": "earned",
+          "offsetMs": 188,
+          "charIndex": 4
+        },
+        {
+          "text": "it",
+          "offsetMs": 424,
+          "charIndex": 11
+        },
+        {
+          "text": "Cadet",
+          "offsetMs": 778,
+          "charIndex": 15
+        }
+      ]
+    },
+    "control|Promotion confirmed. Welcome, Cadet.": {
+      "file": "1fa98da62251a357.mp3",
+      "durationMs": 2856,
+      "words": [
+        {
+          "text": "Promotion",
+          "offsetMs": 112,
+          "charIndex": 0
+        },
+        {
+          "text": "confirmed",
+          "offsetMs": 537,
+          "charIndex": 10
+        },
+        {
+          "text": "Welcome",
+          "offsetMs": 1525,
+          "charIndex": 21
+        },
+        {
+          "text": "Cadet",
+          "offsetMs": 2025,
+          "charIndex": 30
+        }
+      ]
+    },
+    "control|Promoted to Cadet!": {
+      "file": "a8dae48ed2f9a53f.mp3",
+      "durationMs": 1920,
+      "words": [
+        {
+          "text": "Promoted",
+          "offsetMs": 112,
+          "charIndex": 0
+        },
+        {
+          "text": "to",
+          "offsetMs": 437,
+          "charIndex": 9
+        },
+        {
+          "text": "Cadet",
+          "offsetMs": 550,
+          "charIndex": 12
+        }
+      ]
+    },
+    "zib|You earned it, Pilot!": {
+      "file": "85b6a27dc44184d6.mp3",
+      "durationMs": 1992,
+      "words": [
+        {
+          "text": "You",
+          "offsetMs": 58,
+          "charIndex": 0
+        },
+        {
+          "text": "earned",
+          "offsetMs": 188,
+          "charIndex": 4
+        },
+        {
+          "text": "it",
+          "offsetMs": 436,
+          "charIndex": 11
+        },
+        {
+          "text": "Pilot",
+          "offsetMs": 636,
+          "charIndex": 15
+        }
+      ]
+    },
+    "control|Promotion confirmed. Welcome, Pilot.": {
+      "file": "06773d4b718d6d44.mp3",
+      "durationMs": 2904,
+      "words": [
+        {
+          "text": "Promotion",
+          "offsetMs": 112,
+          "charIndex": 0
+        },
+        {
+          "text": "confirmed",
+          "offsetMs": 537,
+          "charIndex": 10
+        },
+        {
+          "text": "Welcome",
+          "offsetMs": 1537,
+          "charIndex": 21
+        },
+        {
+          "text": "Pilot",
+          "offsetMs": 2025,
+          "charIndex": 30
+        }
+      ]
+    },
+    "control|Promoted to Pilot!": {
+      "file": "39cb612875947ba0.mp3",
+      "durationMs": 1920,
+      "words": [
+        {
+          "text": "Promoted",
+          "offsetMs": 112,
+          "charIndex": 0
+        },
+        {
+          "text": "to",
+          "offsetMs": 437,
+          "charIndex": 9
+        },
+        {
+          "text": "Pilot",
+          "offsetMs": 512,
+          "charIndex": 12
+        }
+      ]
+    },
+    "zib|You earned it, Commander!": {
+      "file": "c51b55741360d025.mp3",
+      "durationMs": 1992,
+      "words": [
+        {
+          "text": "You",
+          "offsetMs": 58,
+          "charIndex": 0
+        },
+        {
+          "text": "earned",
+          "offsetMs": 188,
+          "charIndex": 4
+        },
+        {
+          "text": "it",
+          "offsetMs": 448,
+          "charIndex": 11
+        },
+        {
+          "text": "Commander",
+          "offsetMs": 660,
+          "charIndex": 15
+        }
+      ]
+    },
+    "control|Promotion confirmed. Welcome, Commander.": {
+      "file": "950ea359d121a844.mp3",
+      "durationMs": 2976,
+      "words": [
+        {
+          "text": "Promotion",
+          "offsetMs": 112,
+          "charIndex": 0
+        },
+        {
+          "text": "confirmed",
+          "offsetMs": 537,
+          "charIndex": 10
+        },
+        {
+          "text": "Welcome",
+          "offsetMs": 1525,
+          "charIndex": 21
+        },
+        {
+          "text": "Commander",
+          "offsetMs": 2012,
+          "charIndex": 30
+        }
+      ]
+    },
+    "control|Promoted to Commander!": {
+      "file": "1fb8bd8d9a151e0a.mp3",
+      "durationMs": 1512,
+      "words": [
+        {
+          "text": "Promoted",
+          "offsetMs": 112,
+          "charIndex": 0
+        },
+        {
+          "text": "to",
+          "offsetMs": 437,
+          "charIndex": 9
+        },
+        {
+          "text": "Commander",
+          "offsetMs": 537,
+          "charIndex": 12
+        }
+      ]
+    },
+    "zib|You earned it, Captain!": {
+      "file": "4174c693a8669d0d.mp3",
+      "durationMs": 1992,
+      "words": [
+        {
+          "text": "You",
+          "offsetMs": 58,
+          "charIndex": 0
+        },
+        {
+          "text": "earned",
+          "offsetMs": 176,
+          "charIndex": 4
+        },
+        {
+          "text": "it",
+          "offsetMs": 400,
+          "charIndex": 11
+        },
+        {
+          "text": "Captain",
+          "offsetMs": 577,
+          "charIndex": 15
+        }
+      ]
+    },
+    "control|Promotion confirmed. Welcome, Captain.": {
+      "file": "da37f00836bcf4cb.mp3",
+      "durationMs": 2880,
+      "words": [
+        {
+          "text": "Promotion",
+          "offsetMs": 112,
+          "charIndex": 0
+        },
+        {
+          "text": "confirmed",
+          "offsetMs": 537,
+          "charIndex": 10
+        },
+        {
+          "text": "Welcome",
+          "offsetMs": 1537,
+          "charIndex": 21
+        },
+        {
+          "text": "Captain",
+          "offsetMs": 2000,
+          "charIndex": 30
+        }
+      ]
+    },
+    "control|Promoted to Captain!": {
+      "file": "d0a261971470d151.mp3",
+      "durationMs": 1920,
+      "words": [
+        {
+          "text": "Promoted",
+          "offsetMs": 112,
+          "charIndex": 0
+        },
+        {
+          "text": "to",
+          "offsetMs": 450,
+          "charIndex": 9
+        },
+        {
+          "text": "Captain",
+          "offsetMs": 525,
+          "charIndex": 12
+        }
+      ]
+    },
+    "zib|You earned it, Admiral!": {
+      "file": "695d8144d6d130c0.mp3",
+      "durationMs": 1992,
+      "words": [
+        {
+          "text": "You",
+          "offsetMs": 70,
+          "charIndex": 0
+        },
+        {
+          "text": "earned",
+          "offsetMs": 188,
+          "charIndex": 4
+        },
+        {
+          "text": "it",
+          "offsetMs": 412,
+          "charIndex": 11
+        },
+        {
+          "text": "Admiral",
+          "offsetMs": 613,
+          "charIndex": 15
+        }
+      ]
+    },
+    "control|Promotion confirmed. Welcome, Admiral.": {
+      "file": "734f72ca41827087.mp3",
+      "durationMs": 2952,
+      "words": [
+        {
+          "text": "Promotion",
+          "offsetMs": 112,
+          "charIndex": 0
+        },
+        {
+          "text": "confirmed",
+          "offsetMs": 537,
+          "charIndex": 10
+        },
+        {
+          "text": "Welcome",
+          "offsetMs": 1537,
+          "charIndex": 21
+        },
+        {
+          "text": "Admiral",
+          "offsetMs": 2025,
+          "charIndex": 30
+        }
+      ]
+    },
+    "control|Promoted to Admiral!": {
+      "file": "727fdc4281ad2898.mp3",
+      "durationMs": 1920,
+      "words": [
+        {
+          "text": "Promoted",
+          "offsetMs": 112,
+          "charIndex": 0
+        },
+        {
+          "text": "to",
+          "offsetMs": 462,
+          "charIndex": 9
+        },
+        {
+          "text": "Admiral",
+          "offsetMs": 575,
+          "charIndex": 12
+        }
+      ]
     }
   }
 }

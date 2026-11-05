@@ -69,6 +69,11 @@ export interface ProfileProgress {
   
   // Tracks which words the alien "learned" from this child
   alienLearnedWords: string[];
+
+  /** Current cycle fill, 0–99. 100 triggers an upgrade then resets. */
+  shipEnergy: number;
+  /** Illustrated parts unlocked after full energy cycles. */
+  shipPartsUnlocked: string[];
   
   // Analytics for parent/teacher dashboard
   wordHelpCount: Record<string, number>;  // word -> times tapped for help
@@ -134,6 +139,8 @@ export interface StoryParagraph {
   words: DecodableWord[];
   // Original text for display purposes
   rawText: string;
+  /** Optional page art, relative to public/ (e.g. stories/story1/page1.webp). */
+  image?: string;
 }
 
 // Mission with narrative framing

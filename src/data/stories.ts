@@ -19,6 +19,13 @@ function createParagraph(text: string): StoryParagraph {
   };
 }
 
+function withPageImages(storyNumber: number, paragraphs: StoryParagraph[]): StoryParagraph[] {
+  return paragraphs.map((paragraph, index) => ({
+    ...paragraph,
+    image: `stories/story${storyNumber}/page${index + 1}.webp`
+  }));
+}
+
 // Helper to extract all patterns from a story
 function extractStoryPatterns(paragraphs: StoryParagraph[]): string[] {
   const patterns = new Set<string>();
@@ -124,7 +131,7 @@ export const STORIES: Story[] = [
   {
     id: 'story-1-lost-ship',
     title: 'The Lost Ship',
-    paragraphs: story1Paragraphs,
+    paragraphs: withPageImages(1, story1Paragraphs),
     phonicsPatterns: extractStoryPatterns(story1Paragraphs),
     targetWords: ['ship', 'flat', 'rock', 'dent', 'kit', 'pin', 'rod', 'zip', 'sun'],
     sightWords: ['the', 'on', 'a', 'to', 'it', 'was', 'and', 'we', 'is'],
@@ -135,7 +142,7 @@ export const STORIES: Story[] = [
   {
     id: 'story-2-star-map',
     title: 'The Star Map',
-    paragraphs: story2Paragraphs,
+    paragraphs: withPageImages(2, story2Paragraphs),
     phonicsPatterns: extractStoryPatterns(story2Paragraphs),
     targetWords: ['thin', 'map', 'path', 'ship', 'flash', 'north', 'rush', 'thrilled'],
     sightWords: ['the', 'of', 'will', 'show', 'us', 'to', 'with', 'a', 'is'],
@@ -146,7 +153,7 @@ export const STORIES: Story[] = [
   {
     id: 'story-3-zib-words',
     title: "Zib's First Words",
-    paragraphs: story3Paragraphs,
+    paragraphs: withPageImages(3, story3Paragraphs),
     phonicsPatterns: extractStoryPatterns(story3Paragraphs),
     targetWords: ['mug', 'shut', 'fish', 'read', 'know', 'best', 'ship'],
     sightWords: ['did', 'not', 'how', 'to', 'what', 'is', 'this', 'the', 'I'],
@@ -157,7 +164,7 @@ export const STORIES: Story[] = [
   {
     id: 'story-4-dark-cave',
     title: 'The Dark Cave',
-    paragraphs: story4Paragraphs,
+    paragraphs: withPageImages(4, story4Paragraphs),
     phonicsPatterns: extractStoryPatterns(story4Paragraphs),
     targetWords: ['land', 'cold', 'dark', 'tank', 'fast', 'lamp', 'cast', 'crept', 'blast'],
     sightWords: ['we', 'had', 'to', 'on', 'a', 'the', 'is', 'do', 'not', 'be'],
@@ -168,7 +175,7 @@ export const STORIES: Story[] = [
   {
     id: 'story-5-space-race',
     title: 'The Space Race',
-    paragraphs: story5Paragraphs,
+    paragraphs: withPageImages(5, story5Paragraphs),
     phonicsPatterns: extractStoryPatterns(story5Paragraphs),
     targetWords: ['race', 'please', 'speed', 'beat', 'beam', 'green', 'need', 'reached', 'team'],
     sightWords: ['to', 'the', 'we', 'them', 'a', 'of', 'our', 'past'],
@@ -179,7 +186,7 @@ export const STORIES: Story[] = [
   {
     id: 'story-6-alien-pet',
     title: 'The Alien Pet',
-    paragraphs: story6Paragraphs,
+    paragraphs: withPageImages(6, story6Paragraphs),
     phonicsPatterns: extractStoryPatterns(story6Paragraphs),
     targetWords: ['ship', 'shell', 'shall', 'chased', 'chest', 'shut', 'chirped', 'chunk', 'chomped'],
     sightWords: ['a', 'on', 'the', 'what', 'is', 'I', 'we', 'it', 'to', 'of'],
@@ -190,7 +197,7 @@ export const STORIES: Story[] = [
   {
     id: 'story-7-red-planet',
     title: 'Mission to the Red Planet',
-    paragraphs: story7Paragraphs,
+    paragraphs: withPageImages(7, story7Paragraphs),
     phonicsPatterns: extractStoryPatterns(story7Paragraphs),
     targetWords: ['mission', 'planet', 'blast', 'shook', 'rushed', 'storms', 'thud', 'dust', 'quest'],
     sightWords: ['this', 'is', 'the', 'to', 'and', 'we', 'a', 'by', 'of', 'what', 'will'],

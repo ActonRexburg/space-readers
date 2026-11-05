@@ -45,12 +45,12 @@ export default defineConfig({
       workbox: {
         // Bump so Chromebooks stuck on an old SW drop stale caches on activate.
         // dyslexia = self-hosted OpenDyslexic woff2 in public/fonts (SIL OFL).
-        cacheId: 'sr-2026-11-dyslexia',
+        cacheId: 'sr-2026-11-story-art',
         // Deletes leftover audio-cache* runtime caches on activate. public/
         // copies next to sw.js so this relative importScripts URL resolves.
         importScripts: ['sw-purge-audio-cache.js'],
         // Include core app assets in precache (not videos - too large).
-        // webp = Brian's 12 illustrated avatars (~10–18KB each) so the picker is instant.
+        // webp = avatars + premade story page art (~16KB each, 59 files).
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,jpg,webp}'],
         // woff2 includes public/fonts/OpenDyslexic-*.woff2 (SIL OFL).
         // Exclude large video files from precache
@@ -104,6 +104,21 @@ export default defineConfig({
               cacheName: 'avatar-cache-v1',
               expiration: {
                 maxEntries: 20,
+                maxAgeSeconds: 60 * 60 * 24 * 365
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          // Premade story page art. Also in precache via globPatterns webp.
+          {
+            urlPattern: /\/stories\/.*\.webp$/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'story-art-cache-v1',
+              expiration: {
+                maxEntries: 80,
                 maxAgeSeconds: 60 * 60 * 24 * 365
               },
               cacheableResponse: {

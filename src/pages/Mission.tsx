@@ -19,11 +19,14 @@ import { useZibOverlayLock } from '../hooks/useZibOverlayLock';
 import { SpeakButton, SpokenLine } from '../components/SpeakButton';
 import { getMissionById } from '../data/missions';
 import { getStoryById } from '../data/stories';
-import { zibLearnedLine, zibRankUpLine, planetUnlockedLine, UI } from '../data/voiceLines';
+import { zibLearnedLine, planetUnlockedLine, UI } from '../data/voiceLines';
 import { splitSentences } from '../utils/readAloud';
 import type { Story, Rank } from '../types';
 import { RANK_ORDER, RANK_THRESHOLDS } from '../types';
 import { useIdleGlow } from '../hooks/useIdleGlow';
+import { ShipReward } from '../components/ShipReward';
+import { RankUpReward } from '../components/RankUpReward';
+import { hydrateShipProgress, SHIP_ENERGY_PER_STORY } from '../data/ship';
 
 function calculateRank(fuelCredits: number): Rank {
   let rank: Rank = 'Recruit';
@@ -53,31 +56,40 @@ export function Mission() {
 
   const [phase, setPhase] = useState<MissionPhase>('briefing');
   const [currentStory, setCurrentStory] = useState<Story | null>(null);
-  const [completedStories, setCompletedStories] = useState<Set<string>>(new Set());
+  const [completedStories, setCompletedStories] = useState<Set<string>>(() => {
+    const m = missionId ? getMissionById(missionId) : undefined;
+    const done = useAppStore.getState().activeProgress?.storiesCompleted ?? [];
+    if (!m) return new Set();
+    return new Set(done.filter((id) => m.storyIds.includes(id)));
+  });
   const [zibDialogueIndex, setZibDialogueIndex] = useState(0);
   const [totalWordsThisMission, setTotalWordsThisMission] = useState(0);
   const triggeredStoryStartFor = useRef<string | null>(null);
 
   const [fuelAtStart] = useState(() => useAppStore.getState().activeProgress?.fuelCredits ?? 0);
   const [starsAtStart] = useState(() => useAppStore.getState().activeProgress?.starCredits ?? 0);
+  const [energyAtStart] = useState(() =>
+    hydrateShipProgress(useAppStore.getState().activeProgress).shipEnergy
+  );
+  const [storiesAtStart] = useState(() =>
+    new Set(useAppStore.getState().activeProgress?.storiesCompleted ?? [])
+  );
   const [storyFuelEarned, setStoryFuelEarned] = useState(0);
+  const [shipEnergyGained, setShipEnergyGained] = useState(0);
+  const [partsAtStart] = useState(() =>
+    hydrateShipProgress(useAppStore.getState().activeProgress).shipPartsUnlocked
+  );
+  const [shipPartsAfter, setShipPartsAfter] = useState<string[]>(() =>
+    hydrateShipProgress(useAppStore.getState().activeProgress).shipPartsUnlocked
+  );
   const [planetsBefore, setPlanetsBefore] = useState(0);
-  const [rankBefore, setRankBefore] = useState<string | null>(null);
-  const [newRank, setNewRank] = useState<string | null>(null);
+  const [rankBefore, setRankBefore] = useState<Rank | null>(null);
+  const [newRank, setNewRank] = useState<Rank | null>(null);
 
   // Hide Zib popups on Mission Complete and rank-up overlays.
   useZibOverlayLock(phase === 'debrief' || phase === 'rankup');
   // One idle-glow CTA per mission phase; StoryReader owns the reading-phase CTA.
   const idleGlow = useIdleGlow(phase !== 'reading');
-
-  const confettiPieces = useMemo(() => (
-    Array.from({ length: 30 }, (_, i) => ({
-      id: i,
-      left: `${(i * 17) % 100}%`,
-      delay: `${(i % 8) * 0.4}s`,
-      emoji: ['🎉', '⭐', '🌟', '✨', '🏆', '🎖️'][i % 6]
-    }))
-  ), []);
 
   const mission = useMemo(() => {
     if (!missionId) return null;
@@ -140,6 +152,11 @@ export function Mission() {
       const rankAfterMission = calculateRank(fuelAfterMission);
 
       setStoryFuelEarned(fuelAfterStories - fuelAtStart);
+      setShipEnergyGained(
+        [...newCompletedStories].filter((id) => !storiesAtStart.has(id)).length
+        * SHIP_ENERGY_PER_STORY
+      );
+      setShipPartsAfter(hydrateShipProgress(latest).shipPartsUnlocked);
       setPlanetsBefore(planetsAfterStories);
       setRankBefore(rankAfterStories);
 
@@ -151,7 +168,7 @@ export function Mission() {
       triggerStoryComplete();
       setPhase('stories');
     }
-  }, [currentStory, stories.length, completedStories, completeStory, addAlienWord, recordWordHelp, triggerStoryComplete, mission, fuelAtStart]);
+  }, [currentStory, stories.length, completedStories, completeStory, addAlienWord, recordWordHelp, triggerStoryComplete, mission, fuelAtStart, storiesAtStart]);
 
   const handleMissionComplete = useCallback(async () => {
     if (!mission) return;
@@ -206,7 +223,7 @@ export function Mission() {
   const starTotal = starsAtStart + mission.starReward;
   // Dynamic totals — no baked clip; speak() falls back to speechSynthesis.
   const fuelSpeak = `Before ${fuelAtStart}. Story fuel plus ${storyFuelEarned}. Mission bonus plus ${mission.fuelReward}. Total ${fuelTotal}.`;
-  const rankSpeak = newRank ? zibRankUpLine(newRank) : '';
+  const fuelAfterStories = fuelAtStart + storyFuelEarned;
 
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden">
@@ -348,7 +365,15 @@ export function Mission() {
                 variant="success"
                 size="lg"
                 glow
-                onClick={() => setPhase('debrief')}
+                onClick={() => {
+                  const latest = useAppStore.getState().activeProgress;
+                  setShipEnergyGained(
+                    [...completedStories].filter((id) => !storiesAtStart.has(id)).length
+                    * SHIP_ENERGY_PER_STORY
+                  );
+                  setShipPartsAfter(hydrateShipProgress(latest).shipPartsUnlocked);
+                  setPhase('debrief');
+                }}
                 className={`w-full mt-4 text-xl ${idleGlow}`}
               >
                 ✓ Complete
@@ -386,6 +411,14 @@ export function Mission() {
                 textClassName="text-xl text-white leading-snug"
               />
             </div>
+
+            <ShipReward
+              fromEnergy={energyAtStart}
+              addedEnergy={shipEnergyGained}
+              partsBefore={partsAtStart}
+              partsAfter={shipPartsAfter}
+              starReward={mission.starReward}
+            />
 
             <Card className="flex items-center gap-4 p-5">
               <Zib size="md" />
@@ -444,52 +477,17 @@ export function Mission() {
         </main>
       )}
 
-      {phase === 'rankup' && newRank && (
-        <main className="flex-1 relative z-50 p-6 flex flex-col items-center justify-center overflow-hidden">
-          <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            {confettiPieces.map((piece) => (
-              <div
-                key={piece.id}
-                className="absolute animate-confetti"
-                style={{
-                  left: piece.left,
-                  animationDelay: piece.delay,
-                }}
-              >
-                {piece.emoji}
-              </div>
-            ))}
-          </div>
-
-          <div className="max-w-md w-full text-center space-y-8 relative z-10">
-            <div className="relative">
-              <div className="text-8xl mb-4">🎖️</div>
-            </div>
-
-            <SpokenLine
-              text={UI.rankUp}
-              voice="control"
-              autoPlay
-              heading
-              className="justify-center"
-              textClassName="text-4xl font-bold text-alien-green text-glow-cyan"
+      {phase === 'rankup' && newRank && rankBefore && (
+        <main className="flex-1 relative z-50 p-6 flex flex-col items-center justify-center overflow-y-auto">
+          <div className="max-w-md w-full text-center space-y-8 py-4">
+            <RankUpReward
+              fromRank={rankBefore}
+              toRank={newRank}
+              fuelBefore={fuelAfterStories}
+              fuelAfter={fuelTotal}
+              starsBefore={starsAtStart}
+              starsAfter={starTotal}
             />
-            {rankSpeak && (
-              <SpokenLine
-                text={rankSpeak}
-                voice="zib"
-                className="justify-center"
-                textClassName="text-2xl text-white"
-              />
-            )}
-
-            <div className="space-card p-6 glow-green">
-              <div className="flex items-center justify-center gap-4 text-2xl">
-                <span className="text-slate-400">{rankBefore}</span>
-                <span className="text-alien-green text-3xl">→</span>
-                <span className="text-alien-green font-bold text-3xl text-glow-cyan">{newRank}</span>
-              </div>
-            </div>
 
             <Button
               variant="success"

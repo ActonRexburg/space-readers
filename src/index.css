@@ -56,6 +56,13 @@
   --motion-hand: 5.7s;           /* decoder hint: one across-and-back, then fade */
   --motion-hand-fade: 1.2s;      /* slow fade after the single demo */
   --motion-scanline: 5.5s;       /* was 3s */
+  --motion-ship-fill: 2s;        /* energy gauge fill on Mission Complete */
+  --motion-ship-liftoff: 1.4s;   /* one-shot lift after a full tank */
+  --motion-ship-spark: 1.8s;     /* particles flowing into the gauge */
+  --motion-rank-fill: 2s;        /* rank bar fill before the badge reveal */
+  --motion-rank-flip: 0.7s;      /* old badge folds out */
+  --motion-rank-reveal: 0.9s;    /* new badge scales in */
+  --motion-rank-ring: 1.1s;      /* one-shot warp ring */
 }
 
 /* Base styles */
@@ -364,6 +371,20 @@ body[data-overlay-lock='true'] {
   line-height: 2.2;
   letter-spacing: 0.03em;
   color: #f0f9ff;
+}
+
+/* Premade-book page art. Sentence stays the focus; ~36vh cap so
+   Chromebook 1366x768 and phones keep Next/Back on screen. */
+.story-page-image {
+  display: block;
+  width: min(100%, 28rem);
+  max-height: 36vh;
+  height: auto;
+  object-fit: contain;
+  margin: 0 auto 0.5rem;
+  border-radius: 12px;
+  border: 2px solid var(--color-neon-cyan);
+  background: rgba(0, 245, 255, 0.06);
 }
 
 @media (min-width: 768px) {
@@ -859,14 +880,285 @@ html.dyslexia-font .reading-text {
   font-size: 2rem;
 }
 
+/* ============================================
+   ZIB SHIP (energy meter + unlockable parts)
+   Transform/opacity only — no canvas, no looping pulse.
+   ============================================ */
+
+.zib-ship {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.zib-ship-sm .zib-ship-svg {
+  width: 100%;
+  max-width: 220px;
+}
+
+.zib-ship-lg .zib-ship-svg {
+  width: 100%;
+  max-width: 320px;
+}
+
+.zib-ship-svg {
+  display: block;
+  overflow: visible;
+}
+
+.ship-engine-flare {
+  opacity: 0.2;
+  transform-origin: right center;
+  transform: scaleX(0.35);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.ship-engines-on .ship-engine-flare {
+  opacity: 0.95;
+  transform: scaleX(1);
+}
+
+.ship-liftoff {
+  animation: ship-liftoff var(--motion-ship-liftoff) ease-in forwards;
+}
+
+@keyframes ship-liftoff {
+  0% { transform: translateY(0) scale(1); opacity: 1; }
+  70% { transform: translateY(-28px) scale(1.04); opacity: 1; }
+  100% { transform: translateY(-36px) scale(1.08); opacity: 0.92; }
+}
+
+.ship-gauge {
+  width: 100%;
+  max-width: 260px;
+}
+
+.ship-gauge-track {
+  position: relative;
+  height: 14px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(0, 245, 255, 0.12);
+  border: 1px solid rgba(0, 245, 255, 0.45);
+}
+
+.ship-gauge-fill {
+  height: 100%;
+  width: 100%;
+  transform: scaleX(0);
+  transform-origin: left center;
+  background: linear-gradient(90deg, #00f5ff, #22c55e);
+  transition: transform var(--motion-ship-fill) ease-out;
+  will-change: transform;
+}
+
+.ship-gauge-fill-snap {
+  transition: none;
+}
+
+.ship-sparks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.ship-spark {
+  position: absolute;
+  left: 8%;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  margin-top: -3px;
+  border-radius: 999px;
+  background: #bbffe3;
+  box-shadow: 0 0 8px rgba(0, 245, 255, 0.7);
+  opacity: 0;
+  animation: ship-spark var(--motion-ship-spark) ease-out 1 forwards;
+}
+
+.ship-spark:nth-child(2) { top: 30%; }
+.ship-spark:nth-child(3) { top: 70%; }
+.ship-spark:nth-child(4) { left: 18%; }
+.ship-spark:nth-child(5) { left: 4%; top: 40%; }
+.ship-spark:nth-child(6) { left: 12%; top: 60%; }
+
+@keyframes ship-spark {
+  0% {
+    transform: translateX(0) scale(0.4);
+    opacity: 0;
+  }
+  18% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateX(170px) scale(0.25);
+    opacity: 0;
+  }
+}
+
+/* ============================================
+   RANK UP (bar fill + badge flip)
+   Transform/opacity only. No looping pulse.
+   ============================================ */
+
+.rank-bar {
+  width: 100%;
+  max-width: 280px;
+  margin: 0 auto;
+}
+
+.rank-bar-track {
+  position: relative;
+  height: 14px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(251, 191, 36, 0.12);
+  border: 1px solid rgba(251, 191, 36, 0.45);
+}
+
+.rank-bar-fill {
+  height: 100%;
+  width: 100%;
+  transform: scaleX(0);
+  transform-origin: left center;
+  background: linear-gradient(90deg, #fbbf24, #f97316);
+  transition: transform var(--motion-rank-fill) ease-out;
+  will-change: transform;
+}
+
+.rank-bar-fill-snap {
+  transition: none;
+}
+
+.rank-spark {
+  position: absolute;
+  left: 8%;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  margin-top: -3px;
+  border-radius: 999px;
+  background: #fde68a;
+  box-shadow: 0 0 8px rgba(251, 191, 36, 0.75);
+  opacity: 0;
+  animation: ship-spark var(--motion-ship-spark) ease-out 1 forwards;
+}
+
+.rank-spark:nth-child(2) { top: 30%; }
+.rank-spark:nth-child(3) { top: 70%; }
+.rank-spark:nth-child(4) { left: 18%; }
+.rank-spark:nth-child(5) { left: 4%; top: 40%; }
+.rank-spark:nth-child(6) { left: 12%; top: 60%; }
+
+.rank-badge-stage {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  margin: 0 auto;
+}
+
+.rank-badge-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform-origin: center;
+}
+
+.rank-badge-hidden {
+  opacity: 0;
+  transform: scaleX(0);
+}
+
+.rank-badge-out {
+  animation: rank-badge-out var(--motion-rank-flip) ease-in forwards;
+}
+
+.rank-badge-in {
+  animation: rank-badge-in var(--motion-rank-reveal) ease-out forwards;
+}
+
+@keyframes rank-badge-out {
+  0% { transform: scaleX(1) scale(1); opacity: 1; }
+  100% { transform: scaleX(0) scale(0.9); opacity: 0; }
+}
+
+@keyframes rank-badge-in {
+  0% { transform: scaleX(0) scale(0.82); opacity: 0; }
+  100% { transform: scaleX(1) scale(1.06); opacity: 1; }
+}
+
+.rank-warp-ring {
+  position: absolute;
+  inset: 8px;
+  border-radius: 999px;
+  border: 2px solid rgba(0, 245, 255, 0.7);
+  pointer-events: none;
+  animation: rank-warp-ring var(--motion-rank-ring) ease-out 1 forwards;
+}
+
+.rank-starburst {
+  position: absolute;
+  inset: 18px;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, transparent 46%, rgba(251, 191, 36, 0.7) 50%, transparent 54%),
+    linear-gradient(0deg, transparent 46%, rgba(0, 245, 255, 0.55) 50%, transparent 54%),
+    linear-gradient(45deg, transparent 46%, rgba(34, 197, 94, 0.45) 50%, transparent 54%),
+    linear-gradient(-45deg, transparent 46%, rgba(251, 191, 36, 0.4) 50%, transparent 54%);
+  animation: rank-starburst var(--motion-rank-ring) ease-out 1 forwards;
+}
+
+@keyframes rank-warp-ring {
+  0% { transform: scale(0.55); opacity: 0.85; }
+  100% { transform: scale(1.35); opacity: 0; }
+}
+
+@keyframes rank-starburst {
+  0% { transform: scale(0.4); opacity: 0.7; }
+  100% { transform: scale(1.2); opacity: 0; }
+}
+
 /* Respect reduced motion — disable non-essential motion entirely */
 @media (prefers-reduced-motion: reduce) {
   .idle-glow,
   .animate-confetti,
   .starfield-layer-1,
   .starfield-layer-2,
-  .starfield-layer-3 {
+  .starfield-layer-3,
+  .ship-liftoff,
+  .ship-spark,
+  .rank-spark,
+  .rank-badge-out,
+  .rank-badge-in,
+  .rank-warp-ring,
+  .rank-starburst {
     animation: none;
+  }
+
+  .ship-gauge-fill,
+  .rank-bar-fill {
+    transition: none;
+  }
+
+  .ship-spark,
+  .rank-spark,
+  .rank-warp-ring,
+  .rank-starburst {
+    display: none;
+  }
+
+  .rank-badge-out {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+
+  .rank-badge-in {
+    opacity: 1;
+    transform: none;
   }
 
   .animate-slide-hand {

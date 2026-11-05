@@ -16,7 +16,8 @@ import type {
   StoryId,
   MissionId
 } from '../types';
-import { storageService, createInitialProgress, mergeDeviceSettings } from '../services/storage';
+import { storageService, createInitialProgress, mergeDeviceSettings, withShipProgress } from '../services/storage';
+import { applyStoryShipEnergy, hydrateShipProgress } from '../data/ship';
 import { RANK_ORDER, RANK_THRESHOLDS } from '../types';
 
 interface AppState {
@@ -94,7 +95,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       for (const profile of profiles) {
         const progress = await storageService.getProgress(profile.id);
         if (progress) {
-          allProgress[profile.id] = progress;
+          allProgress[profile.id] = withShipProgress(progress);
         }
       }
 
@@ -152,6 +153,8 @@ export const useAppStore = create<AppState>((set, get) => ({
     if (!progress) {
       progress = createInitialProgress(profileId);
       await storageService.saveProgress(progress);
+    } else {
+      progress = withShipProgress(progress);
     }
 
     // Save active profile to settings
@@ -303,15 +306,19 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     // Award fuel credits for completion (base + bonus for words decoded)
     const fuelEarned = 10 + cleanWords.length * 2;
+    const isNewStory = !activeProgress.storiesCompleted.includes(storyId);
+    const ship = applyStoryShipEnergy(hydrateShipProgress(activeProgress), isNewStory);
 
     const newProgress: ProfileProgress = {
       ...activeProgress,
-      storiesCompleted: activeProgress.storiesCompleted.includes(storyId)
-        ? activeProgress.storiesCompleted
-        : [...activeProgress.storiesCompleted, storyId],
+      storiesCompleted: isNewStory
+        ? [...activeProgress.storiesCompleted, storyId]
+        : activeProgress.storiesCompleted,
       fuelCredits: activeProgress.fuelCredits + fuelEarned,
       sessionHistory: [...activeProgress.sessionHistory, sessionRecord],
-      currentRank: calculateRank(activeProgress.fuelCredits + fuelEarned)
+      currentRank: calculateRank(activeProgress.fuelCredits + fuelEarned),
+      shipEnergy: ship.next.shipEnergy,
+      shipPartsUnlocked: ship.next.shipPartsUnlocked
     };
 
     await storageService.saveProgress(newProgress);
