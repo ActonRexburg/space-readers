@@ -3,6 +3,7 @@
  * OpenDyslexic on story sentences when enabled.
  */
 import { test, expect, type Page } from '@playwright/test';
+import { solveMathGate } from './parent-gate';
 
 async function seedPlayer(page: Page) {
   await page.addInitScript(() => {
@@ -45,16 +46,7 @@ async function seedPlayer(page: Page) {
 
 async function openParentDashboard(page: Page) {
   await page.getByTestId('parent-zone-button').click();
-  await page.waitForTimeout(400);
-  const question = await page.locator('[data-testid="parent-gate"]').innerText();
-  const match = question.match(/(\d+)\s*\+\s*(\d+)/);
-  expect(match, `math question parseable: ${question}`).toBeTruthy();
-  const answer = String(Number(match![1]) + Number(match![2]));
-  for (const digit of answer) {
-    await page.locator(`[data-testid="parent-gate-key-${digit}"]`).click();
-  }
-  await page.locator('[data-testid="parent-gate-key-✓"]').click();
-  await expect(page.locator('[data-testid="parent-dashboard"]')).toBeVisible();
+  await solveMathGate(page);
 }
 
 test('dyslexia font toggle is off by default and preview uses OpenDyslexic', async ({ page }) => {

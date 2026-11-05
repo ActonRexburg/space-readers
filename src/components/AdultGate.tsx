@@ -17,14 +17,20 @@ interface AdultGateProps {
   mode?: 'pin' | 'math';
 }
 
-// Generate a simple math problem for verification
+/** 3–9 inclusive — products 9–81, harder to guess than 5+5. */
+function digitFactor(): number {
+  return Math.floor(Math.random() * 7) + 3;
+}
+
 function generateMathProblem(): { question: string; answer: number } {
-  const a = Math.floor(Math.random() * 10) + 5;  // 5-14
-  const b = Math.floor(Math.random() * 10) + 5;  // 5-14
-  return {
-    question: `${a} + ${b} = ?`,
-    answer: a + b
-  };
+  if (Math.random() < 0.5) {
+    const a = Math.floor(Math.random() * 10) + 5;
+    const b = Math.floor(Math.random() * 10) + 5;
+    return { question: `${a} + ${b} = ?`, answer: a + b };
+  }
+  const a = digitFactor();
+  const b = digitFactor();
+  return { question: `${a} × ${b} = ?`, answer: a * b };
 }
 
 export function AdultGate({
@@ -118,7 +124,10 @@ export function AdultGate({
         </p>
 
         {mode === 'math' && (
-          <div className="text-3xl font-bold text-center text-star-gold mb-4">
+          <div
+            className="text-3xl font-bold text-center text-star-gold mb-4"
+            data-testid="parent-gate-question"
+          >
             {mathProblem.question}
           </div>
         )}

@@ -8,6 +8,7 @@
  * Parent Zone Audio test is sequential: TTS onend → clips onend → beep.
  */
 import { test, expect, type Page } from '@playwright/test';
+import { solveMathGate } from './parent-gate';
 
 async function seedPlayers(page: Page) {
   await page.addInitScript(() => {
@@ -228,16 +229,7 @@ test('Parent Zone Audio test reports fetch/decode/advanced evidence', async ({ p
   await waitForSwControl(page);
 
   await page.getByTestId('parent-zone-button').click();
-  await page.waitForTimeout(400);
-  const question = await page.locator('[data-testid="parent-gate"]').innerText();
-  const match = question.match(/(\d+)\s*\+\s*(\d+)/);
-  expect(match, `math question parseable: ${question}`).toBeTruthy();
-  const answer = String(Number(match![1]) + Number(match![2]));
-  for (const digit of answer) {
-    await page.locator(`[data-testid="parent-gate-key-${digit}"]`).click();
-  }
-  await page.locator('[data-testid="parent-gate-key-✓"]').click();
-  await expect(page.locator('[data-testid="parent-dashboard"]')).toBeVisible();
+  await solveMathGate(page);
 
   const audioBtn = page.getByTestId('audio-test');
   await expect(audioBtn).toBeVisible();
