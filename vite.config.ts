@@ -45,12 +45,12 @@ export default defineConfig({
       workbox: {
         // Bump so Chromebooks stuck on an old SW drop stale caches on activate.
         // dyslexia = self-hosted OpenDyslexic woff2 in public/fonts (SIL OFL).
-        cacheId: 'sr-2026-11-story-art',
+        cacheId: 'sr-2026-11-zib-wave',
         // Deletes leftover audio-cache* runtime caches on activate. public/
         // copies next to sw.js so this relative importScripts URL resolves.
         importScripts: ['sw-purge-audio-cache.js'],
         // Include core app assets in precache (not videos - too large).
-        // webp = avatars + premade story page art (~16KB each, 59 files).
+        // webp = avatars, story art, and the Bridge Zib wave figure.
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,jpg,webp}'],
         // woff2 includes public/fonts/OpenDyslexic-*.woff2 (SIL OFL).
         // Exclude large video files from precache

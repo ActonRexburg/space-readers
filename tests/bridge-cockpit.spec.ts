@@ -100,7 +100,7 @@ test('Bridge cockpit has the ship, Zib line, console, and no space-cards', async
   await expect(page.locator('.ship-part-boosters')).toHaveCount(1);
   await expect(page.getByTestId('cockpit-dashboard')).toBeVisible();
   await expect(page.getByTestId('cockpit-overhead')).toBeVisible();
-  await expect(page.locator('.bridge-zib-figure')).toHaveAttribute('src', /zib-stand\.webp/);
+  await expect(page.locator('.bridge-zib-figure')).toHaveAttribute('src', /zib-wave\.webp/);
   await expect(page.getByTestId('bridge-rank-card')).toBeVisible();
   await expect(page.getByTestId('rank-badge-Cadet')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'First Contact' })).toBeVisible();
@@ -243,12 +243,27 @@ async function assertZibCompanionScale(page: Page) {
   const ship = await page.getByTestId('zib-ship').boundingBox();
   const zib = await page.locator('.bridge-zib-figure').boundingBox();
   const planet = await page.locator('.hero-planet').boundingBox();
-  expect(ship && zib && planet).toBeTruthy();
+  const speech = await page.locator('.zib-speech').boundingBox();
+  expect(ship && zib && planet && speech).toBeTruthy();
   const ratio = zib!.height / ship!.height;
   expect(ratio, `zib/ship height ${ratio}`).toBeGreaterThanOrEqual(0.52);
   expect(ratio, `zib/ship height ${ratio}`).toBeLessThanOrEqual(0.68);
+  const crop = await page.locator('.bridge-zib-figure').evaluate((img: HTMLImageElement) => {
+    const box = img.getBoundingClientRect();
+    return {
+      natural: img.naturalWidth / img.naturalHeight,
+      display: box.width / box.height
+    };
+  });
+  expect(
+    Math.abs(crop.natural - crop.display),
+    `zib cropped (natural ${crop.natural}, display ${crop.display})`
+  ).toBeLessThan(0.08);
   expect(boxesOverlap(zib!, ship!), 'zib overlaps ship').toBe(false);
-  expect(boxesOverlap(zib!, planet!), 'zib overlaps planet').toBe(false);
+  expect(boxesOverlap(speech!, ship!), 'speech overlaps ship').toBe(false);
+  const feet = zib!.y + zib!.height;
+  expect(feet, 'feet above planet').toBeGreaterThan(planet!.y - 12);
+  expect(feet, 'feet below planet').toBeLessThan(planet!.y + planet!.height + 8);
 }
 
 for (let n = 0; n <= SHIP_PARTS.length; n += 1) {

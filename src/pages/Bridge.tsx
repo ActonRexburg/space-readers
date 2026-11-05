@@ -30,7 +30,7 @@ import { RankBadge } from '../components/RankBadge';
 import { hydrateShipProgress, SHIP_ENERGY_MAX } from '../data/ship';
 import { resolveAssetUrl } from '../utils/assets';
 
-const ZIB_STAND = resolveAssetUrl('zib-stand.webp');
+const ZIB_WAVE = resolveAssetUrl('zib-wave.webp');
 
 export function Bridge() {
   const navigate = useNavigate();
@@ -241,7 +241,7 @@ export function Bridge() {
                 <SpeakButton text={zibDialogue} voice="zib" />
               </div>
               <img
-                src={ZIB_STAND}
+                src={ZIB_WAVE}
                 alt=""
                 className="bridge-zib-figure"
                 draggable={false}
