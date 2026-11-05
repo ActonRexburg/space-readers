@@ -903,6 +903,43 @@ html.dyslexia-font .reading-text {
   max-width: 320px;
 }
 
+.zib-ship-hero {
+  gap: 0.2rem;
+  height: 100%;
+}
+
+.zib-ship-hero .zib-ship-svg {
+  width: auto;
+  height: 100%;
+  max-width: none;
+  max-height: 100%;
+}
+
+.zib-ship-upright {
+  height: 100%;
+  width: auto;
+}
+
+.zib-ship-upright .zib-ship-svg {
+  height: 100%;
+  width: auto;
+  overflow: visible;
+}
+
+.ship-gauge-fill-vert {
+  transform-box: fill-box;
+  transform-origin: center bottom;
+}
+
+.ship-engine-flare-down {
+  transform-origin: center top;
+  transform: scaleY(0.35);
+}
+
+.ship-engines-on .ship-engine-flare-down {
+  transform: scaleY(1);
+}
+
 .zib-ship-svg {
   display: block;
   overflow: visible;
@@ -944,7 +981,7 @@ html.dyslexia-font .reading-text {
   border: 1px solid rgba(0, 245, 255, 0.45);
 }
 
-.ship-gauge-fill {
+.ship-gauge .ship-gauge-fill {
   height: 100%;
   width: 100%;
   transform: scaleX(0);
@@ -1140,6 +1177,7 @@ html.dyslexia-font .reading-text {
   }
 
   .ship-gauge-fill,
+  .ship-gauge-fill-vert,
   .rank-bar-fill {
     transition: none;
   }
@@ -1330,6 +1368,713 @@ button, .touch-button, .word-highlight, .profile-card, .interest-tile {
   to {
     opacity: 1;
     transform: scale(1) translateY(0);
+  }
+}
+
+/* ============================================
+   BRIDGE COCKPIT (one scene, not three cards)
+   ============================================ */
+
+.bridge-cockpit {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  min-height: 100dvh;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "map map map"
+    "player rank mission";
+  padding-top: env(safe-area-inset-top);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  background: var(--color-space-dark);
+}
+
+.bridge-hud-bar {
+  display: none;
+}
+
+.bridge-console-bar {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(5, 5, 16, 0.15) 0%,
+    rgba(5, 8, 22, 0.82) 28%,
+    rgba(6, 10, 28, 0.94) 100%
+  );
+  border-top: 1px solid rgba(0, 245, 255, 0.22);
+  box-shadow: 0 -12px 28px rgba(0, 0, 0, 0.35);
+}
+
+.star-map {
+  grid-area: map;
+  position: relative;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: minmax(8rem, 1fr) minmax(0, 1.7fr) minmax(8rem, 1fr);
+  grid-template-areas: "done current upcoming";
+  align-items: center;
+  min-height: 0;
+  min-width: 0;
+  padding: 0.4rem 1.2rem 0;
+  overflow: visible;
+}
+
+.star-map-done {
+  grid-area: done;
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  gap: clamp(1rem, 3vw, 2.8rem);
+  padding: 0 0.5rem;
+  z-index: 2;
+  width: 100%;
+}
+
+.star-map-current {
+  grid-area: current;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  z-index: 3;
+  min-width: 0;
+  height: 100%;
+}
+
+.star-map-upcoming {
+  grid-area: upcoming;
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  gap: clamp(1rem, 3.4vw, 2.8rem);
+  padding: 0 0.5rem;
+  z-index: 2;
+  width: 100%;
+}
+
+.star-map-done .planet-node:nth-child(1) {
+  transform: translateY(14%);
+}
+
+.star-map-upcoming .planet-node:nth-child(1) {
+  transform: translateY(-18%);
+}
+
+.star-map-upcoming .planet-node:nth-child(2) {
+  transform: translateY(8%);
+}
+
+.star-map-path {
+  position: absolute;
+  inset: 12% 4% 18% 4%;
+  width: auto;
+  height: auto;
+  pointer-events: none;
+  z-index: 1;
+  overflow: visible;
+}
+
+.star-map-path-v {
+  display: none;
+}
+
+.planet-node {
+  position: relative;
+  width: clamp(72px, 9vw, 124px);
+  height: clamp(72px, 9vw, 124px);
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.planet-node:disabled {
+  cursor: default;
+  opacity: 0.72;
+}
+
+.planet-node-locked {
+  filter: grayscale(0.25) brightness(0.72);
+}
+
+.planet-glyph {
+  width: 100%;
+  height: 100%;
+  display: block;
+  filter: drop-shadow(0 0 8px rgba(0, 245, 255, 0.25));
+}
+
+.planet-check,
+.planet-lock {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.planet-check {
+  width: 26px;
+  height: 26px;
+  right: -4px;
+  bottom: -2px;
+  background: #4ade80;
+  border: 2px solid #052e16;
+}
+
+.planet-lock {
+  width: 36px;
+  height: 36px;
+  right: -8px;
+  top: -8px;
+  background: rgba(8, 12, 28, 0.92);
+  border: 1px solid rgba(148, 163, 184, 0.7);
+}
+
+.star-map-hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto auto;
+  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "ship zib"
+    "planet zib";
+  align-items: end;
+  justify-content: center;
+  column-gap: 0.85rem;
+  width: min(72vw, 880px);
+  height: 64vh;
+  overflow: visible;
+}
+
+.hero-dock {
+  display: contents;
+}
+
+.hero-planet {
+  grid-area: planet;
+  position: relative;
+  width: min(24vh, 220px);
+  aspect-ratio: 1;
+  margin-top: -18%;
+  z-index: 1;
+  justify-self: center;
+}
+
+.hero-planet::after {
+  content: '';
+  position: absolute;
+  inset: -12%;
+  border: 2px solid rgba(0, 245, 255, 0.7);
+  border-radius: 50%;
+  box-shadow: 0 0 22px rgba(0, 245, 255, 0.28);
+  pointer-events: none;
+}
+
+.hero-planet .planet-glyph {
+  width: 100%;
+  height: 100%;
+}
+
+.hero-ship {
+  grid-area: ship;
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  pointer-events: none;
+}
+
+.hero-energy {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+
+.hero-zib {
+  grid-area: zib;
+  position: relative;
+  z-index: 2;
+  align-self: end;
+  height: auto;
+  max-height: 88%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.4rem;
+  margin: 0 0 6% 0.4rem;
+  pointer-events: none;
+}
+
+.bridge-zib-figure {
+  height: 78%;
+  width: auto;
+  max-height: 34vh;
+  object-fit: contain;
+  pointer-events: none;
+  filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.55));
+}
+
+.zib-speech {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  max-width: 13rem;
+  background: #f8fafc;
+  color: #0f172a;
+  border-radius: 1rem;
+  padding: 0.4rem 0.55rem 0.4rem 0.75rem;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+  position: relative;
+  z-index: 3;
+  flex-shrink: 0;
+}
+
+.zib-speech::after {
+  content: '';
+  position: absolute;
+  right: 1.6rem;
+  bottom: -8px;
+  border-width: 8px 7px 0 7px;
+  border-style: solid;
+  border-color: #f8fafc transparent transparent transparent;
+}
+
+.zib-speech p {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.25;
+  font-weight: 600;
+}
+
+.zib-speech .speak-btn {
+  width: 44px;
+  min-width: 44px;
+  border-color: rgba(14, 116, 144, 0.45);
+  background: rgba(8, 145, 178, 0.12);
+  color: #0e7490;
+  box-shadow: none;
+}
+
+.bridge-player {
+  grid-area: player;
+  position: relative;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-width: 0;
+  padding: 0.7rem 0.9rem 0.8rem 1.15rem;
+}
+
+.bridge-player-name {
+  font-weight: 700;
+  font-size: 1.28rem;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 10rem;
+}
+
+.bridge-player-stats {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.bridge-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  min-height: 44px;
+  padding: 0 0.15rem;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font-size: 0.95rem;
+}
+
+.bridge-rank {
+  grid-area: rank;
+  position: relative;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 44px;
+  min-width: 0;
+  padding: 0.5rem 0.75rem;
+  background: transparent;
+  border: 0;
+  color: inherit;
+}
+
+.bridge-rank-name {
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: var(--color-neon-cyan);
+  text-align: left;
+}
+
+.bridge-rank-bar {
+  display: block;
+  width: 7.5rem;
+  height: 8px;
+  margin-top: 0.25rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.bridge-rank-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--color-neon-cyan), #22c55e);
+}
+
+.bridge-tools {
+  position: absolute;
+  top: max(0.45rem, env(safe-area-inset-top));
+  right: max(0.55rem, env(safe-area-inset-right));
+  z-index: 6;
+  display: flex;
+  align-items: flex-end;
+  gap: 0.55rem;
+}
+
+.bridge-tool {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.bridge-tool-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: rgba(224, 253, 255, 0.9);
+  line-height: 1;
+}
+
+.bridge-tools .bridge-icon-btn,
+.bridge-tools [data-testid="parent-zone-button"] {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 245, 255, 0.45);
+  background: rgba(5, 10, 24, 0.72);
+  color: var(--color-neon-cyan);
+}
+
+.bridge-mission {
+  grid-area: mission;
+  position: relative;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-width: 0;
+  padding: 0.55rem 1rem 0.8rem;
+}
+
+.bridge-mission-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.bridge-mission-title h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #e2e8f0;
+}
+
+.bridge-mission-actions {
+  display: flex;
+  align-items: stretch;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 42rem;
+}
+
+.bridge-start {
+  flex: 1.8;
+  min-height: 64px;
+  border: 0;
+  border-radius: 0.85rem;
+  background: linear-gradient(180deg, #fcd34d 0%, #f59e0b 100%);
+  color: #1c1917;
+  font-size: 1.28rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  box-shadow: 0 0 22px rgba(251, 191, 36, 0.45);
+  cursor: pointer;
+}
+
+.bridge-start:hover {
+  filter: brightness(1.05);
+}
+
+.bridge-briefing {
+  flex: 0.75;
+  min-height: 64px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0 1.35rem;
+  border-radius: 0.85rem;
+  border: 2px solid #00f5ff;
+  background: rgba(8, 36, 52, 0.92);
+  color: #e0fdff;
+  font-size: 1.12rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cockpit-frame {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.cockpit-frame-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.cockpit-vignette {
+  position: absolute;
+  inset: 0;
+  box-shadow:
+    inset 0 0 48px 18px rgba(5, 5, 16, 0.55),
+    inset 0 0 0 1px rgba(0, 245, 255, 0.06);
+  border-radius: 1.6rem;
+}
+
+@media (min-width: 1600px) {
+  .star-map-hero {
+    width: min(70vw, 920px);
+    height: 66vh;
+  }
+
+  .hero-planet {
+    width: min(26vh, 250px);
+  }
+}
+
+/* Phone portrait: HUD on top, map vertical, thumb-reach CTAs */
+@media (max-width: 767px) and (orientation: portrait) {
+  .bridge-cockpit {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "player rank tools"
+      "map map map"
+      "mission mission mission";
+  }
+
+  .bridge-hud-bar {
+    display: block;
+    grid-column: 1 / -1;
+    grid-row: 1;
+    z-index: 2;
+    pointer-events: none;
+    background: linear-gradient(
+      180deg,
+      rgba(6, 10, 28, 0.9) 0%,
+      rgba(6, 10, 28, 0.55) 70%,
+      transparent 100%
+    );
+    border-bottom: 1px solid rgba(0, 245, 255, 0.16);
+  }
+
+  .bridge-console-bar {
+    grid-row: 3;
+  }
+
+  .bridge-tools {
+    position: static;
+    grid-area: tools;
+    justify-self: end;
+    align-self: center;
+    padding: 0.35rem 0.45rem 0.35rem 0;
+  }
+
+  .bridge-player {
+    padding: 0.4rem 0.4rem 0.4rem 0.65rem;
+  }
+
+  .bridge-player-name {
+    max-width: 5.5rem;
+    font-size: 0.95rem;
+  }
+
+  .bridge-rank {
+    justify-self: center;
+  }
+
+  .bridge-rank-bar {
+    width: 4.2rem;
+  }
+
+  .star-map {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "upcoming"
+      "current"
+      "done";
+    padding: 0.25rem 0.5rem;
+  }
+
+  .star-map-path-h {
+    display: none;
+  }
+
+  .star-map-path-v {
+    display: block;
+    inset: 4% 18%;
+  }
+
+  .star-map-upcoming,
+  .star-map-done {
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.7rem;
+    padding: 0.2rem 0;
+  }
+
+  .star-map-upcoming .planet-node:nth-child(1),
+  .star-map-upcoming .planet-node:nth-child(2),
+  .star-map-done .planet-node:nth-child(1) {
+    transform: none;
+  }
+
+  .planet-node {
+    width: 56px;
+    height: 56px;
+  }
+
+  .star-map-hero {
+    width: min(96vw, 400px);
+    height: min(50vh, 400px);
+    column-gap: 0.35rem;
+  }
+
+  .hero-planet {
+    width: min(16vh, 128px);
+    margin-top: -16%;
+  }
+
+  .hero-zib {
+    margin: 0 0 2% 0;
+    max-height: 72%;
+  }
+
+  .bridge-rank-name {
+    font-size: 0.9rem;
+  }
+
+  .bridge-rank-bar {
+    width: 3.4rem;
+  }
+
+  .bridge-zib-figure {
+    max-height: 22vh;
+  }
+
+  .zib-speech {
+    max-width: 11rem;
+  }
+
+  .zib-speech p {
+    font-size: 0.8rem;
+  }
+
+  .bridge-tool-label {
+    font-size: 0.62rem;
+  }
+
+  .bridge-mission-actions {
+    flex-direction: column;
+    max-width: none;
+  }
+
+  .bridge-start {
+    width: 100%;
+    min-height: 56px;
+    font-size: 1.15rem;
+  }
+
+  .bridge-briefing {
+    width: 100%;
+    min-height: 48px;
+  }
+
+  .cockpit-vignette {
+    border-radius: 1rem;
+  }
+}
+
+@media (max-height: 500px) {
+  .star-map-hero {
+    height: min(52vh, 250px);
+  }
+
+  .hero-planet {
+    width: min(16vh, 110px);
+  }
+
+  .bridge-zib-figure {
+    max-height: 16vh;
+  }
+
+  .zib-speech p {
+    font-size: 0.75rem;
+  }
+
+  .bridge-mission {
+    padding: 0.25rem 0.6rem 0.35rem;
+  }
+
+  .bridge-start,
+  .bridge-briefing {
+    min-height: 44px;
   }
 }
 

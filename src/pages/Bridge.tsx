@@ -1,16 +1,17 @@
 /**
- * Bridge Page (Home Screen)
+ * Bridge — the ship's cockpit home screen.
  *
- * The ship's bridge where the player sees their mission and Zib.
+ * One full-bleed starfield scene: windshield, star-map path, docked ship,
+ * and a single low-profile console. No separate stat/ship/mission cards.
  */
 
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../stores/appStore';
 import { Starfield } from '../components/Starfield';
-import { Card } from '../components/Card';
+import { CockpitFrame } from '../components/CockpitFrame';
+import { StarMap } from '../components/StarMap';
 import { Button } from '../components/Button';
-import { Zib } from '../components/Zib';
 import { IntroVideo } from '../components/IntroVideo';
 import { useZibClips } from '../components/ZibClip';
 import { useZibOverlayLock } from '../hooks/useZibOverlayLock';
@@ -19,7 +20,7 @@ import { ParentZone } from '../components/ParentZone';
 import { getAudioService } from '../services/audio';
 import { getAvatarById, DEFAULT_AVATAR } from '../data/avatars';
 import { AvatarImage } from '../components/AvatarImage';
-import { getNextMission } from '../data/missions';
+import { getMissionMap, getNextMission } from '../data/missions';
 import { UI, zibWordsKnownLine, ZIB } from '../data/voiceLines';
 import { RANK_THRESHOLDS } from '../types';
 import type { Rank } from '../types';
@@ -27,6 +28,9 @@ import { useIdleGlow } from '../hooks/useIdleGlow';
 import { ZibShip } from '../components/ZibShip';
 import { RankBadge } from '../components/RankBadge';
 import { hydrateShipProgress, SHIP_ENERGY_MAX } from '../data/ship';
+import { resolveAssetUrl } from '../utils/assets';
+
+const ZIB_STAND = resolveAssetUrl('zib-stand.webp');
 
 export function Bridge() {
   const navigate = useNavigate();
@@ -44,7 +48,15 @@ export function Bridge() {
       activeProgress.currentRank
     );
   }, [activeProgress]);
+  const missionMap = useMemo(() => {
+    if (!activeProgress) return [];
+    return getMissionMap(
+      activeProgress.missionsCompleted,
+      activeProgress.currentRank
+    );
+  }, [activeProgress]);
   // Start Mission is the only idle-glow on the Bridge (none if every mission is done).
+  const currentNode = missionMap.find((n) => n.status === 'current') ?? null;
   const idleGlow = useIdleGlow(!!nextMission && !showRankInfo && !showIntroVideo);
 
   useEffect(() => {
@@ -116,151 +128,182 @@ export function Bridge() {
     }
   };
 
+  const handleOpenMission = (missionId: string) => {
+    navigate(`/mission/${missionId}`);
+  };
+
+  const missionSpeak = nextMission
+    ? `${nextMission.title}. ${nextMission.description}`
+    : UI.allDone;
+
   return (
-    <div className="min-h-screen flex flex-col relative overflow-hidden bg-space-dark">
+    <div className="bridge-cockpit" data-testid="bridge-cockpit">
       <Starfield />
+      <CockpitFrame />
+      <div className="bridge-hud-bar" aria-hidden="true" />
+      <div className="bridge-console-bar" aria-hidden="true" />
 
-      <header className="relative z-10 p-4 flex items-center justify-between border-b border-neon-cyan/20 bg-space-deep/80 backdrop-blur-sm">
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-3 hover:bg-neon-cyan/10 rounded-lg p-2 -m-2 transition-colors"
-          aria-label="Switch player"
-        >
-          <AvatarImage avatar={avatar} size="sm" alt={activeProfile.name} />
-          <div className="text-left text-lg font-semibold">{activeProfile.name}</div>
-        </button>
-
-        <div className="flex items-center gap-3">
-          <ParentZone />
-          <button
-            type="button"
-            onClick={() => getAudioService().speakText(UI.fuel, { voice: 'control' })}
-            className="flex items-center gap-1 px-3 py-2 min-h-[44px] rounded-full border border-fuel-orange/50 bg-fuel-orange/10"
-            aria-label="Fuel"
-          >
-            <span className="text-xl">🔥</span>
-            <span className="font-bold text-lg text-fuel-orange">{activeProgress.fuelCredits}</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => getAudioService().speakText(UI.stars, { voice: 'control' })}
-            className="flex items-center gap-1 px-3 py-2 min-h-[44px] rounded-full border border-star-gold/50 bg-star-gold/10"
-            aria-label="Stars"
-          >
-            <span className="text-xl">⭐</span>
-            <span className="font-bold text-lg text-star-gold">{activeProgress.starCredits}</span>
-          </button>
-        </div>
-      </header>
-
-      <main className="flex-1 relative z-10 p-6 overflow-y-auto">
-        <div className="max-w-xl mx-auto space-y-8">
-
-          <div data-testid="bridge-rank-card">
-          <Card className="relative overflow-hidden">
+      <div className="bridge-player">
+        <AvatarImage avatar={avatar} size="hud" alt="" />
+        <div className="bridge-player-meta">
+          <div className="bridge-player-name heading-text">{activeProfile.name}</div>
+          <div className="bridge-player-stats">
             <button
-              onClick={() => setShowRankInfo(true)}
-              className="w-full"
-              aria-label="Space ranks"
+              type="button"
+              onClick={() => getAudioService().speakText(UI.fuel, { voice: 'control' })}
+              className="bridge-stat"
+              aria-label="Fuel"
             >
-              <div className="flex items-center justify-between mb-3">
-                <span className="flex items-center gap-2">
-                  <RankBadge rank={activeProgress.currentRank} size="sm" />
-                  <span className="font-bold text-xl text-star-gold">{activeProgress.currentRank}</span>
-                </span>
-                {rankProgress.nextRank && (
-                  <span className="flex items-center gap-1 text-lg text-white/80">
-                    <span className="text-xl">➡️</span>
-                    <span>{rankProgress.nextRank}</span>
-                  </span>
-                )}
-              </div>
-              <div className="h-4 bg-white/10 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-star-gold to-fuel-orange transition-all duration-500"
-                  style={{ width: `${rankProgress.percent}%` }}
-                />
-              </div>
+              <span aria-hidden="true">🔥</span>
+              <span className="font-bold text-fuel-orange">{activeProgress.fuelCredits}</span>
             </button>
-          </Card>
+            <button
+              type="button"
+              onClick={() => getAudioService().speakText(UI.stars, { voice: 'control' })}
+              className="bridge-stat"
+              aria-label="Stars"
+            >
+              <span aria-hidden="true">⭐</span>
+              <span className="font-bold text-star-gold">{activeProgress.starCredits}</span>
+            </button>
           </div>
-
-          <div data-testid="bridge-ship-card">
-            <Card className="p-5">
-              <div className="flex flex-col items-center gap-3">
-                <ZibShip
-                  energy={ship.shipEnergy}
-                  parts={ship.shipPartsUnlocked}
-                  phase="idle"
-                  size="sm"
-                />
-                <div
-                  className="text-lg font-bold text-neon-cyan"
-                  data-testid="bridge-ship-energy"
-                >
-                  {ship.shipEnergy} / {SHIP_ENERGY_MAX}
-                </div>
-              </div>
-            </Card>
-          </div>
-
-          <Card className="flex flex-col sm:flex-row items-center gap-5 p-6">
-            <Zib
-              expression={activeProgress.alienLearnedWords.length > 0 ? 'happy' : 'curious'}
-              size="md"
-            />
-            <SpokenLine
-              text={zibDialogue}
-              voice="zib"
-              className="flex-1"
-              textClassName="text-xl text-cyan-100 leading-snug"
-            />
-          </Card>
-
-          <button
-            onClick={() => setShowIntroVideo(true)}
-            className="w-full flex items-center justify-center gap-3 p-4 min-h-[56px] rounded-lg border border-neon-cyan/30 bg-neon-cyan/5 hover:bg-neon-cyan/10 hover:border-neon-cyan/50 transition-all text-lg text-neon-cyan"
-          >
-            <span className="text-2xl">📺</span>
-            <span>Briefing</span>
-          </button>
-
-          {nextMission ? (
-            <Card glow="gold" padding="lg" className="text-center space-y-5">
-              {/* One 🔊 for the heading block — it already reads title + description. */}
-              <div className="flex items-center justify-center gap-3">
-                <h2 className="text-3xl font-bold">{nextMission.title}</h2>
-                <SpeakButton
-                  voice="control"
-                  text={`${nextMission.title}. ${nextMission.description}`}
-                />
-              </div>
-              <p className="instruction-text text-xl text-white leading-snug">{nextMission.description}</p>
-
-              <Button
-                variant="success"
-                size="lg"
-                glow
-                onClick={handleStartMission}
-                className={`w-full text-2xl py-5 ${idleGlow}`}
-              >
-                🚀 Start Mission
-              </Button>
-            </Card>
-          ) : (
-            <Card padding="lg" className="text-center space-y-4">
-              <div className="text-5xl">🎉</div>
-              <SpokenLine
-                text={UI.allDone}
-                voice="control"
-                heading
-                className="justify-center"
-                textClassName="text-2xl font-bold"
-              />
-            </Card>
-          )}
         </div>
-      </main>
+      </div>
+
+      <button
+        type="button"
+        onClick={() => setShowRankInfo(true)}
+        className="bridge-rank"
+        data-testid="bridge-rank-card"
+        aria-label="Space ranks"
+      >
+        <RankBadge rank={activeProgress.currentRank} size="sm" />
+        <div className="bridge-rank-meta">
+          <span className="bridge-rank-name heading-text">{activeProgress.currentRank}</span>
+          <span className="bridge-rank-bar" aria-hidden="true">
+            <span
+              className="bridge-rank-fill"
+              style={{ width: `${rankProgress.percent}%` }}
+            />
+          </span>
+        </div>
+      </button>
+
+      <div className="bridge-tools">
+        <div className="bridge-tool">
+          <ParentZone className="bridge-icon-btn" />
+          <span className="bridge-tool-label">Parents</span>
+        </div>
+        <div className="bridge-tool">
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="bridge-icon-btn bridge-switch"
+            aria-label="Switch player"
+            data-testid="bridge-switch-player"
+          >
+            <SwitchPlayerIcon />
+          </button>
+          <span className="bridge-tool-label">Switch</span>
+        </div>
+      </div>
+
+      <StarMap
+        nodes={missionMap}
+        onOpenMission={handleOpenMission}
+        docked={
+          <>
+            <div className="hero-ship">
+              <ZibShip
+                energy={ship.shipEnergy}
+                parts={ship.shipPartsUnlocked}
+                phase="idle"
+                size="hero"
+                layout="upright"
+              />
+              <div className="hero-energy" data-testid="bridge-ship-energy">
+                {ship.shipEnergy} / {SHIP_ENERGY_MAX}
+              </div>
+            </div>
+            <div className="hero-zib">
+              <div className="zib-speech">
+                <p className="instruction-text">{zibDialogue}</p>
+                <SpeakButton text={zibDialogue} voice="zib" />
+              </div>
+              <img
+                src={ZIB_STAND}
+                alt=""
+                className="bridge-zib-figure"
+                draggable={false}
+              />
+            </div>
+          </>
+        }
+      />
+
+      <div className="bridge-mission">
+        {nextMission ? (
+          <>
+            <div className="bridge-mission-title">
+              <h2 className="heading-text">{nextMission.title}</h2>
+              <SpeakButton voice="control" text={missionSpeak} />
+            </div>
+            <div className="bridge-mission-actions">
+              <button
+                type="button"
+                onClick={handleStartMission}
+                className={`bridge-start ${idleGlow}`}
+              >
+                START MISSION
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowIntroVideo(true)}
+                className="bridge-briefing"
+              >
+                <PlayIcon />
+                <span>Briefing</span>
+              </button>
+            </div>
+          </>
+        ) : currentNode && !currentNode.completed ? (
+          <>
+            <div className="bridge-mission-title">
+              <h2 className="heading-text">{currentNode.mission.title}</h2>
+              <SpeakButton
+                voice="control"
+                text={`${currentNode.mission.title}. ${currentNode.mission.description}`}
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowIntroVideo(true)}
+              className="bridge-briefing"
+            >
+              <PlayIcon />
+              <span>Briefing</span>
+            </button>
+          </>
+        ) : (
+          <>
+            <SpokenLine
+              text={UI.allDone}
+              voice="control"
+              heading
+              className="bridge-all-done"
+              textClassName="text-2xl font-bold"
+            />
+            <button
+              type="button"
+              onClick={() => setShowIntroVideo(true)}
+              className="bridge-briefing"
+            >
+              <PlayIcon />
+              <span>Briefing</span>
+            </button>
+          </>
+        )}
+      </div>
 
       {showRankInfo && (
         <div
@@ -303,5 +346,24 @@ export function Bridge() {
         />
       )}
     </div>
+  );
+}
+
+function SwitchPlayerIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor">
+      <circle cx="9" cy="8" r="3.2" />
+      <path d="M3.2 19c.3-3.2 2.6-5.2 5.8-5.2s5.5 2 5.8 5.2H3.2z" />
+      <circle cx="17" cy="9.2" r="2.5" />
+      <path d="M13.4 19c.25-2.2 1.7-3.6 3.6-3.6s3.35 1.4 3.6 3.6H13.4z" />
+    </svg>
+  );
+}
+
+function PlayIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="currentColor">
+      <path d="M8 5.5v13l11-6.5-11-6.5z" />
+    </svg>
   );
 }

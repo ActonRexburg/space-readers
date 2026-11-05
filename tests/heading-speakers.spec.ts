@@ -53,12 +53,15 @@ async function assertOneSpeakerOnHeading(page: Page) {
   await expect(sub.locator('xpath=preceding-sibling::button[contains(@class,"speak-btn")]')).toHaveCount(0);
 }
 
-test('Bridge First Contact heading has one 🔊; subline is text only', async ({ page }) => {
+test('Bridge First Contact heading has one 🔊', async ({ page }) => {
   await seedPlayer(page);
   await page.goto('/');
   await page.getByTestId('profile-card-qa-a').click();
-  await expect(page.getByRole('heading', { level: 2, name: 'First Contact' })).toBeVisible();
-  await assertOneSpeakerOnHeading(page);
+  const heading = page.getByRole('heading', { level: 2, name: 'First Contact' });
+  await expect(heading).toBeVisible();
+  await expect(heading.locator('xpath=following-sibling::button[contains(@class,"speak-btn")]')).toHaveCount(1);
+  await expect(page.getByRole('button', { name: /START MISSION/i })).toBeVisible();
+  await expect(page.locator('.bridge-mission .speak-btn')).toHaveCount(1);
   await page.screenshot({
     path: '/opt/cursor/artifacts/screenshots/bridge-first-contact-one-speaker.png',
     fullPage: true
