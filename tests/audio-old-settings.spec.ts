@@ -61,6 +61,7 @@ test('old settings with volume:0 are healed and 🔊 still advances', async ({ p
   expect(healed.zibClipsEnabled).toBe(true);
   expect(healed.speechRate).toBe(1);
   expect(healed.audioEnabled).toBe(true);
+  expect(healed.dyslexiaFont).toBe(false);
 
   const speaker = page.locator('.speak-btn').first();
   await expect(speaker).toBeVisible();

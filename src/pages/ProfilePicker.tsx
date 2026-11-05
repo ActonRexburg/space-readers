@@ -100,6 +100,7 @@ export function ProfilePicker() {
               text={UI.whoIsPlaying}
               voice="control"
               autoPlay
+              heading
               className="justify-center mb-8"
               textClassName="text-2xl text-neon-cyan text-glow-cyan"
             />

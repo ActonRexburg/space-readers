@@ -29,7 +29,8 @@ const DEFAULT_SETTINGS: DeviceSettings = {
   parentPin: '1234',
   audioEnabled: true,
   speechRate: 1.0,
-  zibClipsEnabled: true
+  zibClipsEnabled: true,
+  dyslexiaFont: false
 };
 
 /**
@@ -50,6 +51,7 @@ export function mergeDeviceSettings(raw: unknown): DeviceSettings {
     audioEnabled: stored.audioEnabled !== false,
     speechRate: Number.isFinite(rate) && rate >= 0.5 && rate <= 2 ? rate : DEFAULT_SETTINGS.speechRate,
     zibClipsEnabled: stored.zibClipsEnabled !== false,
+    dyslexiaFont: stored.dyslexiaFont === true,
     activeProfileId: typeof stored.activeProfileId === 'string' ? stored.activeProfileId : undefined,
     lastSyncedAt: typeof stored.lastSyncedAt === 'number' ? stored.lastSyncedAt : undefined
   };
@@ -221,12 +223,18 @@ function settingsNeedsHeal(raw: unknown, merged: DeviceSettings): boolean {
   if (!raw || typeof raw !== 'object') return true;
   const stored = raw as Record<string, unknown>;
   if ('volume' in stored || 'muted' in stored) return true;
-  if (!('audioEnabled' in stored) || !('speechRate' in stored) || !('zibClipsEnabled' in stored)) {
+  if (
+    !('audioEnabled' in stored) ||
+    !('speechRate' in stored) ||
+    !('zibClipsEnabled' in stored) ||
+    !('dyslexiaFont' in stored)
+  ) {
     return true;
   }
   if (stored.audioEnabled !== merged.audioEnabled) return true;
   if (Number(stored.speechRate) !== merged.speechRate) return true;
   if (stored.zibClipsEnabled !== merged.zibClipsEnabled) return true;
+  if (stored.dyslexiaFont !== merged.dyslexiaFont) return true;
   return false;
 }
 

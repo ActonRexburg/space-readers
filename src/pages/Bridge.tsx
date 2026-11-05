@@ -205,7 +205,7 @@ export function Bridge() {
                   text={`${nextMission.title}. ${nextMission.description}`}
                 />
               </div>
-              <p className="text-xl text-white leading-snug">{nextMission.description}</p>
+              <p className="instruction-text text-xl text-white leading-snug">{nextMission.description}</p>
 
               <Button
                 variant="success"
@@ -223,6 +223,7 @@ export function Bridge() {
               <SpokenLine
                 text={UI.allDone}
                 voice="control"
+                heading
                 className="justify-center"
                 textClassName="text-2xl font-bold"
               />

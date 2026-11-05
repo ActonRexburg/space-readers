@@ -246,7 +246,7 @@ export function Mission() {
               </div>
             </div>
 
-            <p className="text-xl text-star-gold font-bold text-center">
+            <p className="instruction-text text-xl text-star-gold font-bold text-center">
               {mission.description}
             </p>
 
@@ -375,6 +375,7 @@ export function Mission() {
                 text={UI.missionComplete}
                 autoPlay
                 voice="control"
+                heading
                 className="justify-center"
                 textClassName="text-3xl font-bold text-star-gold"
               />
@@ -469,6 +470,7 @@ export function Mission() {
               text={UI.rankUp}
               voice="control"
               autoPlay
+              heading
               className="justify-center"
               textClassName="text-4xl font-bold text-alien-green text-glow-cyan"
             />
