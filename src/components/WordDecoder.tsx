@@ -30,6 +30,8 @@ export function WordDecoder({ word, isOpen, onClose, onComplete, onKeepTrying }:
   const [missCount, setMissCount] = useState(0);
   const [hasTriggeredKeepTrying, setHasTriggeredKeepTrying] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+  /** Finger hint: one across-and-back demo, then gone. Hidden immediately on drag. */
+  const [showHint, setShowHint] = useState(true);
   const audioService = useRef(getAudioService());
 
   // Decoder is a full-screen overlay — never let a Zib popup sit on top of it.
@@ -45,6 +47,7 @@ export function WordDecoder({ word, isOpen, onClose, onComplete, onKeepTrying }:
       setMissCount(0);
       setHasTriggeredKeepTrying(false);
       setIsClosing(false);
+      setShowHint(true);
       audioService.current.stop();
     }
   }, [isOpen, word.word]);
@@ -80,10 +83,15 @@ export function WordDecoder({ word, isOpen, onClose, onComplete, onKeepTrying }:
 
   const activeIndex = getActiveGraphemeIndex(sliderValue);
 
+  const dismissHint = useCallback(() => {
+    setShowHint(false);
+  }, []);
+
   const handleSliderChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value, 10);
     setSliderValue(value);
     setHasStarted(true);
+    setShowHint(false);
     // Visual highlight only — Brian found phoneme clips unhelpful / wrong,
     // and we never speak letter names. Say Word at the end plays the whole word.
 
@@ -191,8 +199,17 @@ export function WordDecoder({ word, isOpen, onClose, onComplete, onKeepTrying }:
         </div>
 
         <div className="relative mb-8 px-2">
-          {!hasStarted && (
-            <div className="animate-slide-hand text-5xl z-10" aria-hidden="true">
+          {showHint && (
+            <div
+              data-testid="slider-hand-hint"
+              className="animate-slide-hand text-5xl z-10"
+              aria-hidden="true"
+              onAnimationEnd={(event) => {
+                if (event.animationName === 'slide-hand' || event.animationName === 'hint-fade-out') {
+                  setShowHint(false);
+                }
+              }}
+            >
               👆
             </div>
           )}
@@ -204,6 +221,7 @@ export function WordDecoder({ word, isOpen, onClose, onComplete, onKeepTrying }:
             value={sliderValue}
             onChange={handleSliderChange}
             onInput={handleSliderInput}
+            onPointerDown={dismissHint}
             onMouseUp={handleSliderRelease}
             onTouchEnd={handleSliderRelease}
             className="decoder-slider decoder-slider-large w-full h-12 cursor-grab active:cursor-grabbing"

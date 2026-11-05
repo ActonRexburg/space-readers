@@ -52,7 +52,8 @@
   --motion-twinkle: 7s;          /* was 4s */
   --motion-popup: 0.38s;         /* comm-link slide-in; keep under 400ms */
   --motion-confetti: 6.5s;       /* was ~2–4s */
-  --motion-hand: 4.5s;           /* decoder hint loop including pause */
+  --motion-hand: 5.7s;           /* decoder hint: one across-and-back, then fade */
+  --motion-hand-fade: 1.2s;      /* slow fade after the single demo */
   --motion-scanline: 5.5s;       /* was 3s */
 }
 
@@ -480,9 +481,12 @@ body[data-overlay-lock='true'] {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .idle-glow,
-  .animate-slide-hand {
+  .idle-glow {
     animation: none;
+  }
+
+  .animate-slide-hand {
+    animation: hint-fade-out var(--motion-hand-fade) ease-out 0.5s 1 forwards;
   }
 }
 
@@ -554,19 +558,26 @@ body[data-overlay-lock='true'] {
   height: 44px !important;
 }
 
-/* Hand hint: slower slide with a pause at each end (no bounce/wiggle) */
+/* Hand hint: one across-and-back with a pause at each end, then a slow fade.
+   Do not loop — Brian asked for a single demo that then disappears. */
 @keyframes slide-hand {
-  0% { left: 0; }
-  30% { left: calc(100% - 2.75rem); }
-  50% { left: calc(100% - 2.75rem); }
-  80% { left: 0; }
-  100% { left: 0; }
+  0% { left: 0; opacity: 1; }
+  24% { left: calc(100% - 2.75rem); opacity: 1; }
+  40% { left: calc(100% - 2.75rem); opacity: 1; }
+  63% { left: 0; opacity: 1; }
+  79% { left: 0; opacity: 1; }
+  100% { left: 0; opacity: 0; }
+}
+
+@keyframes hint-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
 }
 
 .animate-slide-hand {
   position: absolute;
   top: -2.35rem;
-  animation: slide-hand var(--motion-hand) ease-in-out infinite;
+  animation: slide-hand var(--motion-hand) ease-in-out 1 forwards;
   pointer-events: none;
 }
 
@@ -793,12 +804,15 @@ body[data-overlay-lock='true'] {
 /* Respect reduced motion — disable non-essential motion entirely */
 @media (prefers-reduced-motion: reduce) {
   .idle-glow,
-  .animate-slide-hand,
   .animate-confetti,
   .starfield-layer-1,
   .starfield-layer-2,
   .starfield-layer-3 {
     animation: none;
+  }
+
+  .animate-slide-hand {
+    animation: hint-fade-out var(--motion-hand-fade) ease-out 0.5s 1 forwards;
   }
 
   .animate-confetti {
