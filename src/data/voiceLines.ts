@@ -36,6 +36,8 @@ export const UI = {
   hearIt: 'Hear it.',
   sayWord: 'Say word.',
   heartWord: 'This is a heart word. We just know it!',
+  shipEnergyRising: 'Ship energy rising.',
+  shipUpgraded: 'Ship upgraded!',
 } as const;
 
 export const ZIB = {
@@ -52,6 +54,7 @@ export const ZIB = {
   clipStoryComplete: 'You did it! Our ship has more fuel!',
   clipPlanetUnlocked: "A new planet! Let's go explore!",
   clipRankUp: "Cadet, you've been promoted!",
+  shipPower: 'More power for the ship!',
 } as const;
 
 export function zibWordsKnownLine(count: number): string {

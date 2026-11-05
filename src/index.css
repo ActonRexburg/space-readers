@@ -56,6 +56,9 @@
   --motion-hand: 5.7s;           /* decoder hint: one across-and-back, then fade */
   --motion-hand-fade: 1.2s;      /* slow fade after the single demo */
   --motion-scanline: 5.5s;       /* was 3s */
+  --motion-ship-fill: 2s;        /* energy gauge fill on Mission Complete */
+  --motion-ship-liftoff: 1.4s;   /* one-shot lift after a full tank */
+  --motion-ship-spark: 1.8s;     /* particles flowing into the gauge */
 }
 
 /* Base styles */
@@ -859,14 +862,142 @@ html.dyslexia-font .reading-text {
   font-size: 2rem;
 }
 
+/* ============================================
+   ZIB SHIP (energy meter + unlockable parts)
+   Transform/opacity only — no canvas, no looping pulse.
+   ============================================ */
+
+.zib-ship {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.zib-ship-sm .zib-ship-svg {
+  width: 100%;
+  max-width: 220px;
+}
+
+.zib-ship-lg .zib-ship-svg {
+  width: 100%;
+  max-width: 320px;
+}
+
+.zib-ship-svg {
+  display: block;
+  overflow: visible;
+}
+
+.ship-engine-flare {
+  opacity: 0.2;
+  transform-origin: right center;
+  transform: scaleX(0.35);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.ship-engines-on .ship-engine-flare {
+  opacity: 0.95;
+  transform: scaleX(1);
+}
+
+.ship-liftoff {
+  animation: ship-liftoff var(--motion-ship-liftoff) ease-in forwards;
+}
+
+@keyframes ship-liftoff {
+  0% { transform: translateY(0) scale(1); opacity: 1; }
+  70% { transform: translateY(-28px) scale(1.04); opacity: 1; }
+  100% { transform: translateY(-36px) scale(1.08); opacity: 0.92; }
+}
+
+.ship-gauge {
+  width: 100%;
+  max-width: 260px;
+}
+
+.ship-gauge-track {
+  position: relative;
+  height: 14px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(0, 245, 255, 0.12);
+  border: 1px solid rgba(0, 245, 255, 0.45);
+}
+
+.ship-gauge-fill {
+  height: 100%;
+  width: 100%;
+  transform: scaleX(0);
+  transform-origin: left center;
+  background: linear-gradient(90deg, #00f5ff, #22c55e);
+  transition: transform var(--motion-ship-fill) ease-out;
+  will-change: transform;
+}
+
+.ship-gauge-fill-snap {
+  transition: none;
+}
+
+.ship-sparks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.ship-spark {
+  position: absolute;
+  left: 8%;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  margin-top: -3px;
+  border-radius: 999px;
+  background: #bbffe3;
+  box-shadow: 0 0 8px rgba(0, 245, 255, 0.7);
+  opacity: 0;
+  animation: ship-spark var(--motion-ship-spark) ease-out 1 forwards;
+}
+
+.ship-spark:nth-child(2) { top: 30%; }
+.ship-spark:nth-child(3) { top: 70%; }
+.ship-spark:nth-child(4) { left: 18%; }
+.ship-spark:nth-child(5) { left: 4%; top: 40%; }
+.ship-spark:nth-child(6) { left: 12%; top: 60%; }
+
+@keyframes ship-spark {
+  0% {
+    transform: translateX(0) scale(0.4);
+    opacity: 0;
+  }
+  18% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateX(170px) scale(0.25);
+    opacity: 0;
+  }
+}
+
 /* Respect reduced motion — disable non-essential motion entirely */
 @media (prefers-reduced-motion: reduce) {
   .idle-glow,
   .animate-confetti,
   .starfield-layer-1,
   .starfield-layer-2,
-  .starfield-layer-3 {
+  .starfield-layer-3,
+  .ship-liftoff,
+  .ship-spark {
     animation: none;
+  }
+
+  .ship-gauge-fill {
+    transition: none;
+  }
+
+  .ship-spark {
+    display: none;
   }
 
   .animate-slide-hand {

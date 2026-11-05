@@ -11310,6 +11310,74 @@
           "charIndex": 15
         }
       ]
+    },
+    "control|Ship energy rising.": {
+      "file": "0e027705923e26ca.mp3",
+      "durationMs": 1920,
+      "words": [
+        {
+          "text": "Ship",
+          "offsetMs": 100,
+          "charIndex": 0
+        },
+        {
+          "text": "energy",
+          "offsetMs": 487,
+          "charIndex": 5
+        },
+        {
+          "text": "rising",
+          "offsetMs": 812,
+          "charIndex": 12
+        }
+      ]
+    },
+    "control|Ship upgraded!": {
+      "file": "d9ff5cff4eaa5450.mp3",
+      "durationMs": 1920,
+      "words": [
+        {
+          "text": "Ship",
+          "offsetMs": 100,
+          "charIndex": 0
+        },
+        {
+          "text": "upgraded",
+          "offsetMs": 300,
+          "charIndex": 5
+        }
+      ]
+    },
+    "zib|More power for the ship!": {
+      "file": "b1620225184fa1bc.mp3",
+      "durationMs": 1992,
+      "words": [
+        {
+          "text": "More",
+          "offsetMs": 82,
+          "charIndex": 0
+        },
+        {
+          "text": "power",
+          "offsetMs": 365,
+          "charIndex": 5
+        },
+        {
+          "text": "for",
+          "offsetMs": 790,
+          "charIndex": 11
+        },
+        {
+          "text": "the",
+          "offsetMs": 955,
+          "charIndex": 15
+        },
+        {
+          "text": "ship",
+          "offsetMs": 1037,
+          "charIndex": 19
+        }
+      ]
     }
   }
 }

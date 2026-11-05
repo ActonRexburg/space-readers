@@ -23,6 +23,8 @@ import { getNextMission } from '../data/missions';
 import { UI, zibWordsKnownLine, ZIB } from '../data/voiceLines';
 import { RANK_THRESHOLDS } from '../types';
 import { useIdleGlow } from '../hooks/useIdleGlow';
+import { ZibShip } from '../components/ZibShip';
+import { hydrateShipProgress, SHIP_ENERGY_MAX } from '../data/ship';
 
 export function Bridge() {
   const navigate = useNavigate();
@@ -69,6 +71,11 @@ export function Bridge() {
       nextRank
     };
   }, [activeProgress]);
+
+  const ship = useMemo(
+    () => hydrateShipProgress(activeProgress),
+    [activeProgress]
+  );
 
   const zibDialogue = useMemo(() => {
     const wordsLearned = activeProgress?.alienLearnedWords.length ?? 0;
@@ -173,6 +180,25 @@ export function Bridge() {
               </div>
             </button>
           </Card>
+
+          <div data-testid="bridge-ship-card">
+            <Card className="p-5">
+              <div className="flex flex-col items-center gap-3">
+                <ZibShip
+                  energy={ship.shipEnergy}
+                  parts={ship.shipPartsUnlocked}
+                  phase="idle"
+                  size="sm"
+                />
+                <div
+                  className="text-lg font-bold text-neon-cyan"
+                  data-testid="bridge-ship-energy"
+                >
+                  {ship.shipEnergy} / {SHIP_ENERGY_MAX}
+                </div>
+              </div>
+            </Card>
+          </div>
 
           <Card className="flex flex-col sm:flex-row items-center gap-5 p-6">
             <Zib

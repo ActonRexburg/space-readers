@@ -24,6 +24,8 @@ import { splitSentences } from '../utils/readAloud';
 import type { Story, Rank } from '../types';
 import { RANK_ORDER, RANK_THRESHOLDS } from '../types';
 import { useIdleGlow } from '../hooks/useIdleGlow';
+import { ShipReward } from '../components/ShipReward';
+import { hydrateShipProgress, SHIP_ENERGY_PER_STORY } from '../data/ship';
 
 function calculateRank(fuelCredits: number): Rank {
   let rank: Rank = 'Recruit';
@@ -53,14 +55,32 @@ export function Mission() {
 
   const [phase, setPhase] = useState<MissionPhase>('briefing');
   const [currentStory, setCurrentStory] = useState<Story | null>(null);
-  const [completedStories, setCompletedStories] = useState<Set<string>>(new Set());
+  const [completedStories, setCompletedStories] = useState<Set<string>>(() => {
+    const m = missionId ? getMissionById(missionId) : undefined;
+    const done = useAppStore.getState().activeProgress?.storiesCompleted ?? [];
+    if (!m) return new Set();
+    return new Set(done.filter((id) => m.storyIds.includes(id)));
+  });
   const [zibDialogueIndex, setZibDialogueIndex] = useState(0);
   const [totalWordsThisMission, setTotalWordsThisMission] = useState(0);
   const triggeredStoryStartFor = useRef<string | null>(null);
 
   const [fuelAtStart] = useState(() => useAppStore.getState().activeProgress?.fuelCredits ?? 0);
   const [starsAtStart] = useState(() => useAppStore.getState().activeProgress?.starCredits ?? 0);
+  const [energyAtStart] = useState(() =>
+    hydrateShipProgress(useAppStore.getState().activeProgress).shipEnergy
+  );
+  const [storiesAtStart] = useState(() =>
+    new Set(useAppStore.getState().activeProgress?.storiesCompleted ?? [])
+  );
   const [storyFuelEarned, setStoryFuelEarned] = useState(0);
+  const [shipEnergyGained, setShipEnergyGained] = useState(0);
+  const [partsAtStart] = useState(() =>
+    hydrateShipProgress(useAppStore.getState().activeProgress).shipPartsUnlocked
+  );
+  const [shipPartsAfter, setShipPartsAfter] = useState<string[]>(() =>
+    hydrateShipProgress(useAppStore.getState().activeProgress).shipPartsUnlocked
+  );
   const [planetsBefore, setPlanetsBefore] = useState(0);
   const [rankBefore, setRankBefore] = useState<string | null>(null);
   const [newRank, setNewRank] = useState<string | null>(null);
@@ -140,6 +160,11 @@ export function Mission() {
       const rankAfterMission = calculateRank(fuelAfterMission);
 
       setStoryFuelEarned(fuelAfterStories - fuelAtStart);
+      setShipEnergyGained(
+        [...newCompletedStories].filter((id) => !storiesAtStart.has(id)).length
+        * SHIP_ENERGY_PER_STORY
+      );
+      setShipPartsAfter(hydrateShipProgress(latest).shipPartsUnlocked);
       setPlanetsBefore(planetsAfterStories);
       setRankBefore(rankAfterStories);
 
@@ -151,7 +176,7 @@ export function Mission() {
       triggerStoryComplete();
       setPhase('stories');
     }
-  }, [currentStory, stories.length, completedStories, completeStory, addAlienWord, recordWordHelp, triggerStoryComplete, mission, fuelAtStart]);
+  }, [currentStory, stories.length, completedStories, completeStory, addAlienWord, recordWordHelp, triggerStoryComplete, mission, fuelAtStart, storiesAtStart]);
 
   const handleMissionComplete = useCallback(async () => {
     if (!mission) return;
@@ -348,7 +373,15 @@ export function Mission() {
                 variant="success"
                 size="lg"
                 glow
-                onClick={() => setPhase('debrief')}
+                onClick={() => {
+                  const latest = useAppStore.getState().activeProgress;
+                  setShipEnergyGained(
+                    [...completedStories].filter((id) => !storiesAtStart.has(id)).length
+                    * SHIP_ENERGY_PER_STORY
+                  );
+                  setShipPartsAfter(hydrateShipProgress(latest).shipPartsUnlocked);
+                  setPhase('debrief');
+                }}
                 className={`w-full mt-4 text-xl ${idleGlow}`}
               >
                 ✓ Complete
@@ -386,6 +419,14 @@ export function Mission() {
                 textClassName="text-xl text-white leading-snug"
               />
             </div>
+
+            <ShipReward
+              fromEnergy={energyAtStart}
+              addedEnergy={shipEnergyGained}
+              partsBefore={partsAtStart}
+              partsAfter={shipPartsAfter}
+              starReward={mission.starReward}
+            />
 
             <Card className="flex items-center gap-4 p-5">
               <Zib size="md" />
