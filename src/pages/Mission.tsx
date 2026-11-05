@@ -19,12 +19,13 @@ import { useZibOverlayLock } from '../hooks/useZibOverlayLock';
 import { SpeakButton, SpokenLine } from '../components/SpeakButton';
 import { getMissionById } from '../data/missions';
 import { getStoryById } from '../data/stories';
-import { zibLearnedLine, zibRankUpLine, planetUnlockedLine, UI } from '../data/voiceLines';
+import { zibLearnedLine, planetUnlockedLine, UI } from '../data/voiceLines';
 import { splitSentences } from '../utils/readAloud';
 import type { Story, Rank } from '../types';
 import { RANK_ORDER, RANK_THRESHOLDS } from '../types';
 import { useIdleGlow } from '../hooks/useIdleGlow';
 import { ShipReward } from '../components/ShipReward';
+import { RankUpReward } from '../components/RankUpReward';
 import { hydrateShipProgress, SHIP_ENERGY_PER_STORY } from '../data/ship';
 
 function calculateRank(fuelCredits: number): Rank {
@@ -82,22 +83,13 @@ export function Mission() {
     hydrateShipProgress(useAppStore.getState().activeProgress).shipPartsUnlocked
   );
   const [planetsBefore, setPlanetsBefore] = useState(0);
-  const [rankBefore, setRankBefore] = useState<string | null>(null);
-  const [newRank, setNewRank] = useState<string | null>(null);
+  const [rankBefore, setRankBefore] = useState<Rank | null>(null);
+  const [newRank, setNewRank] = useState<Rank | null>(null);
 
   // Hide Zib popups on Mission Complete and rank-up overlays.
   useZibOverlayLock(phase === 'debrief' || phase === 'rankup');
   // One idle-glow CTA per mission phase; StoryReader owns the reading-phase CTA.
   const idleGlow = useIdleGlow(phase !== 'reading');
-
-  const confettiPieces = useMemo(() => (
-    Array.from({ length: 30 }, (_, i) => ({
-      id: i,
-      left: `${(i * 17) % 100}%`,
-      delay: `${(i % 8) * 0.4}s`,
-      emoji: ['🎉', '⭐', '🌟', '✨', '🏆', '🎖️'][i % 6]
-    }))
-  ), []);
 
   const mission = useMemo(() => {
     if (!missionId) return null;
@@ -231,7 +223,7 @@ export function Mission() {
   const starTotal = starsAtStart + mission.starReward;
   // Dynamic totals — no baked clip; speak() falls back to speechSynthesis.
   const fuelSpeak = `Before ${fuelAtStart}. Story fuel plus ${storyFuelEarned}. Mission bonus plus ${mission.fuelReward}. Total ${fuelTotal}.`;
-  const rankSpeak = newRank ? zibRankUpLine(newRank) : '';
+  const fuelAfterStories = fuelAtStart + storyFuelEarned;
 
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden">
@@ -485,52 +477,17 @@ export function Mission() {
         </main>
       )}
 
-      {phase === 'rankup' && newRank && (
-        <main className="flex-1 relative z-50 p-6 flex flex-col items-center justify-center overflow-hidden">
-          <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            {confettiPieces.map((piece) => (
-              <div
-                key={piece.id}
-                className="absolute animate-confetti"
-                style={{
-                  left: piece.left,
-                  animationDelay: piece.delay,
-                }}
-              >
-                {piece.emoji}
-              </div>
-            ))}
-          </div>
-
-          <div className="max-w-md w-full text-center space-y-8 relative z-10">
-            <div className="relative">
-              <div className="text-8xl mb-4">🎖️</div>
-            </div>
-
-            <SpokenLine
-              text={UI.rankUp}
-              voice="control"
-              autoPlay
-              heading
-              className="justify-center"
-              textClassName="text-4xl font-bold text-alien-green text-glow-cyan"
+      {phase === 'rankup' && newRank && rankBefore && (
+        <main className="flex-1 relative z-50 p-6 flex flex-col items-center justify-center overflow-y-auto">
+          <div className="max-w-md w-full text-center space-y-8 py-4">
+            <RankUpReward
+              fromRank={rankBefore}
+              toRank={newRank}
+              fuelBefore={fuelAfterStories}
+              fuelAfter={fuelTotal}
+              starsBefore={starsAtStart}
+              starsAfter={starTotal}
             />
-            {rankSpeak && (
-              <SpokenLine
-                text={rankSpeak}
-                voice="zib"
-                className="justify-center"
-                textClassName="text-2xl text-white"
-              />
-            )}
-
-            <div className="space-card p-6 glow-green">
-              <div className="flex items-center justify-center gap-4 text-2xl">
-                <span className="text-slate-400">{rankBefore}</span>
-                <span className="text-alien-green text-3xl">→</span>
-                <span className="text-alien-green font-bold text-3xl text-glow-cyan">{newRank}</span>
-              </div>
-            </div>
 
             <Button
               variant="success"

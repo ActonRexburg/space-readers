@@ -40,6 +40,18 @@ export const UI = {
   shipUpgraded: 'Ship upgraded!',
 } as const;
 
+export function promotionConfirmedLine(rank: string): string {
+  return `Promotion confirmed. Welcome, ${rank}.`;
+}
+
+export function promotedToLine(rank: string): string {
+  return `Promoted to ${rank}!`;
+}
+
+export function zibPromotionLine(rank: string): string {
+  return `You earned it, ${rank}!`;
+}
+
 export const ZIB = {
   helloTeach: "Hello! I'm Zib. Can you teach me to read?",
   readingAmazing: 'Reading is amazing! Each word opens a new world!',
@@ -104,7 +116,10 @@ export function staticCatalog(): Array<{ kind: VoiceKind; text: string }> {
   }
   for (const rank of RANK_ORDER) {
     lines.push({ kind: 'zib', text: zibRankUpLine(rank) });
+    lines.push({ kind: 'zib', text: zibPromotionLine(rank) });
     lines.push({ kind: 'control', text: `Rank up! You are now ${rank}!` });
+    lines.push({ kind: 'control', text: promotionConfirmedLine(rank) });
+    lines.push({ kind: 'control', text: promotedToLine(rank) });
   }
   for (const planet of ['Earth', 'Moon', 'Mars', 'Jupiter']) {
     lines.push({ kind: 'control', text: planetUnlockedLine(planet) });
