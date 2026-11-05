@@ -138,10 +138,20 @@ export function Bridge() {
 
   return (
     <div className="bridge-cockpit" data-testid="bridge-cockpit">
+      <div className="bridge-cockpit-inner">
       <Starfield />
       <CockpitFrame />
       <div className="bridge-hud-bar" aria-hidden="true" />
-      <div className="bridge-console-bar" aria-hidden="true" />
+      <div className="bridge-console-bar" data-testid="cockpit-dashboard" aria-hidden="true">
+        <div className="cockpit-dash-lip" />
+        <div className="cockpit-dash-seams" />
+        <div className="cockpit-dash-lamps">
+          <span className="cockpit-lamp cockpit-lamp-on" />
+          <span className="cockpit-lamp cockpit-lamp-green" />
+          <span className="cockpit-lamp cockpit-lamp-on" />
+          <span className="cockpit-lamp" />
+        </div>
+      </div>
 
       <div className="bridge-player">
         <AvatarImage avatar={avatar} size="hud" alt="" />
@@ -189,7 +199,7 @@ export function Bridge() {
         </div>
       </button>
 
-      <div className="bridge-tools">
+      <div className="bridge-tools" data-testid="cockpit-overhead">
         <div className="bridge-tool">
           <ParentZone className="bridge-icon-btn" />
           <span className="bridge-tool-label">Parents</span>
@@ -303,6 +313,7 @@ export function Bridge() {
             </button>
           </>
         )}
+      </div>
       </div>
 
       {showRankInfo && (

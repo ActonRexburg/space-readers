@@ -3,6 +3,7 @@
  */
 import { test, expect, type Page } from '@playwright/test';
 import { getMissionMap } from '../src/data/missions';
+import { SHIP_PARTS } from '../src/data/ship';
 
 async function seedPlayer(page: Page, extraProgress: Record<string, unknown> = {}) {
   await page.addInitScript((progress) => {
@@ -51,6 +52,27 @@ async function openBridge(page: Page) {
   await expect(page.getByTestId('bridge-cockpit')).toBeVisible();
 }
 
+async function waitForBridgeArt(page: Page) {
+  const zib = page.locator('.bridge-zib-figure');
+  await zib.waitFor({ state: 'visible' });
+  await zib.evaluate((img: HTMLImageElement) => {
+    if (img.complete && img.naturalWidth > 0) return;
+    return new Promise<void>((resolve) => {
+      img.onload = () => resolve();
+      img.onerror = () => resolve();
+      window.setTimeout(() => resolve(), 2500);
+    });
+  });
+  await page.locator('[data-testid="zib-ship"] svg').waitFor({ state: 'visible' });
+}
+
+function boxesOverlap(
+  a: { x: number; y: number; width: number; height: number },
+  b: { x: number; y: number; width: number; height: number }
+) {
+  return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
+}
+
 test('mission map marks Earth current and later planets locked for a new Cadet', () => {
   const nodes = getMissionMap([], 'Cadet');
   expect(nodes.map((n) => [n.mission.planetId, n.status, n.playable])).toEqual([
@@ -74,7 +96,10 @@ test('Bridge cockpit has the ship, Zib line, console, and no space-cards', async
   await expect(page.getByTestId('zib-ship')).toBeVisible();
   await expect(page.getByTestId('zib-ship')).toHaveAttribute('data-ship-layout', 'upright');
   await expect(page.getByTestId('bridge-ship-energy')).toHaveText('40 / 100');
+  await expect(page.locator('.ship-part-base-fins')).toHaveCount(1);
   await expect(page.locator('.ship-part-boosters')).toHaveCount(1);
+  await expect(page.getByTestId('cockpit-dashboard')).toBeVisible();
+  await expect(page.getByTestId('cockpit-overhead')).toBeVisible();
   await expect(page.locator('.bridge-zib-figure')).toHaveAttribute('src', /zib-stand\.webp/);
   await expect(page.getByTestId('bridge-rank-card')).toBeVisible();
   await expect(page.getByTestId('rank-badge-Cadet')).toBeVisible();
@@ -115,12 +140,28 @@ async function assertMinTap(page: Page, testId: string) {
   expect(box!.width, `${testId} width`).toBeGreaterThanOrEqual(44);
 }
 
+async function assertUnobstructed(page: Page, locator: ReturnType<Page['locator']>, label: string) {
+  const box = await locator.boundingBox();
+  expect(box, `${label} box`).toBeTruthy();
+  const covered = await locator.evaluate((el) => {
+    const r = el.getBoundingClientRect();
+    const hit = document.elementFromPoint(r.left + r.width / 2, r.top + Math.min(12, r.height / 2));
+    return !hit || !(el === hit || el.contains(hit));
+  });
+  expect(covered, `${label} is covered by another layer`).toBe(false);
+}
+
 test('desktop 1920x1080 cockpit', async ({ page }) => {
   await page.setViewportSize({ width: 1920, height: 1080 });
   await seedPlayer(page);
   await openBridge(page);
+  await waitForBridgeArt(page);
   await expect(page.getByTestId('zib-ship')).toBeVisible();
   await assertNoHorizontalScroll(page);
+  await assertInsetFromEdges(page, 20);
+  await expect(page.getByText('Maya')).toBeVisible();
+  await assertUnobstructed(page, page.getByRole('button', { name: /START MISSION/i }), 'START MISSION');
+  await assertUnobstructed(page, page.getByRole('button', { name: 'Briefing' }), 'Briefing');
   await page.screenshot({ path: '/opt/cursor/artifacts/bridge-cockpit-desktop.png' });
 });
 
@@ -128,8 +169,12 @@ test('Chromebook 1366x768 cockpit', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
   await seedPlayer(page);
   await openBridge(page);
+  await waitForBridgeArt(page);
   await expect(page.getByRole('button', { name: /START MISSION/i })).toBeVisible();
   await assertNoHorizontalScroll(page);
+  await assertInsetFromEdges(page, 20);
+  await assertZibCompanionScale(page);
+  await assertUnobstructed(page, page.getByRole('button', { name: /START MISSION/i }), 'START MISSION');
   await page.screenshot({ path: '/opt/cursor/artifacts/bridge-cockpit-chromebook.png' });
 });
 
@@ -137,10 +182,20 @@ test('phone 390x844 cockpit', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await seedPlayer(page);
   await openBridge(page);
+  await waitForBridgeArt(page);
   await expect(page.getByRole('button', { name: /START MISSION/i })).toBeVisible();
   await assertMinTap(page, 'bridge-switch-player');
   await assertMinTap(page, 'parent-zone-button');
   await assertNoHorizontalScroll(page);
+  await assertInsetFromEdges(page, 12);
+  await assertZibCompanionScale(page);
+  await expect(page.getByText('Maya')).toBeVisible();
+  await assertUnobstructed(page, page.getByRole('button', { name: /START MISSION/i }), 'START MISSION');
+  await assertUnobstructed(page, page.getByRole('button', { name: 'Briefing' }), 'Briefing');
+  const rankBox = await page.getByTestId('bridge-rank-card').boundingBox();
+  const toolsBox = await page.getByTestId('cockpit-overhead').boundingBox();
+  expect(rankBox && toolsBox).toBeTruthy();
+  expect(boxesOverlap(rankBox!, toolsBox!), 'rank overlaps overhead tools').toBe(false);
   await page.screenshot({ path: '/opt/cursor/artifacts/bridge-cockpit-phone.png' });
 });
 
@@ -148,9 +203,11 @@ test('phone 360x740 cockpit', async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 740 });
   await seedPlayer(page);
   await openBridge(page);
+  await waitForBridgeArt(page);
   await expect(page.getByRole('button', { name: /START MISSION/i })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Briefing' })).toBeVisible();
   await assertNoHorizontalScroll(page);
+  await assertInsetFromEdges(page, 12);
   await page.screenshot({ path: '/opt/cursor/artifacts/bridge-cockpit-phone-narrow.png' });
 });
 
@@ -158,6 +215,63 @@ test('landscape phone keeps START on screen', async ({ page }) => {
   await page.setViewportSize({ width: 740, height: 360 });
   await seedPlayer(page);
   await openBridge(page);
+  await waitForBridgeArt(page);
   await expect(page.getByRole('button', { name: /START MISSION/i })).toBeVisible();
   await assertNoHorizontalScroll(page);
+  await assertUnobstructed(page, page.getByRole('button', { name: /START MISSION/i }), 'START MISSION');
+  await page.screenshot({ path: '/opt/cursor/artifacts/bridge-cockpit-phone-landscape.png' });
 });
+
+async function assertInsetFromEdges(page: Page, minPx: number) {
+  const cockpit = await page.getByTestId('bridge-cockpit').boundingBox();
+  const player = await page.locator('.bridge-player').boundingBox();
+  const tools = await page.getByTestId('bridge-switch-player').boundingBox();
+  const start = await page.getByRole('button', { name: /START MISSION/i }).boundingBox();
+  expect(cockpit && player && tools && start).toBeTruthy();
+  expect(player!.x - cockpit!.x, 'player left inset').toBeGreaterThanOrEqual(minPx);
+  expect(
+    cockpit!.x + cockpit!.width - (tools!.x + tools!.width),
+    'tools right inset'
+  ).toBeGreaterThanOrEqual(minPx);
+  expect(
+    cockpit!.y + cockpit!.height - (start!.y + start!.height),
+    'start bottom inset'
+  ).toBeGreaterThanOrEqual(minPx);
+}
+
+async function assertZibCompanionScale(page: Page) {
+  const ship = await page.getByTestId('zib-ship').boundingBox();
+  const zib = await page.locator('.bridge-zib-figure').boundingBox();
+  const planet = await page.locator('.hero-planet').boundingBox();
+  expect(ship && zib && planet).toBeTruthy();
+  const ratio = zib!.height / ship!.height;
+  expect(ratio, `zib/ship height ${ratio}`).toBeGreaterThanOrEqual(0.52);
+  expect(ratio, `zib/ship height ${ratio}`).toBeLessThanOrEqual(0.68);
+  expect(boxesOverlap(zib!, ship!), 'zib overlaps ship').toBe(false);
+  expect(boxesOverlap(zib!, planet!), 'zib overlaps planet').toBe(false);
+}
+
+for (let n = 0; n <= SHIP_PARTS.length; n += 1) {
+  const unlocked = SHIP_PARTS.slice(0, n).map((part) => part.id);
+
+  test(`Bridge ship keeps base fins plus parts 0-${n}`, async ({ page }) => {
+    await page.setViewportSize({ width: 1366, height: 768 });
+    await seedPlayer(page, {
+      shipEnergy: 20,
+      shipPartsUnlocked: unlocked
+    });
+    await openBridge(page);
+    await waitForBridgeArt(page);
+    await expect(page.getByTestId('zib-ship')).toHaveAttribute('data-ship-part-count', String(n));
+    await expect(page.locator('.ship-part-base-fins')).toHaveCount(1);
+    for (let i = 0; i < n; i += 1) {
+      await expect(page.locator(`.ship-part-${SHIP_PARTS[i].id}`)).toHaveCount(1);
+    }
+    for (let i = n; i < SHIP_PARTS.length; i += 1) {
+      await expect(page.locator(`.ship-part-${SHIP_PARTS[i].id}`)).toHaveCount(0);
+    }
+    await page.locator('[data-testid="bridge-ship-card"]').screenshot({
+      path: `/opt/cursor/artifacts/bridge-ship-parts-${n}.png`
+    });
+  });
+}
