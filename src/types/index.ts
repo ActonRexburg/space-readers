@@ -185,6 +185,8 @@ export interface DeviceSettings {
   audioEnabled: boolean;
   speechRate: number;         // 0.5 to 2.0
   zibClipsEnabled: boolean;   // Parent toggle for Zib story clips
+  /** Device-wide. Profiles have no settings bag; Parent Zone is one panel like Zib clips. */
+  dyslexiaFont: boolean;
   lastSyncedAt?: number;      // For future cloud sync
 }
 

@@ -30,6 +30,8 @@ interface ProgressDashboardProps {
   onUpdateInterests?: (profile: Profile, interests: string[]) => void;
   zibClipsEnabled?: boolean;
   onToggleZibClips?: (enabled: boolean) => void;
+  dyslexiaFont?: boolean;
+  onToggleDyslexiaFont?: (enabled: boolean) => void;
 }
 
 export function ProgressDashboard({
@@ -42,7 +44,9 @@ export function ProgressDashboard({
   onChangePin,
   onUpdateInterests,
   zibClipsEnabled = true,
-  onToggleZibClips
+  onToggleZibClips,
+  dyslexiaFont = false,
+  onToggleDyslexiaFont
 }: ProgressDashboardProps) {
   const [editingInterestsProfile, setEditingInterestsProfile] = useState<Profile | null>(null);
   const [manageProfile, setManageProfile] = useState<Profile | null>(null);
@@ -355,6 +359,42 @@ export function ProgressDashboard({
                   `} />
                 </div>
               </button>
+            )}
+
+            {onToggleDyslexiaFont && (
+              <div className="p-3">
+                <button
+                  type="button"
+                  data-testid="dyslexia-font-toggle"
+                  onClick={() => onToggleDyslexiaFont(!dyslexiaFont)}
+                  className="w-full flex items-center justify-between hover:bg-neon-cyan/10 rounded-lg transition-colors p-0"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl" aria-hidden="true">Aa</span>
+                    <div className="text-left">
+                      <span className="block">Dyslexia-friendly font</span>
+                      <span className="text-xs text-neon-cyan/60">
+                        OpenDyslexic for stories and instructions
+                      </span>
+                    </div>
+                  </div>
+                  <div className={`
+                    w-12 h-7 rounded-full transition-colors relative shrink-0
+                    ${dyslexiaFont ? 'bg-alien-green' : 'bg-white/20'}
+                  `}>
+                    <div className={`
+                      absolute top-1 w-5 h-5 rounded-full bg-white transition-transform
+                      ${dyslexiaFont ? 'translate-x-6' : 'translate-x-1'}
+                    `} />
+                  </div>
+                </button>
+                <p
+                  data-testid="dyslexia-font-preview"
+                  className="dyslexia-preview mt-3 text-white/90"
+                >
+                  The red ship sat on a flat rock.
+                </p>
+              </div>
             )}
             
             <div className="p-3 space-y-2">

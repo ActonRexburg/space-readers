@@ -118,6 +118,10 @@ export function ParentZone({ className = '' }: ParentZoneProps) {
           onToggleZibClips={async (enabled) => {
             await updateSettings({ zibClipsEnabled: enabled });
           }}
+          dyslexiaFont={settings.dyslexiaFont === true}
+          onToggleDyslexiaFont={async (enabled) => {
+            await updateSettings({ dyslexiaFont: enabled });
+          }}
         />
       )}
 

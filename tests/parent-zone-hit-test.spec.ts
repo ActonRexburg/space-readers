@@ -6,6 +6,7 @@
  * clicks still worked; elementFromPoint at the button center did not.
  */
 import { test, expect, type Locator, type Page } from '@playwright/test';
+import { solveMathGate } from './parent-gate';
 
 async function seedPlayers(page: Page) {
   await page.addInitScript(() => {
@@ -64,19 +65,6 @@ async function hitAtCenter(page: Page, locator: Locator) {
     };
   }, { x, y });
   return { x, y, hit };
-}
-
-async function solveMathGate(page: Page) {
-  await page.waitForTimeout(400);
-  const question = await page.locator('[data-testid="parent-gate"]').innerText();
-  const match = question.match(/(\d+)\s*\+\s*(\d+)/);
-  expect(match, `math question parseable: ${question}`).toBeTruthy();
-  const answer = String(Number(match![1]) + Number(match![2]));
-  for (const digit of answer) {
-    await page.locator(`[data-testid="parent-gate-key-${digit}"]`).click();
-  }
-  await page.locator('[data-testid="parent-gate-key-✓"]').click();
-  await expect(page.locator('[data-testid="parent-dashboard"]')).toBeVisible();
 }
 
 test.describe('Parent Zone hit testing', () => {

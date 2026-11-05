@@ -9,6 +9,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAppStore } from './stores/appStore';
 import { getZibClipService } from './services/zibClips';
 import { getAudioService } from './services/audio';
+import { injectOpenDyslexicFont } from './utils/opendyslexic';
 import { ProfilePicker } from './pages/ProfilePicker';
 import { Bridge } from './pages/Bridge';
 import { Mission } from './pages/Mission';
@@ -79,6 +80,12 @@ export function App() {
     const service = getZibClipService();
     service.setEnabled(settings.zibClipsEnabled !== false);
   }, [settings.zibClipsEnabled]);
+
+  // Device-wide OpenDyslexic for reading text. Headings stay Fredoka.
+  useEffect(() => {
+    injectOpenDyslexicFont();
+    document.documentElement.classList.toggle('dyslexia-font', settings.dyslexiaFont === true);
+  }, [settings.dyslexiaFont]);
 
   // Preload voice clips before the first 🔊 tap. Do NOT create an
   // AudioContext on pointerdown — that ducks speechSynthesis + HTMLAudio

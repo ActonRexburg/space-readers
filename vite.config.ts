@@ -44,14 +44,15 @@ export default defineConfig({
       },
       workbox: {
         // Bump so Chromebooks stuck on an old SW drop stale caches on activate.
-        // html = 🔊 is HTMLAudio only; a live AudioContext ducked TTS+HTML.
-        cacheId: 'sr-2026-11-html',
+        // dyslexia = self-hosted OpenDyslexic woff2 in public/fonts (SIL OFL).
+        cacheId: 'sr-2026-11-dyslexia',
         // Deletes leftover audio-cache* runtime caches on activate. public/
         // copies next to sw.js so this relative importScripts URL resolves.
         importScripts: ['sw-purge-audio-cache.js'],
         // Include core app assets in precache (not videos - too large).
         // webp = Brian's 12 illustrated avatars (~10–18KB each) so the picker is instant.
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,jpg,webp}'],
+        // woff2 includes public/fonts/OpenDyslexic-*.woff2 (SIL OFL).
         // Exclude large video files from precache
         globIgnores: ['**/*.mp4', '**/*.webm', '**/*.mp3'],
         // Force new service worker to take control immediately

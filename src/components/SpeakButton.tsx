@@ -147,6 +147,8 @@ interface SpokenLineProps {
   className?: string;
   textClassName?: string;
   voice?: VoiceKind;
+  /** Tron heading — stays Fredoka when the dyslexia reading font is on. */
+  heading?: boolean;
 }
 
 export function SpokenLine({
@@ -154,7 +156,8 @@ export function SpokenLine({
   autoPlay = false,
   className = '',
   textClassName = 'text-lg leading-snug',
-  voice = 'control'
+  voice = 'control',
+  heading = false
 }: SpokenLineProps) {
   if (!text.trim()) return null;
 
@@ -164,7 +167,7 @@ export function SpokenLine({
     <div className={`flex justify-center ${className}`}>
       <div className="inline-flex items-center gap-2 max-w-full">
         <SpeakButton text={text} autoPlay={autoPlay} voice={voice} className="shrink-0" />
-        <p className={`min-w-0 ${textClassName}`}>{text}</p>
+        <p className={`min-w-0 ${heading ? 'heading-text' : 'instruction-text'} ${textClassName}`}>{text}</p>
       </div>
     </div>
   );
