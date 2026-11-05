@@ -62,12 +62,12 @@ export function StarMap({ nodes, docked, onOpenMission }: StarMapProps) {
       <div className="star-map-current">
         {current && (
           <div className="star-map-hero" data-testid="bridge-ship-card">
+            <div className="hero-dock">{docked}</div>
             <div className="hero-planet">
               <PlanetGlyph planetId={current.mission.planetId} />
               {current.completed && <CheckMark />}
               {!current.playable && !current.completed && <LockMark />}
             </div>
-            <div className="hero-dock">{docked}</div>
           </div>
         )}
       </div>

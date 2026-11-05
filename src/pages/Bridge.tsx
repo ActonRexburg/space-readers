@@ -30,7 +30,7 @@ import { RankBadge } from '../components/RankBadge';
 import { hydrateShipProgress, SHIP_ENERGY_MAX } from '../data/ship';
 import { resolveAssetUrl } from '../utils/assets';
 
-const ZIB_SCENE = resolveAssetUrl('zib-clips/poster/zib_planet_unlocked.jpg');
+const ZIB_STAND = resolveAssetUrl('zib-stand.webp');
 
 export function Bridge() {
   const navigate = useNavigate();
@@ -144,7 +144,7 @@ export function Bridge() {
       <div className="bridge-console-bar" aria-hidden="true" />
 
       <div className="bridge-player">
-        <AvatarImage avatar={avatar} size="sm" alt="" />
+        <AvatarImage avatar={avatar} size="hud" alt="" />
         <div className="bridge-player-meta">
           <div className="bridge-player-name heading-text">{activeProfile.name}</div>
           <div className="bridge-player-stats">
@@ -190,16 +190,22 @@ export function Bridge() {
       </button>
 
       <div className="bridge-tools">
-        <ParentZone className="bridge-icon-btn" />
-        <button
-          type="button"
-          onClick={handleLogout}
-          className="bridge-icon-btn bridge-switch"
-          aria-label="Switch player"
-          data-testid="bridge-switch-player"
-        >
-          <SwitchPlayerIcon />
-        </button>
+        <div className="bridge-tool">
+          <ParentZone className="bridge-icon-btn" />
+          <span className="bridge-tool-label">Parents</span>
+        </div>
+        <div className="bridge-tool">
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="bridge-icon-btn bridge-switch"
+            aria-label="Switch player"
+            data-testid="bridge-switch-player"
+          >
+            <SwitchPlayerIcon />
+          </button>
+          <span className="bridge-tool-label">Switch</span>
+        </div>
       </div>
 
       <StarMap
@@ -213,6 +219,7 @@ export function Bridge() {
                 parts={ship.shipPartsUnlocked}
                 phase="idle"
                 size="hero"
+                layout="upright"
               />
               <div className="hero-energy" data-testid="bridge-ship-energy">
                 {ship.shipEnergy} / {SHIP_ENERGY_MAX}
@@ -224,7 +231,7 @@ export function Bridge() {
                 <SpeakButton text={zibDialogue} voice="zib" />
               </div>
               <img
-                src={ZIB_SCENE}
+                src={ZIB_STAND}
                 alt=""
                 className="bridge-zib-figure"
                 draggable={false}
@@ -242,15 +249,13 @@ export function Bridge() {
               <SpeakButton voice="control" text={missionSpeak} />
             </div>
             <div className="bridge-mission-actions">
-              <Button
-                variant="success"
-                size="lg"
-                glow
+              <button
+                type="button"
                 onClick={handleStartMission}
                 className={`bridge-start ${idleGlow}`}
               >
                 START MISSION
-              </Button>
+              </button>
               <button
                 type="button"
                 onClick={() => setShowIntroVideo(true)}

@@ -9,6 +9,7 @@ import type { Avatar } from '../types';
 
 const SIZE_CLASS = {
   sm: 'w-12 h-12 text-2xl',
+  hud: 'w-14 h-14 text-2xl',
   md: 'w-16 h-16 text-3xl',
   lg: 'w-24 h-24 text-5xl',
   fill: 'w-full h-full text-3xl'

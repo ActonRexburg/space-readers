@@ -72,8 +72,10 @@ test('Bridge cockpit has the ship, Zib line, console, and no space-cards', async
   await openBridge(page);
 
   await expect(page.getByTestId('zib-ship')).toBeVisible();
+  await expect(page.getByTestId('zib-ship')).toHaveAttribute('data-ship-layout', 'upright');
   await expect(page.getByTestId('bridge-ship-energy')).toHaveText('40 / 100');
   await expect(page.locator('.ship-part-boosters')).toHaveCount(1);
+  await expect(page.locator('.bridge-zib-figure')).toHaveAttribute('src', /zib-stand\.webp/);
   await expect(page.getByTestId('bridge-rank-card')).toBeVisible();
   await expect(page.getByTestId('rank-badge-Cadet')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'First Contact' })).toBeVisible();
@@ -81,6 +83,8 @@ test('Bridge cockpit has the ship, Zib line, console, and no space-cards', async
   await expect(page.getByRole('button', { name: 'Briefing' })).toBeVisible();
   await expect(page.getByTestId('bridge-switch-player')).toBeVisible();
   await expect(page.getByTestId('parent-zone-button')).toBeVisible();
+  await expect(page.getByText('Parents', { exact: true })).toBeVisible();
+  await expect(page.getByText('Switch', { exact: true })).toBeVisible();
   await expect(page.getByTestId('planet-node-moon')).toBeVisible();
   await expect(page.getByTestId('planet-node-mars')).toBeVisible();
   await expect(page.locator('.bridge-cockpit .space-card')).toHaveCount(0);
