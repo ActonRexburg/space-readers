@@ -232,21 +232,23 @@ export function Mission() {
       {phase === 'briefing' && (
         <main className="flex-1 relative z-10 p-6 flex flex-col items-center justify-center">
           <div className="max-w-md w-full space-y-6">
+            {/* One 🔊 for the heading block (title + description). Do not put a
+                second speaker on the subline — it repeats the same instruction. */}
             <div className="flex flex-col items-center gap-3">
               <div className="text-5xl">🎯</div>
               <div className="flex items-center gap-3">
                 <h2 className="text-3xl font-bold text-star-gold">{mission.title}</h2>
-                <SpeakButton text={mission.title} voice="control" />
+                <SpeakButton
+                  text={`${mission.title}. ${mission.description}`}
+                  voice="control"
+                  autoPlay
+                />
               </div>
             </div>
 
-            <SpokenLine
-              text={mission.description}
-              autoPlay
-              voice="control"
-              textClassName="text-xl text-star-gold font-bold text-center"
-              className="justify-center"
-            />
+            <p className="text-xl text-star-gold font-bold text-center">
+              {mission.description}
+            </p>
 
             <Card className="space-y-3 p-5">
               {briefingSentences.map((line) => (

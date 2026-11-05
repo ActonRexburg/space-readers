@@ -197,6 +197,7 @@ export function Bridge() {
 
           {nextMission ? (
             <Card glow="gold" padding="lg" className="text-center space-y-5">
+              {/* One 🔊 for the heading block — it already reads title + description. */}
               <div className="flex items-center justify-center gap-3">
                 <h2 className="text-3xl font-bold">{nextMission.title}</h2>
                 <SpeakButton
@@ -204,12 +205,7 @@ export function Bridge() {
                   text={`${nextMission.title}. ${nextMission.description}`}
                 />
               </div>
-              <SpokenLine
-                text={nextMission.description}
-                voice="control"
-                className="justify-center"
-                textClassName="text-xl text-white leading-snug"
-              />
+              <p className="text-xl text-white leading-snug">{nextMission.description}</p>
 
               <Button
                 variant="success"
