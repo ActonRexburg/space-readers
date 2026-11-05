@@ -73,3 +73,25 @@ test('finger hint disappears as soon as the child starts dragging', async ({ pag
   await page.getByLabel('Sound out slider').dispatchEvent('pointerdown');
   await expect(hint).toBeHidden({ timeout: 1000 });
 });
+
+test('heart words open the same silent slider plus Hear It', async ({ page }) => {
+  await seedPlayer(page);
+  await page.goto('/');
+  await page.getByTestId('profile-card-qa-a').click();
+  await page.getByRole('button', { name: /Start Mission/i }).click();
+  await page.getByRole('button', { name: /Accept/i }).click();
+  await page.getByRole('heading', { name: 'The Lost Ship' }).click();
+  await page.locator('.word-highlight.sight-word', { hasText: /^The$/ }).click();
+
+  const decoder = page.getByTestId('word-decoder');
+  await expect(decoder).toBeVisible();
+  await expect(page.getByLabel('Sound out slider')).toBeVisible();
+  await expect(decoder.getByText('This is a heart word. We just know it!')).toBeVisible();
+  await expect(decoder.getByRole('button', { name: /Hear It/i })).toBeVisible();
+  await expect(decoder.getByRole('button', { name: /Say Word/i })).toBeDisabled();
+  await expect(page.getByTestId('slider-hand-hint')).toBeVisible();
+  await page.screenshot({
+    path: '/opt/cursor/artifacts/screenshots/decoder-heart-word-slider.png',
+    fullPage: true
+  });
+});

@@ -2,7 +2,9 @@
  * Word Decoder Popup
  *
  * Shows a word broken into graphemes with a slider that highlights
- * each sound. The slider is silent — no phoneme clips, no letter names.
+ * each sound. Heart/sight words use this same silent slider — they also
+ * keep the story pink-dot marker, the heart-word line, and Hear It.
+ * The slider is silent — no phoneme clips, no letter names.
  * "Say Word" / "Hear It" play the whole-word story clip.
  */
 
@@ -36,7 +38,7 @@ export function WordDecoder({ word, isOpen, onClose, onComplete, onKeepTrying }:
 
   // Decoder is a full-screen overlay — never let a Zib popup sit on top of it.
   useZibOverlayLock(isOpen);
-  // Heart-word: Hear It. Slider: Say Word only once the slider is complete.
+  // Heart-word Hear It is always the extra CTA. Regular Say Word waits for the slider.
   const idleGlow = useIdleGlow(isOpen && (word.isSightWord || isComplete));
 
   useEffect(() => {
@@ -128,58 +130,31 @@ export function WordDecoder({ word, isOpen, onClose, onComplete, onKeepTrying }:
     return 'grapheme-inactive';
   };
 
+  const handleHearIt = useCallback(async () => {
+    if (isClosing) return;
+    setIsClosing(true);
+    // Count as taught/practiced immediately — don't wait for audio,
+    // or Hear It never lands in Zib's word list / practiced words.
+    const spoken = word.word.replace(/[^a-zA-Z]/g, '');
+    onComplete();
+    audioService.current.stop();
+    await audioService.current.speakWord(spoken, { voice: 'story' });
+    onClose();
+  }, [word.word, onComplete, onClose, isClosing]);
+
   if (!isOpen) return null;
 
-  const cleanWord = word.word.replace(/[^a-zA-Z]/g, '');
-
-  if (word.isSightWord) {
-    return (
-      <div
-        className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4"
-        onClick={(e) => e.target === e.currentTarget && onClose()}
-      >
-        <div className="decoder-popup p-8 max-w-md w-full text-center space-y-6">
-          <div className="flex items-center justify-center gap-3">
-            <span className="text-3xl" aria-hidden="true">❤️</span>
-            <div className="text-5xl font-bold text-star-gold text-glow-gold reading-text">
-              {word.word}
-            </div>
-          </div>
-
-          <SpokenLine
-            text={UI.heartWord}
-            voice="control"
-            className="justify-center"
-            textClassName="text-xl text-white leading-snug"
-          />
-
-          <Button
-            variant="success"
-            onClick={async () => {
-              if (isClosing) return;
-              setIsClosing(true);
-              // Count as taught/practiced immediately — don't wait for audio,
-              // or Hear It never lands in Zib's word list / practiced words.
-              onComplete();
-              await audioService.current.speakWord(cleanWord, { voice: 'story' });
-              onClose();
-            }}
-            glow
-            className={`w-full text-xl ${idleGlow}`}
-          >
-            🔊 Hear It
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  const isHeart = word.isSightWord;
+  const graphemes = word.graphemes.length > 0
+    ? word.graphemes
+    : [{ text: word.word.replace(/[^a-zA-Z]/g, '') || word.word, phoneme: '' }];
 
   return (
     <div
       className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="decoder-popup p-6 max-w-lg w-full">
+      <div className="decoder-popup p-6 max-w-lg w-full" data-testid="word-decoder">
         <SpokenLine
           text={UI.slideToSound}
           voice="control"
@@ -187,8 +162,20 @@ export function WordDecoder({ word, isOpen, onClose, onComplete, onKeepTrying }:
           textClassName="text-xl text-white font-semibold"
         />
 
+        {isHeart && (
+          <div className="flex flex-col items-center gap-2 mb-4">
+            <span className="text-3xl" aria-hidden="true">❤️</span>
+            <SpokenLine
+              text={UI.heartWord}
+              voice="control"
+              className="justify-center"
+              textClassName="text-xl text-white leading-snug"
+            />
+          </div>
+        )}
+
         <div className="flex justify-center flex-wrap gap-2 mb-8 min-h-[80px] items-center">
-          {word.graphemes.map((grapheme, index) => (
+          {graphemes.map((grapheme, index) => (
             <span
               key={`${grapheme.text}-${index}`}
               className={`grapheme ${getGraphemeStyle(index)}`}
@@ -231,7 +218,7 @@ export function WordDecoder({ word, isOpen, onClose, onComplete, onKeepTrying }:
         </div>
 
         <div className="flex justify-center gap-1 mb-6">
-          {word.graphemes.map((_, index) => (
+          {graphemes.map((_, index) => (
             <div
               key={index}
               className={`w-4 h-2 rounded-full transition-colors ${
@@ -244,6 +231,17 @@ export function WordDecoder({ word, isOpen, onClose, onComplete, onKeepTrying }:
             />
           ))}
         </div>
+
+        {isHeart && (
+          <Button
+            variant="success"
+            onClick={handleHearIt}
+            glow
+            className={`w-full mb-3 text-xl ${idleGlow}`}
+          >
+            🔊 Hear It
+          </Button>
+        )}
 
         <div className="flex gap-3 items-center">
           <button
@@ -258,8 +256,8 @@ export function WordDecoder({ word, isOpen, onClose, onComplete, onKeepTrying }:
             variant="success"
             onClick={handleComplete}
             disabled={!isComplete}
-            glow={isComplete}
-            className={`flex-1 py-4 text-xl ${isComplete ? idleGlow : ''}`}
+            glow={isComplete && !isHeart}
+            className={`flex-1 py-4 text-xl ${isComplete && !isHeart ? idleGlow : ''}`}
           >
             🔊 Say Word
           </Button>

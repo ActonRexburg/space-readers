@@ -4,8 +4,8 @@
  * Kids read the book themselves. Story sentences have NO 🔊 and are never
  * auto-played — tapping a speaker instead of reading was the live-QA failure.
  * The only audio help on story text is tapping a single word:
- *   - decodable words open the slider decoder
- *   - heart/sight words open Hear It
+ *   - decodable and heart/sight words open the silent slider decoder
+ *   - heart words also keep the pink-dot marker, heart-word line, and Hear It
  * Title, Story Complete, and other UI labels still have speakers.
  */
 
